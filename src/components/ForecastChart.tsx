@@ -13,7 +13,7 @@ export interface ForecastColumn {
 }
 
 const H = 230
-const PAD = { top: 14, right: 12, bottom: 30, left: 46 }
+const PAD = { top: 24, right: 12, bottom: 30, left: 46 }
 /** The thickest a column gets, so a few weeks never turn into fat blocks. */
 const MAX_BAR = 26
 
@@ -35,6 +35,8 @@ export function ForecastChart({ columns, active, onPick, format }: { columns: Fo
   const cx = (i: number): number => PAD.left + slot * i + slot / 2
   const y = (v: number): number => PAD.top + innerH - (v / top) * innerH
   const step = Math.ceil(n / Math.max(2, Math.floor(innerW / 48)))
+  // An amount above a column: always on the chosen one, and on the others when each has room for it.
+  const roomForLabels = slot >= 38
 
   return (
     <div ref={ref} dir="ltr" className="w-full">
@@ -76,15 +78,20 @@ export function ForecastChart({ columns, active, onPick, format }: { columns: Fo
               {c.expected > 0 && (
                 <rect
                   x={x0 + 0.5}
-                  y={y(0) - sched - exp - (c.scheduled > 0 ? 2 : 0) + 0.5}
+                  y={y(0) - sched - Math.max(6, exp) - (c.scheduled > 0 ? 2 : 0) + 0.5}
                   width={bar - 1}
-                  height={Math.max(2, exp) - 1}
+                  height={Math.max(6, exp) - 1}
                   rx={4}
                   className="fill-viz-b stroke-viz-b"
-                  fillOpacity={0.28}
-                  strokeWidth={1}
+                  fillOpacity={0.35}
+                  strokeWidth={1.5}
                   strokeDasharray="3 2"
                 />
+              )}
+              {total > 0 && (i === active || roomForLabels) && (
+                <text x={cx(i)} y={y(0) - sched - (c.expected > 0 ? Math.max(6, exp) + 2 : 0) - 6} textAnchor="middle" className={i === active ? 'fill-foreground' : 'fill-muted-foreground'} fontSize={10} fontWeight={i === active ? 700 : 400}>
+                  {compact(total)}
+                </text>
               )}
               {total === 0 && <rect x={x0} y={y(0) - 2} width={bar} height={2} className="fill-border" />}
               {i % step === 0 || i === active ? (

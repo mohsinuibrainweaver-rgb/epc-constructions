@@ -48,6 +48,9 @@ export interface Forecast {
   /** Of the next 30 days (and overdue), what the builder is to pay out of the cash he holds, and what the investor pays directly. */
   builderNext30: number
   investorNext30: number
+  /** The same split for the next 7 days. */
+  builderNext7: number
+  investorNext7: number
   /** Active contracts' money that is not yet planned for any day. */
   unscheduled: ContractBalance[]
   unscheduledTotal: number
@@ -121,6 +124,8 @@ export function forecast({ payments, plans, contracts, today, weeks = FORECAST_W
     next30: total(n30),
     builderNext30: total(n30.filter((i) => i.paidBy === 'builder')),
     investorNext30: total(n30.filter((i) => i.paidBy === 'investor')),
+    builderNext7: total(n7.filter((i) => i.paidBy === 'builder')),
+    investorNext7: total(n7.filter((i) => i.paidBy === 'investor')),
     unscheduled,
     unscheduledTotal: unscheduled.reduce((s, x) => s + x.amount, 0),
     items: sorted,

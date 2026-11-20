@@ -36,6 +36,7 @@ assert.equal(f.later, 900, 'beyond the weeks shown')
 assert.equal(f.next7, 500 + 200 + 300, 'overdue plus the first 7 days (today to day 6)')
 assert.equal(f.next30, 500 + 200 + 300 + 400, 'overdue plus the first 30 days; the one on day 35 is outside')
 assert.deepEqual([f.builderNext30, f.investorNext30], [0, 1400], 'who pays what in the next 30 days')
+assert.deepEqual([f.builderNext7, f.investorNext7], [0, 1000], 'and in the next 7 days (the overdue one counts)')
 assert.deepEqual(f.items.map((i) => i.amount), [500, 200, 300, 400, 600], 'oldest first, inside the weeks only')
 assert.equal(f.items[0].overdue, true)
 
@@ -64,6 +65,7 @@ assert.equal(f.items.filter((i) => i.kind === 'expected')[0].date, '2026-12-17',
 // The plan's payer carries through.
 f = run({ plans: [plan({ paidBy: 'builder' })] })
 assert.ok(f.builderNext30 > 0 && f.investorNext30 === 0)
+assert.equal(f.builderNext7, 1000, 'the first Thursday inside 7 days is the builder\'s')
 
 // ---- contracts: what is left and not yet planned
 const c1 = contract({ id: 'c1', amount: 1000 })

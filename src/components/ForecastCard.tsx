@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Banknote, ChevronRight, CircleAlert, TrendingUp } from 'lucide-react'
+import { Banknote, ChevronRight, CircleAlert } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
-import { Badge } from '@/components/ui/badge'
+import { BuilderCash } from '@/components/BuilderCash'
 import { Card } from '@/components/ui/card'
 import { useContracts, usePayments, usePhases, usePlans, useTransfers } from '@/db/hooks'
 import { cashAdvice, forecast } from '@/lib/forecast'
@@ -10,8 +10,9 @@ import { money, todayISO } from '@/lib/format'
 import { computeSettlement } from '@/lib/settlement'
 
 /**
- * Home's short version of the Cash forecast: what the next 7 and 30 days need, what is overdue, what has no day yet, and when the
- * builder's cash will not cover what he is to pay. The whole card opens the forecast. Hidden when nothing is planned at all.
+ * Home's short version of the Cash forecast: the next 7 and 30 days, each split into what you pay yourself and what the builder pays,
+ * then (only when he has payments to make) a box that says what he must pay, what he holds and how much more to send. The whole card
+ * opens the forecast. Hidden when nothing is planned at all.
  */
 export function ForecastCard() {
   const { t, project } = useApp()
@@ -23,10 +24,15 @@ export function ForecastCard() {
   const today = todayISO()
 
   const f = useMemo(() => forecast({ payments, plans, contracts, today }), [payments, plans, contracts, today])
-  const topUp = useMemo(() => (project ? cashAdvice(computeSettlement(project, payments, transfers, phases, today).builderBalance, f.builderNext30).topUp : 0), [project, payments, transfers, phases, today, f.builderNext30])
+  const advice = useMemo(() => (project ? cashAdvice(computeSettlement(project, payments, transfers, phases, today).builderBalance, f.builderNext30) : undefined), [project, payments, transfers, phases, today, f.builderNext30])
 
-  if (!project) return null
+  if (!project || !advice) return null
   if (f.next30 === 0 && f.later === 0 && f.unscheduledTotal === 0) return null
+
+  const rows = [
+    { label: t('forecast.next7'), total: f.next7, you: f.investorNext7, builder: f.builderNext7 },
+    { label: t('forecast.next30'), total: f.next30, you: f.investorNext30, builder: f.builderNext30 },
+  ]
 
   return (
     <Card className="gap-0 py-0 transition-colors hover:border-foreground/30">
@@ -41,37 +47,32 @@ export function ForecastCard() {
             <ChevronRight aria-hidden="true" className="size-4 rtl:rotate-180" />
           </span>
         </span>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-          <div className="grid gap-0.5">
-            <dt className="text-sm text-muted-foreground">{t('forecast.next7')}</dt>
-            <dd className="tabular text-lg font-extrabold">{money(f.next7)}</dd>
-          </div>
-          <div className="grid gap-0.5">
-            <dt className="text-sm text-muted-foreground">{t('forecast.next30')}</dt>
-            <dd className="tabular text-lg font-extrabold">{money(f.next30)}</dd>
-          </div>
-          {f.unscheduledTotal > 0 && (
-            <div className="col-span-2 grid gap-0.5 sm:col-span-1">
-              <dt className="text-sm text-muted-foreground">{t('forecast.unscheduled')}</dt>
-              <dd className="tabular text-lg font-extrabold">{money(f.unscheduledTotal)}</dd>
-            </div>
-          )}
-        </dl>
-        {(f.overdue > 0 || topUp > 0) && (
-          <span className="flex flex-wrap gap-2">
-            {f.overdue > 0 && (
-              <Badge variant="warning" className="h-auto w-fit whitespace-normal">
-                <CircleAlert aria-hidden="true" />
-                {t('forecast.includesOverdue', { amount: money(f.overdue) })}
-              </Badge>
-            )}
-            {topUp > 0 && (
-              <Badge variant="warning" className="h-auto w-fit whitespace-normal">
-                <TrendingUp aria-hidden="true" />
-                {t('forecast.topUp', { amount: money(topUp) })}
-              </Badge>
-            )}
-          </span>
+
+        <ul className="grid gap-3">
+          {rows.map((r) => (
+            <li key={r.label} className="grid gap-0.5 sm:grid-cols-[9rem_1fr] sm:items-baseline sm:gap-4">
+              <span className="text-sm text-muted-foreground">{r.label}</span>
+              <span className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5">
+                <span className="tabular text-lg font-extrabold">{money(r.total)}</span>
+                <span className="text-sm text-muted-foreground">
+                  {r.builder > 0 ? t('forecast.split', { you: money(r.you), builder: money(r.builder) }) : t('forecast.splitYou')}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        {f.overdue > 0 && (
+          <p className="flex items-start gap-1.5 text-sm font-semibold">
+            <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-warning" />
+            {t('forecast.includesOverdue', { amount: money(f.overdue) })}
+          </p>
+        )}
+
+        <BuilderCash advice={advice} />
+
+        {f.unscheduledTotal > 0 && (
+          <p className="text-sm text-muted-foreground">{t('forecast.unscheduledNote', { amount: money(f.unscheduledTotal) })}</p>
         )}
       </Link>
     </Card>
