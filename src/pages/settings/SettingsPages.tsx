@@ -141,8 +141,11 @@ function AccountSection() {
   const [everywhere, setEverywhere] = useState(false)
   const email = sync.session?.user.email ?? ''
   // The name and role are kept in the account too, so the next phone or sign-in has the same ones.
-  const saveProfile = (patch: { name?: string; role?: Role }) => {
-    if (sync.session) void supabase?.auth.updateUser({ data: patch })
+  const toast = useToast()
+  const saveProfile = async (patch: { name?: string; role?: Role }) => {
+    if (!sync.session || !supabase) return
+    const failed = await supabase.auth.updateUser({ data: patch }).then(({ error }) => Boolean(error), () => true)
+    if (failed) toast.show({ kind: 'error', message: t('set.profileFailed') })
   }
   return (
     <>
@@ -158,7 +161,7 @@ function AccountSection() {
               value={settings.userName}
               autoComplete="name"
               onChange={(e) => void setSetting('userName', e.target.value)}
-              onBlur={(e) => saveProfile({ name: e.target.value.trim() })}
+              onBlur={(e) => void saveProfile({ name: e.target.value.trim() })}
             />
           )}
         />
@@ -168,7 +171,7 @@ function AccountSection() {
           control={(a) => (
             <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={settings.role} onValueChange={(v) => {
                 void setSetting('role', v as Role)
-                saveProfile({ role: v as Role })
+                void saveProfile({ role: v as Role })
               }}>
               {(['investor', 'builder'] as Role[]).map((r) => (
                 <PillRadioItem key={r} value={r}>

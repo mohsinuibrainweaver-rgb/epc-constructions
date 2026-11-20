@@ -4,7 +4,8 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
-const css = readFileSync('src/index.css', 'utf8')
+// The file has Windows line endings on some machines; the patterns below expect plain newlines.
+const css = readFileSync('src/index.css', 'utf8').replace(/\r\n/g, '\n')
 const block = (re: RegExp): Record<string, string> => {
   const m = css.match(re)
   assert.ok(m, `block not found: ${re}`)

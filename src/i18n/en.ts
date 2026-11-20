@@ -759,6 +759,7 @@ export const en = {
   'set.role': 'Your role on this project',
   'set.roleInvestor': 'Investor',
   'set.roleBuilder': 'Builder',
+  'set.profileFailed': 'Changed on this phone only. It could not be saved to your account, so change it again when you are online.',
   'set.install': 'Install the app',
   'set.installBtn': 'Install EndPoint Construction',
   'set.installed': 'The app is installed on this device.',

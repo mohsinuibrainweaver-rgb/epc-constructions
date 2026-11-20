@@ -7,6 +7,8 @@ import { supabase } from './supabase'
 const OWNER = 'device.userId'
 /** Settings about the phone itself, which stay when another account takes it over. */
 const KEEP = new Set(['language', 'region'])
+/** How long to wait for the server when checking whose data this is. */
+const ASK_MS = 8000
 
 export type DeviceCheck = { state: 'checking' } | { state: 'ok' } | { state: 'foreign'; projects: number; pending: number }
 
@@ -34,8 +36,9 @@ export async function checkDevice(uid: string): Promise<DeviceCheck> {
   const synced = projects.filter((p) => p.ownerId).map((p) => p.id)
   let visibleIds: string[] | undefined
   if (!marker && synced.length > 0 && supabase) {
-    const { data, error } = await supabase.from('projects').select('id').in('id', synced)
-    if (!error) visibleIds = (data ?? []).map((r) => r.id as string)
+    const ask = supabase.from('projects').select('id').in('id', synced).then(({ data, error }) => (error ? undefined : (data ?? []).map((r) => r.id as string)))
+    // A server that does not answer must not keep the screen blank: carry on and ask again at the next sign-in.
+    visibleIds = await Promise.race([ask, new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), ASK_MS))]).catch(() => undefined)
   }
   const verdict = deviceVerdict({ marker, uid, syncedProjectIds: synced, visibleIds })
   if (verdict === 'unknown') return { state: 'ok' }

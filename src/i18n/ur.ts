@@ -761,6 +761,7 @@ export const ur: Record<Key, string> = {
   'set.role': 'اس پراجیکٹ میں آپ کا کردار',
   'set.roleInvestor': 'سرمایہ کار',
   'set.roleBuilder': 'بلڈر',
+  'set.profileFailed': 'صرف اس فون پر بدلا۔ آپ کے اکاؤنٹ میں محفوظ نہیں ہو سکا، آن لائن ہونے پر دوبارہ بدلیں۔',
   'set.install': 'ایپ انسٹال کریں',
   'set.installBtn': 'اینڈ پوائنٹ کنسٹرکشن انسٹال کریں',
   'set.installed': 'ایپ اس ڈیوائس پر انسٹال ہے۔',
