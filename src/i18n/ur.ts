@@ -107,6 +107,7 @@ export const ur: Record<Key, string> = {
   'projects.open': 'کھولیں',
   'projects.spent': 'اب تک خرچ',
   'projects.ofBudget': 'کل بجٹ {amount} میں سے',
+  'projects.noBudget': 'بجٹ طے نہیں',
 
   'pf.new': 'نیا پراجیکٹ',
   'pf.edit': 'پراجیکٹ میں ترمیم',

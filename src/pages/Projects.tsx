@@ -18,8 +18,8 @@ import { cn } from '@/lib/utils'
 
 /**
  * One project: the picture with the "Current" mark, the name and place, how much is spent (against the budget when there is one),
- * and the actions. Every card in a row is the same height and its buttons sit on the same line; the text stays together with the
- * buttons, so any spare room of a shorter card is left under the picture.
+ * and the actions. Every card is the same height: the picture is always 16:9, and the name, the place and the budget part always take the
+ * same room, so there is no empty gap in any card.
  */
 function ProjectCard({ project, spent, current, onDelete }: { project: Project; spent: number; current: boolean; onDelete: () => void }) {
   const { t, can, roleOf } = useApp()
@@ -33,8 +33,9 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
       className={cn('h-full gap-0 overflow-hidden py-0 transition-colors hover:border-foreground/30', current && 'ring-2 ring-primary')}
       aria-current={current || undefined}
     >
-      <div className="grid aspect-video place-items-center bg-secondary text-primary">
-        {url ? <img src={url} alt="" className="size-full object-cover" /> : <Building2 className="size-10" aria-hidden="true" />}
+      {/* The picture fills a fixed 16:9 box whatever its own shape, so every card has the same picture size. */}
+      <div className="relative aspect-video overflow-hidden bg-secondary text-primary">
+        {url ? <img src={url} alt="" className="absolute inset-0 size-full object-cover" /> : <Building2 className="absolute inset-0 m-auto size-10" aria-hidden="true" />}
       </div>
       <CardContent className="flex flex-1 flex-col justify-end gap-4 p-4">
         <div className="min-w-0">
@@ -42,22 +43,18 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
             {current && <Badge variant="secondary">{t('projects.current')}</Badge>}
             <Badge variant="neutral">{t(role === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')}</Badge>
           </div>
-          <h2 className="line-clamp-2 text-lg leading-snug font-semibold [overflow-wrap:anywhere]">{project.name}</h2>
-          {project.location && <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">{project.location}</p>}
+          <h2 className="line-clamp-2 min-h-[2lh] text-lg leading-snug font-semibold [overflow-wrap:anywhere]">{project.name}</h2>
+          <p className="mt-0.5 line-clamp-2 min-h-[2lh] text-sm text-muted-foreground [overflow-wrap:anywhere]">{project.location}</p>
         </div>
 
         <div className="grid gap-1.5">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex h-6 items-center justify-between gap-2">
             <span className="text-sm text-muted-foreground">{t('projects.spent')}</span>
             {project.budget ? <Badge variant={level === 'error' ? 'danger' : level === 'warning' ? 'warning' : 'neutral'}>{pct}%</Badge> : null}
           </div>
           <p className="tabular text-xl leading-tight font-bold whitespace-nowrap">{money(spent)}</p>
-          {project.budget ? (
-            <>
-              <BudgetBar spent={spent} budget={project.budget} label={`${project.name}: ${pct}%`} />
-              <p className="tabular text-sm whitespace-nowrap text-muted-foreground">{t('projects.ofBudget', { amount: money(project.budget) })}</p>
-            </>
-          ) : null}
+          <BudgetBar spent={spent} budget={project.budget} label={`${project.name}: ${pct}%`} />
+          <p className="tabular text-sm whitespace-nowrap text-muted-foreground">{project.budget ? t('projects.ofBudget', { amount: money(project.budget) }) : t('projects.noBudget')}</p>
         </div>
 
         <div className="flex items-center gap-2 pt-1">
