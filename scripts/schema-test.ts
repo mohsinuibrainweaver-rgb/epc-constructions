@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs'
 const stubs = `
 create role anon nologin; create role authenticated nologin;
 create schema auth; create schema storage;
-create table auth.users (id uuid primary key, email text);
+create table auth.users (id uuid primary key, email text, email_confirmed_at timestamptz);
 create function auth.uid() returns uuid language sql stable as $$ select nullif((coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb) ->> 'sub', '')::uuid $$;
 create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
 create table storage.buckets (id text primary key, name text, public boolean);
@@ -77,13 +77,16 @@ await assert.rejects(db.exec(`update phases set fee_kind = 'weekly' where id = '
 assert.equal((await db.query<{ done: boolean }>(`select done from phases where id = '12121212-1212-1212-1212-121212121212'`)).rows[0].done, true)
 assert.equal((await db.query<{ done: boolean }>(`select done from phases where fee_kind is null limit 1`)).rows.length, 0, 'only the phase we gave a fee has one')
 await db.exec(`update projects set fee_basis = 'retainer', retainer_amount = 100000, retainer_start = '2026-11-01' where id = '${P}'`)
-await db.exec(`insert into project_invites (project_id, email, role) values ('${P}','b@x.com','builder')`)
+await db.exec(`insert into project_invites (project_id, role) values ('${P}','builder')`)
+const inviteCode = (await db.query<{ code: string }>('select code from project_invites')).rows[0].code
 
 await as(B, 'b@x.com')
 assert.equal(await count('transfers'), 0, 'B sees nothing before joining')
-await db.exec('select claim_invites()')
+await db.exec(`select join_project('${inviteCode}')`)
 assert.equal(await count('transfers'), 1); assert.equal(await count('payment_plans'), 1); assert.equal(await count('payments'), 2); assert.equal(await count('materials'), 1, 'B sees the material line'); assert.equal(await count('project_files'), 1, 'B sees the file row'); assert.equal(await count('contracts'), 1, 'B sees the contract')
+// A builder cannot add a transfer: the write is ignored (see scripts/roles-test.ts for the rest of the role rules).
 await db.exec(`insert into transfers (id, project_id, date, amount, kind, created_at, updated_at) values ('55555555-5555-5555-5555-555555555555','${P}','2026-11-09',25000,'fee',2,2)`)
+assert.equal(await count('transfers'), 1, 'the builder\'s transfer was ignored')
 
 await as(C, 'c@x.com')
 assert.equal(await count('transfers'), 0); assert.equal(await count('payment_plans'), 0); assert.equal(await count('materials'), 0, 'stranger sees no materials'); assert.equal(await count('project_files'), 0, 'stranger sees no files'); assert.equal(await count('contracts'), 0, 'stranger sees no contracts')
@@ -93,7 +96,7 @@ await assert.rejects(db.exec(`insert into transfers (id, project_id, date, amoun
 await assert.rejects(db.exec(`insert into transfers (id, project_id, date, amount, kind, created_at, updated_at) values ('77777777-7777-7777-7777-777777777777','${P}','2026-11-09',1,'gift',3,3)`), /./)
 
 await as(A, 'a@x.com')
-assert.equal(await count('transfers'), 2, 'A sees the transfer B added')
+assert.equal(await count('transfers'), 1, 'A sees only the transfer A added')
 
 // Push subscriptions: each person sees and changes only their own devices; the log is for the server only.
 await db.exec(`insert into push_subscriptions (user_id, endpoint, p256dh, auth, lang) values ('${A}','https://push.example/a','k','a','ur')`)

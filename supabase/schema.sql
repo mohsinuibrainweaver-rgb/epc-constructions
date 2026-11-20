@@ -51,6 +51,17 @@ create table if not exists public.project_invites (
 create unique index if not exists project_invites_unique
   on public.project_invites (project_id, lower(email)) where accepted_at is null;
 
+-- Invitations by one-time code (the investor sends the code by WhatsApp; the other person enters it after signing in).
+-- The email is now optional. A code works once and ends after 7 days.
+alter table public.project_invites alter column email drop not null;
+alter table public.project_invites add column if not exists code text;
+alter table public.project_invites add column if not exists expires_at timestamptz;
+update public.project_invites set code = upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)) where code is null;
+alter table public.project_invites alter column code set default upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12));
+alter table public.project_invites alter column expires_at set default (now() + interval '7 days');
+alter table public.project_invites alter column invited_by set default auth.uid();
+create unique index if not exists project_invites_code on public.project_invites (code);
+
 -- Soft references (no foreign keys) so rows can arrive in any order during a sync.
 create table if not exists public.phases (
   id uuid primary key,
@@ -260,6 +271,88 @@ as $$
   );
 $$;
 
+-- The role of the signed-in person in a project ('investor', 'builder'), or null when they are not a member.
+create or replace function public.role_of(pid uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select m.role from public.project_members m where m.project_id = pid and m.user_id = auth.uid();
+$$;
+
+-- What a builder may write. The investor, the dashboard and the service key are not limited here.
+-- A write the builder may not make is ignored (the trigger returns null), never an error: the app sends rows in batches,
+-- and one refused row must not fail the others. The app notices the missing row in the answer and brings the real one down.
+--   projects, contracts, transfers: read only for a builder.
+--   phases: a builder may only mark a phase done or not done.
+--   payments: a builder's paid or advance entry is always pending; he cannot approve, and he cannot change an entry that
+--   is approved or that the investor entered himself (a paid entry that did not come through approval).
+create or replace function public.role_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  n jsonb := to_jsonb(new);
+  o jsonb;
+  pid uuid;
+begin
+  if auth.uid() is null then return new; end if;
+  if tg_table_name = 'projects' then pid := new.id; else pid := (n ->> 'project_id')::uuid; end if;
+  if tg_op = 'UPDATE' then
+    o := to_jsonb(old);
+  else
+    -- An upsert fires the insert trigger even when the row exists, so look for the row that is there now.
+    execute format('select to_jsonb(t) from public.%I t where t.id = $1', tg_table_name) into o using new.id;
+  end if;
+  -- A brand new project has no member yet; its creator is checked by the insert policy.
+  if tg_table_name = 'projects' and o is null then return new; end if;
+  if public.role_of(pid) is distinct from 'builder' then return new; end if;
+
+  if tg_table_name in ('projects', 'contracts', 'transfers') then
+    return null;
+  elsif tg_table_name = 'phases' then
+    if o is null then return null; end if;
+    if (o - 'done' - 'updated_at' - 'server_updated_at') is distinct from (n - 'done' - 'updated_at' - 'server_updated_at') then return null; end if;
+    return new;
+  elsif tg_table_name = 'payments' then
+    if o is not null and (o ->> 'status') in ('paid', 'advance') and coalesce(o ->> 'approval', '') not in ('pending', 'rejected') then
+      return null;
+    end if;
+    if (n ->> 'status') in ('paid', 'advance') then
+      new.approval := 'pending'; new.approved_by := null; new.approved_at := null; new.reject_reason := null;
+    else
+      new.approval := o ->> 'approval'; new.approved_by := o ->> 'approved_by';
+      new.approved_at := (o ->> 'approved_at')::bigint; new.reject_reason := o ->> 'reject_reason';
+    end if;
+    return new;
+  end if;
+  return new;
+end;
+$$;
+
+-- Nobody changes their own role, and only an investor changes another person's.
+create or replace function public.member_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then return new; end if;
+  if new.project_id <> old.project_id or new.user_id <> old.user_id then
+    raise exception 'a member cannot be moved' using errcode = '42501';
+  end if;
+  if new.role <> old.role and (old.user_id = auth.uid() or public.role_of(old.project_id) is distinct from 'investor') then
+    raise exception 'only the investor can change another person''s role' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
 -- Last write wins by the client's updated_at; the server clock is stamped on every accepted write.
 create or replace function public.sync_stamp()
 returns trigger
@@ -286,6 +379,22 @@ begin
   end loop;
 end $$;
 
+do $$
+declare t text;
+begin
+  foreach t in array array['projects', 'phases', 'payments', 'contracts', 'transfers'] loop
+    execute format('drop trigger if exists %I_guard on public.%I', t, t);
+    execute format(
+      'create trigger %I_guard before insert or update on public.%I for each row execute function public.role_guard()',
+      t, t
+    );
+  end loop;
+end $$;
+
+drop trigger if exists project_members_guard on public.project_members;
+create trigger project_members_guard before update on public.project_members
+for each row execute function public.member_guard();
+
 -- The creator of a project becomes its first member.
 create or replace function public.add_owner_member()
 returns trigger
@@ -305,7 +414,8 @@ drop trigger if exists projects_owner_member on public.projects;
 create trigger projects_owner_member after insert on public.projects
 for each row execute function public.add_owner_member();
 
--- Called by the app after sign-in: turns invitations sent to this email into memberships.
+-- Called by the app after sign-in: turns invitations sent to this email into memberships. Only for an email the person has
+-- confirmed, so nobody can claim an invitation by registering someone else's address.
 create or replace function public.claim_invites()
 returns integer
 language plpgsql
@@ -316,9 +426,13 @@ declare
   claimed integer := 0;
   r record;
 begin
+  if not exists (select 1 from auth.users u where u.id = auth.uid() and u.email_confirmed_at is not null) then
+    return 0;
+  end if;
   for r in
     select * from public.project_invites
-    where accepted_at is null and lower(email) = lower(auth.jwt() ->> 'email')
+    where accepted_at is null and email is not null and lower(email) = lower(auth.jwt() ->> 'email')
+      and (expires_at is null or expires_at > now())
   loop
     insert into public.project_members (project_id, user_id, role, email)
     values (r.project_id, auth.uid(), r.role, auth.jwt() ->> 'email')
@@ -330,7 +444,37 @@ begin
 end;
 $$;
 
+-- Joins a project with the one-time code the investor sent. The code works once and ends after 7 days; the person gets the
+-- role the invitation names. Someone who is already a member keeps the role they have.
+create or replace function public.join_project(p_code text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  inv record;
+begin
+  if auth.uid() is null then
+    raise exception 'sign in first' using errcode = '28000';
+  end if;
+  select * into inv from public.project_invites
+  where upper(code) = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'))
+    and accepted_at is null and (expires_at is null or expires_at > now())
+  for update;
+  if not found then
+    raise exception 'invalid_code' using errcode = 'P0001';
+  end if;
+  insert into public.project_members (project_id, user_id, role, email)
+  values (inv.project_id, auth.uid(), inv.role, auth.jwt() ->> 'email')
+  on conflict do nothing;
+  update public.project_invites set accepted_at = now() where id = inv.id;
+  return inv.project_id;
+end;
+$$;
 grant execute on function public.claim_invites() to authenticated;
+grant execute on function public.join_project(text) to authenticated;
+grant execute on function public.role_of(uuid) to authenticated;
 grant execute on function public.is_member(uuid) to authenticated;
 
 -- --------------------------------------------------------- row level security
@@ -359,24 +503,43 @@ create policy projects_update on public.projects for update to authenticated
 
 drop policy if exists members_select on public.project_members;
 drop policy if exists members_update_self on public.project_members;
+drop policy if exists members_update on public.project_members;
+drop policy if exists members_delete on public.project_members;
 create policy members_select on public.project_members for select to authenticated
   using (public.is_member(project_id));
-create policy members_update_self on public.project_members for update to authenticated
-  using (user_id = auth.uid()) with check (user_id = auth.uid());
+-- A role changes only through member_guard: nobody changes their own, only an investor changes another person's.
+create policy members_update on public.project_members for update to authenticated
+  using (user_id = auth.uid() or public.role_of(project_id) = 'investor')
+  with check (user_id = auth.uid() or public.role_of(project_id) = 'investor');
+-- An investor removes another person; a builder may leave a project himself. There is no insert policy: members are made by the
+-- project's creator trigger and by join_project.
+create policy members_delete on public.project_members for delete to authenticated
+  using ((public.role_of(project_id) = 'investor' and user_id <> auth.uid()) or (user_id = auth.uid() and role = 'builder'));
 
+-- Only an investor sees, makes and withdraws invitations (a code is a key to the project).
 drop policy if exists invites_all on public.project_invites;
-create policy invites_all on public.project_invites for all to authenticated
-  using (public.is_member(project_id)) with check (public.is_member(project_id));
+drop policy if exists invites_select on public.project_invites;
+drop policy if exists invites_insert on public.project_invites;
+drop policy if exists invites_delete on public.project_invites;
+create policy invites_select on public.project_invites for select to authenticated using (public.role_of(project_id) = 'investor');
+create policy invites_insert on public.project_invites for insert to authenticated with check (public.role_of(project_id) = 'investor');
+create policy invites_delete on public.project_invites for delete to authenticated using (public.role_of(project_id) = 'investor');
 
 do $$
 declare t text;
 begin
   foreach t in array array['phases', 'vendors', 'payments', 'attachments', 'payment_plans', 'transfers', 'materials', 'project_files', 'contracts'] loop
+    -- Every member reads and writes; what a builder may not change is held back by the guard triggers above (an ignored write,
+    -- not an error, so a batch of rows is never failed by one). Only an investor removes a row for good.
     execute format('drop policy if exists %I_all on public.%I', t, t);
-    execute format(
-      'create policy %I_all on public.%I for all to authenticated using (public.is_member(project_id)) with check (public.is_member(project_id))',
-      t, t
-    );
+    execute format('drop policy if exists %I_select on public.%I', t, t);
+    execute format('drop policy if exists %I_insert on public.%I', t, t);
+    execute format('drop policy if exists %I_update on public.%I', t, t);
+    execute format('drop policy if exists %I_delete on public.%I', t, t);
+    execute format('create policy %I_select on public.%I for select to authenticated using (public.is_member(project_id))', t, t);
+    execute format('create policy %I_insert on public.%I for insert to authenticated with check (public.is_member(project_id))', t, t);
+    execute format('create policy %I_update on public.%I for update to authenticated using (public.is_member(project_id)) with check (public.is_member(project_id))', t, t);
+    execute format('create policy %I_delete on public.%I for delete to authenticated using (public.role_of(project_id) = ''investor'')', t, t);
   end loop;
 end $$;
 
