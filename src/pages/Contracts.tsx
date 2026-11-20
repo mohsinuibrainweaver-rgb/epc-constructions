@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Ban, CalendarPlus, CircleCheck, FileSignature, FileText, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2 } from 'lucide-react'
+import { Ban, CalendarPlus, CircleCheck, HandCoins, FileSignature, FileText, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { BackLink, EmptyState, PageHeader, StatusPill } from '@/components/common'
 import { ContractBar, ContractPill } from '@/components/ContractParts'
@@ -319,10 +319,18 @@ export function ContractDetail() {
               <p className="text-sm text-muted-foreground">{t('contract.scheduleSub')}</p>
             </div>
             {canPlan && (
-              <Button size="sm" variant="secondary" onClick={() => setPlanning(true)}>
-                <CalendarPlus aria-hidden="true" />
-                {scheduled.length > 0 ? t('contract.planRest', { amount: money(unplanned) }) : t('contract.planButton')}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" asChild>
+                  <Link to={`/add?contract=${contract.id}&amount=${unplanned}`}>
+                    <HandCoins aria-hidden="true" />
+                    {t('contract.payNow', { amount: money(unplanned) })}
+                  </Link>
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => setPlanning(true)}>
+                  <CalendarPlus aria-hidden="true" />
+                  {scheduled.length > 0 ? t('contract.planRest', { amount: money(unplanned) }) : t('contract.planButton')}
+                </Button>
+              </div>
             )}
           </div>
           {unplanned > 0 && (

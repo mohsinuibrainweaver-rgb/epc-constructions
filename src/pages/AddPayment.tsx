@@ -205,6 +205,9 @@ export function AddPayment() {
     if (!cid || prefilled.current || edit || contracts.length === 0) return
     prefilled.current = true
     pickContract(cid)
+    // "Pay the remaining ... now" on a contract brings the amount along.
+    const wanted = Math.round(Number(sp.get('amount')))
+    if (wanted > 0) setAmount(groupDigits(String(wanted)))
   }) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Arriving from a vendor's page ("Add payment" there) chooses that vendor once, which also brings its only open contract.

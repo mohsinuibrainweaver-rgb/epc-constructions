@@ -225,7 +225,8 @@ A contract can be with any vendor of the project (or none). Its page now has a *
 
 - The contract's **planned payments by day**, each with Mark paid / Move / Skip (the same as in Due and upcoming), and **Not planned
   yet** (what is left after what is paid, waiting for approval and already planned; `unplannedBalance` in `src/lib/contracts.ts`).
-- **Plan payments** (the button reads **Plan the remaining Rs x** once some payments are already planned) spreads that amount: how many (1 to 12), the first day, then every week, 2 weeks or month. The amount is split
+- **Pay the remaining Rs x now** opens Add payment for this contract with the amount already filled in (for settling what is left in one go, instead of planning it): `/add?contract=…&amount=…`.
+- **Plan payments** (the button reads **Plan the remaining Rs x** once some payments are already planned) opens with **One payment** (an amount and a day) or **In instalments** (how many, 2 to 12, the first day, then every week, 2 weeks or month) to spread that amount. The amount is split
   in parts rounded to 100 with the last part taking the rest, so they add up exactly; months keep the day (31 Jan, 28 Feb, 31 Mar). Every
   date and amount can be changed before saving; a warning shows when the instalments are more than what is left. The category, mode and
   who pays start from the contract's earlier payments.
