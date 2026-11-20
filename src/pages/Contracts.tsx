@@ -1,0 +1,291 @@
+import { useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Ban, CircleCheck, FileSignature, FileText, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2 } from 'lucide-react'
+import { useApp } from '@/app/AppContext'
+import { BackLink, EmptyState, PageHeader } from '@/components/common'
+import { ContractBar, ContractPill } from '@/components/ContractParts'
+import { ContractDialog, VariationDialog } from '@/components/ContractDialog'
+import { PaymentsTable } from '@/components/PaymentsTable'
+import { useToast } from '@/components/Toast'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
+import { deleteContract, removeVariation, restoreContract, saveContract } from '@/db/actions'
+import { useContracts, usePayments, usePhases, useVendors } from '@/db/hooks'
+import type { Contract, ContractStatus, ContractVariation } from '@/db/types'
+import type { Key } from '@/i18n/en'
+import { contractPayments, summarizeContract } from '@/lib/contracts'
+import { formatDate, money } from '@/lib/format'
+
+function Figure({ label, value, tone }: { label: string; value: string; tone?: 'danger' | 'success' }) {
+  return (
+    <div className="grid gap-0.5">
+      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+      <dd className={`tabular text-lg font-extrabold ${tone === 'danger' ? 'text-danger' : tone === 'success' ? 'text-success' : ''}`}>{value}</dd>
+    </div>
+  )
+}
+
+export function Contracts() {
+  const { t, lang, project } = useApp()
+  const contracts = useContracts(project?.id)
+  const payments = usePayments(project?.id)
+  const vendors = useVendors(project?.id)
+  const [filter, setFilter] = useState<'active' | ContractStatus | 'all'>('active')
+  const [adding, setAdding] = useState(false)
+  const nav = useNavigate()
+
+  const vendorName = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
+  const rows = useMemo(
+    () => contracts.map((c) => ({ c, s: summarizeContract(c, payments) })).filter(({ c }) => filter === 'all' || c.status === filter),
+    [contracts, payments, filter],
+  )
+  const live = contracts.filter((c) => c.status === 'active').map((c) => summarizeContract(c, payments))
+  const sumOf = (f: (s: ReturnType<typeof summarizeContract>) => number) => live.reduce((n, s) => n + f(s), 0)
+
+  return (
+    <>
+      <PageHeader
+        title={t('nav.contracts')}
+        actions={
+          <Button variant="secondary" onClick={() => setAdding(true)}>
+            <Plus aria-hidden="true" />
+            {t('contract.add')}
+          </Button>
+        }
+      />
+
+      {contracts.length === 0 ? (
+        <Card>
+          <EmptyState icon={FileSignature} title={t('contract.empty')} body={t('contract.emptyBody')} />
+        </Card>
+      ) : (
+        <>
+          <section aria-label={t('contract.summary')} className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
+            {[
+              [t('contract.agreed'), sumOf((s) => s.total)],
+              [t('contract.paid'), sumOf((s) => s.paid)],
+              [t('contract.remaining'), sumOf((s) => Math.max(0, s.remaining))],
+              [t('contract.awaiting'), sumOf((s) => s.awaiting)],
+            ].map(([label, v]) => (
+              <Card key={label as string} className="gap-1 p-3 sm:p-4">
+                <p className="text-sm font-medium text-muted-foreground">{label}</p>
+                <p className="tabular text-[1.0625rem] font-extrabold whitespace-nowrap sm:text-2xl">{money(v as number)}</p>
+              </Card>
+            ))}
+          </section>
+          <p className="-mt-3 text-sm text-muted-foreground">{t('contract.summaryNote')}</p>
+
+          <PillRadioGroup aria-label={t('contract.status')} value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+            {(['active', 'completed', 'cancelled', 'all'] as const).map((f) => (
+              <PillRadioItem key={f} value={f}>
+                {f === 'all' ? t('common.all') : t(`contract.status.${f}` as Key)}
+              </PillRadioItem>
+            ))}
+          </PillRadioGroup>
+
+          {rows.length === 0 ? (
+            <Card>
+              <EmptyState icon={SearchX} title={t('contract.noMatch')} action={<Button variant="outline" onClick={() => setFilter('all')}>{t('contract.showAll')}</Button>} />
+            </Card>
+          ) : (
+            <ul className="grid gap-4 md:grid-cols-2">
+              {rows.map(({ c, s }) => (
+                <li key={c.id}>
+                  <Card className="gap-3 p-4 transition-colors hover:bg-muted/40">
+                    <Link to={`/contracts/${c.id}`} className="grid gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+                      <span className="flex items-start justify-between gap-3">
+                        <span className="grid min-w-0 gap-0.5">
+                          <span className="truncate text-lg font-bold">{c.title}</span>
+                          <span className="truncate text-sm text-muted-foreground">
+                            {[c.vendorId && vendorName.get(c.vendorId), formatDate(c.date, lang)].filter(Boolean).join(' · ')}
+                          </span>
+                        </span>
+                        <span className="flex shrink-0 flex-col items-end gap-1">
+                          <ContractPill state={s.state} />
+                          {c.status !== 'active' && <Badge variant="neutral">{t(`contract.status.${c.status}` as Key)}</Badge>}
+                        </span>
+                      </span>
+                      <ContractBar pct={s.pct} state={s.state} label={t('contract.paidPct', { pct: s.pct })} />
+                      <span className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                        <span className="tabular text-muted-foreground">
+                          {money(s.paid)} / {money(s.total)}
+                        </span>
+                        <span className={`tabular font-semibold ${s.state === 'overpaid' ? 'text-danger' : ''}`}>
+                          {s.state === 'overpaid' ? t('contract.overBy', { amount: money(s.over) }) : t('contract.left', { amount: money(s.remaining) })}
+                        </span>
+                      </span>
+                    </Link>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+
+      <ContractDialog open={adding} onClose={() => setAdding(false)} onSaved={(id) => nav(`/contracts/${id}`)} />
+    </>
+  )
+}
+
+export function ContractDetail() {
+  const { id } = useParams()
+  const { t, lang, project, phaseName } = useApp()
+  const toast = useToast()
+  const nav = useNavigate()
+  const contract = useContracts(project?.id).find((c) => c.id === id)
+  const payments = usePayments(project?.id)
+  const vendors = useVendors(project?.id)
+  const phases = usePhases(project?.id)
+  const [editing, setEditing] = useState(false)
+  const [variation, setVariation] = useState<{ open: boolean; v?: ContractVariation }>({ open: false })
+
+  if (!contract) return null
+  const s = summarizeContract(contract, payments)
+  const mine = contractPayments(contract, payments).sort((a, b) => b.date.localeCompare(a.date))
+  const vendor = vendors.find((v) => v.id === contract.vendorId)
+  const phase = phases.find((p) => p.id === contract.phaseId)
+  const varTotal = s.total - contract.amount
+
+  const setStatus = async (next: ContractStatus) => {
+    await saveContract({ ...(contract as Contract), status: next })
+    toast.show({ kind: 'success', message: t('contract.saved') })
+  }
+  const remove = async () => {
+    await deleteContract(contract.id)
+    toast.show({ kind: 'info', message: t('contract.deleted'), actionLabel: t('common.undo'), onAction: () => void restoreContract(contract.id), duration: 8000 })
+    nav('/contracts')
+  }
+
+  return (
+    <>
+      <BackLink to="/contracts" label={t('nav.contracts')} />
+      <PageHeader
+        title={contract.title}
+        subtitle={[vendor?.name, phase && phaseName(phase), formatDate(contract.date, lang)].filter(Boolean).join(' · ')}
+        actions={
+          <>
+            <Button variant="secondary" asChild>
+              <Link to={`/add?contract=${contract.id}`}>
+                <Plus aria-hidden="true" />
+                {t('contract.addPayment')}
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={`/statements?contract=${contract.id}`}>
+                <FileText aria-hidden="true" />
+                {t('stmt.open')}
+              </Link>
+            </Button>
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              <Pencil aria-hidden="true" />
+              {t('common.edit')}
+            </Button>
+          </>
+        }
+      />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <ContractPill state={s.state} />
+        {contract.status !== 'active' && <Badge variant="neutral">{t(`contract.status.${contract.status}` as Key)}</Badge>}
+      </div>
+
+      <div className="grid items-start gap-6 md:grid-cols-12">
+        <Card className="md:col-span-7">
+          <CardHeader>
+            <CardTitle className="text-lg">{t('contract.summary')}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <ContractBar pct={s.pct} state={s.state} label={t('contract.paidPct', { pct: s.pct })} />
+            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <Figure label={t('contract.original')} value={money(contract.amount)} />
+              <Figure label={t('contract.variationsTotal')} value={`${varTotal > 0 ? '+' : ''}${money(varTotal)}`} />
+              <Figure label={t('contract.total')} value={money(s.total)} />
+              <Figure label={t('contract.paid')} value={money(s.paid)} />
+              <Figure
+                label={s.state === 'overpaid' ? t('contract.overpaid') : t('contract.remaining')}
+                value={money(s.state === 'overpaid' ? s.over : s.remaining)}
+                tone={s.state === 'overpaid' ? 'danger' : s.state === 'fullyPaid' ? 'success' : undefined}
+              />
+              {s.planned > 0 && <Figure label={t('contract.planned')} value={money(s.planned)} />}
+            </dl>
+            {s.awaiting > 0 && <p className="rounded-xl bg-warning-soft p-3 text-sm font-semibold text-warning">{t('contract.awaitingNote', { amount: money(s.awaiting) })}</p>}
+            {s.state === 'overpaid' && <p role="status" className="rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger">{t('contract.overNote', { amount: money(s.over) })}</p>}
+            {contract.note && <p className="whitespace-pre-wrap text-muted-foreground">{contract.note}</p>}
+            <div className="flex flex-wrap gap-2">
+              {contract.status === 'active' ? (
+                <>
+                  <Button variant="outline" onClick={() => void setStatus('completed')}>
+                    <CircleCheck aria-hidden="true" />
+                    {t('contract.markCompleted')}
+                  </Button>
+                  <Button variant="outline" onClick={() => void setStatus('cancelled')}>
+                    <Ban aria-hidden="true" />
+                    {t('contract.markCancelled')}
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={() => void setStatus('active')}>
+                  <RotateCcw aria-hidden="true" />
+                  {t('contract.reopen')}
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => void remove()}>
+                <Trash2 aria-hidden="true" />
+                {t('common.delete')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0 overflow-hidden py-0 md:col-span-5" aria-labelledby="var-title">
+          <div className="flex items-center justify-between gap-3 p-4">
+            <h2 id="var-title" className="text-lg font-semibold">
+              {t('contract.variations')}
+            </h2>
+            <Button size="sm" variant="outline" onClick={() => setVariation({ open: true })}>
+              <Plus aria-hidden="true" />
+              {t('contract.addVariation')}
+            </Button>
+          </div>
+          {contract.variations.length === 0 ? (
+            <p className="px-4 pb-4 text-sm text-muted-foreground">{t('contract.noVariations')}</p>
+          ) : (
+            <ul className="divide-y border-t">
+              {contract.variations.map((v) => (
+                <li key={v.id} className="flex items-center gap-2 p-4">
+                  <span className="grid min-w-0 flex-1 gap-0.5">
+                    <span className="truncate font-semibold">{v.title}</span>
+                    <span className="text-sm text-muted-foreground">{formatDate(v.date, lang)}</span>
+                  </span>
+                  <span className={`tabular font-bold whitespace-nowrap ${v.amount < 0 ? 'text-success' : ''}`}>
+                    {v.amount > 0 ? '+' : '−'}
+                    {money(Math.abs(v.amount))}
+                  </span>
+                  <Button variant="ghost" size="icon" aria-label={`${t('common.edit')}: ${v.title}`} onClick={() => setVariation({ open: true, v })}>
+                    <Pencil aria-hidden="true" />
+                  </Button>
+                  <Button variant="ghost" size="icon" aria-label={`${t('common.delete')}: ${v.title}`} onClick={() => void removeVariation(contract.id, v.id)}>
+                    <Trash2 aria-hidden="true" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+
+      <Card className="gap-0 overflow-hidden py-0" aria-labelledby="cp-title">
+        <h2 id="cp-title" className="p-4 text-lg font-semibold">
+          {t('contract.payments')} ({mine.length})
+        </h2>
+        {mine.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('contract.noPayments')} body={t('contract.noPaymentsBody')} /> : <PaymentsTable payments={mine} />}
+      </Card>
+
+      <ContractDialog open={editing} contract={contract} onClose={() => setEditing(false)} />
+      <VariationDialog open={variation.open} contractId={contract.id} variation={variation.v} onClose={() => setVariation({ open: false })} />
+    </>
+  )
+}

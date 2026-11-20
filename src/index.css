@@ -1,0 +1,256 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Design tokens (shadcn/ui variables). Indigo #4338CA is the single brand colour; status colours
+   follow the usual green / amber / red / blue conventions. Text colours are chosen for 4.5:1 or better. */
+:root {
+  --radius: 0.75rem;
+  /* The gap between the screen edge and the app, all round. Also the gap between the sidebar and the page. */
+  --page-gap: 0.5rem;
+  --background: #ffffff;
+  /* The page behind the cards: a neutral light grey, so white cards lift off it. The top bar, fields and popovers
+     stay on --background (white). Every grey in the app is neutral (red = green = blue), never blue-tinted slate. */
+  --canvas: #f5f5f5;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #4338ca;
+  --primary-foreground: #ffffff;
+  --secondary: #eef0ff; /* the brand tint: selected choices */
+  --secondary-foreground: #3730a3;
+  --muted: #f0f0f0;
+  --muted-foreground: #525252; /* 7.8:1 on white, 7.2:1 on the canvas */
+  --accent: #f0f0f0; /* hover and focus fill: neutral */
+  --accent-foreground: #171717;
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: #8a8a8a; /* field borders must stay visible (WCAG 1.4.11, 3:1): 3.5:1 on white, 3.2:1 on the page */
+  --ring: #4338ca;
+
+  --success: #166534;
+  --success-soft: #dcfce7;
+  --warning: #92400e;
+  --warning-soft: #fef3c7;
+  --danger: #b91c1c;
+  --danger-soft: #fee2e2;
+  --info: #1d4ed8;
+  --info-soft: #dbeafe;
+
+  /* The sidebar is dark neutral in both themes. Checked by scripts/contrast-test.ts. */
+  --sidebar: #171717;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #8f95ff;
+  --sidebar-primary-foreground: #12132b;
+  /* The selected item: the brand indigo with white text and icon, in both themes (white on it is 7.6:1). */
+  --sidebar-active: #4338ca;
+  --sidebar-active-foreground: #ffffff;
+  --sidebar-accent: #2b2b2b;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2e2e2e;
+  --sidebar-ring: #a5abff;
+  /* Status text on the dark sidebar (sync chip). Checked on both the sidebar and its raised fill. */
+  --sidebar-info: #93c5fd;
+  --sidebar-warning: #fcd34d;
+  --sidebar-danger: #fca5a5;
+
+  --content-max: 1280px; /* the fixed content grid: never stretches beyond this */
+}
+
+/* Dark theme. Every text and border pair below is checked by scripts/contrast-test.ts for WCAG AA (4.5:1 for text,
+   3:1 for field borders and focus rings). It lives under @media screen so printing and "Save as PDF" always stay on
+   white paper. Greys are neutral. Indigo is lightened on dark: #4338CA is too dark to read as text or a link there, so
+   the brand colour becomes a light indigo with dark text on it (buttons). */
+@media screen {
+  .dark {
+    color-scheme: dark;
+    --background: #0a0a0a;
+    --canvas: #0a0a0a;
+    --foreground: #f5f5f5;
+    --card: #141414;
+    --card-foreground: #f5f5f5;
+    --popover: #1a1a1a;
+    --popover-foreground: #f5f5f5;
+    --primary: #8f95ff;
+    --primary-foreground: #12132b;
+    --secondary: #24264a;
+    --secondary-foreground: #c7caff;
+    --muted: #1f1f1f;
+    --muted-foreground: #a3a3a3;
+    --accent: #262626;
+    --accent-foreground: #f5f5f5;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: #2e2e2e;
+    --input: #707070; /* 3.7:1 on a card, 3.5:1 on a popover */
+    --ring: #a5abff;
+
+    --success: #4ade80;
+    --success-soft: #0f2a1a;
+    --warning: #fbbf24;
+    --warning-soft: #2d2306;
+    --danger: #f87171;
+    --danger-soft: #3a1417;
+    --info: #60a5fa;
+    --info-soft: #12233f;
+  }
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-background: var(--background);
+  --color-canvas: var(--canvas);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-info: var(--sidebar-info);
+  --color-sidebar-warning: var(--sidebar-warning);
+  --color-sidebar-danger: var(--sidebar-danger);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  /* Buttons, choices and fields: one 8 px corner everywhere (cards and panels stay rounder). */
+  --radius-control: 0.5rem;
+
+  /* Breakpoints follow the layout plan: phones under 600, icon sidebar from 600, full sidebar from 1200 */
+  --breakpoint-sm: 37.5rem;
+  --breakpoint-md: 52.5rem;
+  --breakpoint-lg: 75rem;
+  --breakpoint-xl: 100rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    background: var(--canvas);
+  }
+  html[lang='ur'] {
+    --font-sans: 'Noto Naskh Arabic Variable', 'Noto Naskh Arabic', 'Inter Variable', serif;
+  }
+  body {
+    @apply text-foreground font-sans antialiased;
+    background: var(--canvas);
+    min-height: 100dvh;
+    font-size: 1rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  html[lang='ur'] body {
+    line-height: 1.9;
+  }
+  /* An even gap all round, so the app floats a little in from the screen edges. It is on the root element, not the
+     body, because a dialog or drop-down that is open locks the body's scrolling and resets the body's padding. */
+  #root {
+    padding: var(--page-gap);
+  }
+  /* Radix keeps a hidden form input beside each choice and moves it one width to the left. On a right-to-left page that
+     area scrolls, so the whole page could be dragged sideways (Urdu, Add payment, 375 px). Keep them in place. */
+  input[aria-hidden='true'][tabindex='-1'],
+  select[aria-hidden='true'][tabindex='-1'] {
+    transform: none !important;
+    inset-inline-start: 0 !important;
+  }
+  /* A visible focus ring on every interactive element (WCAG 2.4.7, 2.4.11) */
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: plaintext;
+}
+
+@utility container-page {
+  inline-size: min(100%, var(--content-max));
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @media (min-width: 600px) {
+    padding-inline: 1.5rem;
+  }
+}
+
+/* Printing and "Save as PDF": plain white pages, no screen chrome, rows never split across pages. */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  html {
+    color-scheme: light !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000;
+    font-size: 11pt;
+  }
+  #root {
+    padding: 0 !important;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr,
+  li {
+    break-inside: avoid;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

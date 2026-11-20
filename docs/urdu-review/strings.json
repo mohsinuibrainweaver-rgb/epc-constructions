@@ -1,0 +1,5819 @@
+{
+ "exportedAt": "2026-11-16T09:45:26.410Z",
+ "rows": [
+  {
+   "key": "app.name",
+   "area": "1 Menu, buttons and general words",
+   "en": "EndPoint Construction",
+   "ur": "اینڈ پوائنٹ کنسٹرکشن",
+   "placeholders": []
+  },
+  {
+   "key": "app.name.1",
+   "area": "1 Menu, buttons and general words",
+   "en": "EndPoint",
+   "ur": "اینڈ پوائنٹ",
+   "placeholders": []
+  },
+  {
+   "key": "app.name.2",
+   "area": "1 Menu, buttons and general words",
+   "en": "Construction",
+   "ur": "کنسٹرکشن",
+   "placeholders": []
+  },
+  {
+   "key": "app.full",
+   "area": "1 Menu, buttons and general words",
+   "en": "Endpoint Clients Construction",
+   "ur": "اینڈ پوائنٹ کلائنٹس کنسٹرکشن",
+   "placeholders": []
+  },
+  {
+   "key": "nav.home",
+   "area": "1 Menu, buttons and general words",
+   "en": "Home",
+   "ur": "ہوم",
+   "placeholders": []
+  },
+  {
+   "key": "nav.phases",
+   "area": "1 Menu, buttons and general words",
+   "en": "Phases",
+   "ur": "مراحل",
+   "placeholders": []
+  },
+  {
+   "key": "nav.vendors",
+   "area": "1 Menu, buttons and general words",
+   "en": "Vendors",
+   "ur": "وینڈرز",
+   "placeholders": []
+  },
+  {
+   "key": "nav.ledger",
+   "area": "1 Menu, buttons and general words",
+   "en": "Ledger",
+   "ur": "کھاتہ",
+   "placeholders": []
+  },
+  {
+   "key": "nav.materials",
+   "area": "1 Menu, buttons and general words",
+   "en": "Materials",
+   "ur": "میٹیریل",
+   "placeholders": []
+  },
+  {
+   "key": "nav.reports",
+   "area": "1 Menu, buttons and general words",
+   "en": "Reports",
+   "ur": "رپورٹس",
+   "placeholders": []
+  },
+  {
+   "key": "nav.files",
+   "area": "1 Menu, buttons and general words",
+   "en": "Files",
+   "ur": "فائلیں",
+   "placeholders": []
+  },
+  {
+   "key": "nav.settings",
+   "area": "1 Menu, buttons and general words",
+   "en": "Settings",
+   "ur": "ترتیبات",
+   "placeholders": []
+  },
+  {
+   "key": "nav.more",
+   "area": "1 Menu, buttons and general words",
+   "en": "More",
+   "ur": "مزید",
+   "placeholders": []
+  },
+  {
+   "key": "nav.add",
+   "area": "1 Menu, buttons and general words",
+   "en": "Add",
+   "ur": "شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "nav.projects",
+   "area": "1 Menu, buttons and general words",
+   "en": "Projects",
+   "ur": "پراجیکٹس",
+   "placeholders": []
+  },
+  {
+   "key": "common.save",
+   "area": "1 Menu, buttons and general words",
+   "en": "Save",
+   "ur": "محفوظ کریں",
+   "placeholders": []
+  },
+  {
+   "key": "common.cancel",
+   "area": "1 Menu, buttons and general words",
+   "en": "Cancel",
+   "ur": "منسوخ",
+   "placeholders": []
+  },
+  {
+   "key": "common.delete",
+   "area": "1 Menu, buttons and general words",
+   "en": "Delete",
+   "ur": "حذف کریں",
+   "placeholders": []
+  },
+  {
+   "key": "common.edit",
+   "area": "1 Menu, buttons and general words",
+   "en": "Edit",
+   "ur": "ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "common.close",
+   "area": "1 Menu, buttons and general words",
+   "en": "Close",
+   "ur": "بند کریں",
+   "placeholders": []
+  },
+  {
+   "key": "common.undo",
+   "area": "1 Menu, buttons and general words",
+   "en": "Undo",
+   "ur": "واپس",
+   "placeholders": []
+  },
+  {
+   "key": "common.retry",
+   "area": "1 Menu, buttons and general words",
+   "en": "Retry",
+   "ur": "دوبارہ کوشش",
+   "placeholders": []
+  },
+  {
+   "key": "common.add",
+   "area": "1 Menu, buttons and general words",
+   "en": "Add",
+   "ur": "شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "common.back",
+   "area": "1 Menu, buttons and general words",
+   "en": "Back",
+   "ur": "پیچھے",
+   "placeholders": []
+  },
+  {
+   "key": "common.search",
+   "area": "1 Menu, buttons and general words",
+   "en": "Search",
+   "ur": "تلاش",
+   "placeholders": []
+  },
+  {
+   "key": "common.all",
+   "area": "1 Menu, buttons and general words",
+   "en": "All",
+   "ur": "سب",
+   "placeholders": []
+  },
+  {
+   "key": "common.optional",
+   "area": "1 Menu, buttons and general words",
+   "en": "optional",
+   "ur": "اختیاری",
+   "placeholders": []
+  },
+  {
+   "key": "common.restore",
+   "area": "1 Menu, buttons and general words",
+   "en": "Restore",
+   "ur": "بحال کریں",
+   "placeholders": []
+  },
+  {
+   "key": "common.export",
+   "area": "1 Menu, buttons and general words",
+   "en": "Export CSV",
+   "ur": "CSV ایکسپورٹ",
+   "placeholders": []
+  },
+  {
+   "key": "common.copy",
+   "area": "1 Menu, buttons and general words",
+   "en": "Copy",
+   "ur": "کاپی",
+   "placeholders": []
+  },
+  {
+   "key": "common.call",
+   "area": "1 Menu, buttons and general words",
+   "en": "Call",
+   "ur": "کال",
+   "placeholders": []
+  },
+  {
+   "key": "common.share",
+   "area": "1 Menu, buttons and general words",
+   "en": "Share",
+   "ur": "شیئر",
+   "placeholders": []
+  },
+  {
+   "key": "common.none",
+   "area": "1 Menu, buttons and general words",
+   "en": "None",
+   "ur": "کوئی نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "common.or",
+   "area": "1 Menu, buttons and general words",
+   "en": "or",
+   "ur": "یا",
+   "placeholders": []
+  },
+  {
+   "key": "common.total",
+   "area": "1 Menu, buttons and general words",
+   "en": "Total",
+   "ur": "کل",
+   "placeholders": []
+  },
+  {
+   "key": "common.loading",
+   "area": "1 Menu, buttons and general words",
+   "en": "Loading",
+   "ur": "لوڈ ہو رہا ہے",
+   "placeholders": []
+  },
+  {
+   "key": "a11y.skip",
+   "area": "1 Menu, buttons and general words",
+   "en": "Skip to main content",
+   "ur": "مرکزی مواد پر جائیں",
+   "placeholders": []
+  },
+  {
+   "key": "phases.nameRequired",
+   "area": "5 Phases (stages of the build)",
+   "en": "Enter a phase name",
+   "ur": "مرحلے کا نام لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "status.paid",
+   "area": "8 Adding or editing a payment",
+   "en": "Paid",
+   "ur": "ادا شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "status.planned",
+   "area": "8 Adding or editing a payment",
+   "en": "Planned",
+   "ur": "منصوبہ شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "status.advance",
+   "area": "8 Adding or editing a payment",
+   "en": "Advance",
+   "ur": "ایڈوانس",
+   "placeholders": []
+  },
+  {
+   "key": "status.overdue",
+   "area": "8 Adding or editing a payment",
+   "en": "Overdue",
+   "ur": "تاخیر شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "status.due",
+   "area": "8 Adding or editing a payment",
+   "en": "Due",
+   "ur": "واجب",
+   "placeholders": []
+  },
+  {
+   "key": "mode.cash",
+   "area": "8 Adding or editing a payment",
+   "en": "Cash",
+   "ur": "نقد",
+   "placeholders": []
+  },
+  {
+   "key": "mode.bank",
+   "area": "8 Adding or editing a payment",
+   "en": "Bank transfer",
+   "ur": "بینک ٹرانسفر",
+   "placeholders": []
+  },
+  {
+   "key": "paidBy.investor",
+   "area": "8 Adding or editing a payment",
+   "en": "Investor",
+   "ur": "سرمایہ کار",
+   "placeholders": []
+  },
+  {
+   "key": "paidBy.builder",
+   "area": "8 Adding or editing a payment",
+   "en": "Builder",
+   "ur": "بلڈر",
+   "placeholders": []
+  },
+  {
+   "key": "cat.material",
+   "area": "8 Adding or editing a payment",
+   "en": "Material",
+   "ur": "میٹیریل",
+   "placeholders": []
+  },
+  {
+   "key": "cat.labour",
+   "area": "8 Adding or editing a payment",
+   "en": "Labour",
+   "ur": "مزدوری",
+   "placeholders": []
+  },
+  {
+   "key": "cat.machinery",
+   "area": "8 Adding or editing a payment",
+   "en": "Machinery and transport",
+   "ur": "مشینری اور ٹرانسپورٹ",
+   "placeholders": []
+  },
+  {
+   "key": "cat.fees",
+   "area": "8 Adding or editing a payment",
+   "en": "Fees and permits",
+   "ur": "فیس اور اجازت نامے",
+   "placeholders": []
+  },
+  {
+   "key": "cat.misc",
+   "area": "8 Adding or editing a payment",
+   "en": "Miscellaneous",
+   "ur": "متفرق",
+   "placeholders": []
+  },
+  {
+   "key": "misc.utilities",
+   "area": "8 Adding or editing a payment",
+   "en": "Utilities and connections",
+   "ur": "یوٹیلیٹی اور کنکشن",
+   "placeholders": []
+  },
+  {
+   "key": "misc.meals",
+   "area": "8 Adding or editing a payment",
+   "en": "Meals and hospitality",
+   "ur": "کھانا اور مہمان نوازی",
+   "placeholders": []
+  },
+  {
+   "key": "misc.carriage",
+   "area": "8 Adding or editing a payment",
+   "en": "Carriage and transport",
+   "ur": "کرایہ اور ٹرانسپورٹ",
+   "placeholders": []
+  },
+  {
+   "key": "misc.rent",
+   "area": "8 Adding or editing a payment",
+   "en": "Equipment rent",
+   "ur": "سامان کا کرایہ",
+   "placeholders": []
+  },
+  {
+   "key": "misc.tools",
+   "area": "8 Adding or editing a payment",
+   "en": "Tools and consumables",
+   "ur": "اوزار اور چھوٹا سامان",
+   "placeholders": []
+  },
+  {
+   "key": "misc.cleaning",
+   "area": "8 Adding or editing a payment",
+   "en": "Cleaning",
+   "ur": "صفائی",
+   "placeholders": []
+  },
+  {
+   "key": "misc.fees",
+   "area": "8 Adding or editing a payment",
+   "en": "Fees and permits",
+   "ur": "فیس اور اجازت نامے",
+   "placeholders": []
+  },
+  {
+   "key": "misc.unplanned",
+   "area": "8 Adding or editing a payment",
+   "en": "Unplanned extras",
+   "ur": "غیر متوقع اخراجات",
+   "placeholders": []
+  },
+  {
+   "key": "misc.other",
+   "area": "8 Adding or editing a payment",
+   "en": "Other",
+   "ur": "دیگر",
+   "placeholders": []
+  },
+  {
+   "key": "role.builder",
+   "area": "6 Vendors and their roles",
+   "en": "Builder",
+   "ur": "بلڈر",
+   "placeholders": []
+  },
+  {
+   "key": "role.foreman",
+   "area": "6 Vendors and their roles",
+   "en": "Labour foreman",
+   "ur": "مزدوروں کا فورمین",
+   "placeholders": []
+  },
+  {
+   "key": "role.carpenter",
+   "area": "6 Vendors and their roles",
+   "en": "Carpenter",
+   "ur": "کارپینٹر",
+   "placeholders": []
+  },
+  {
+   "key": "role.painter",
+   "area": "6 Vendors and their roles",
+   "en": "Painter",
+   "ur": "پینٹر",
+   "placeholders": []
+  },
+  {
+   "key": "role.plumber",
+   "area": "6 Vendors and their roles",
+   "en": "Plumber",
+   "ur": "پلمبر",
+   "placeholders": []
+  },
+  {
+   "key": "role.electrician",
+   "area": "6 Vendors and their roles",
+   "en": "Electrician",
+   "ur": "الیکٹریشن",
+   "placeholders": []
+  },
+  {
+   "key": "role.tiler",
+   "area": "6 Vendors and their roles",
+   "en": "Tiler",
+   "ur": "ٹائل مستری",
+   "placeholders": []
+  },
+  {
+   "key": "role.welder",
+   "area": "6 Vendors and their roles",
+   "en": "Welder",
+   "ur": "ویلڈر",
+   "placeholders": []
+  },
+  {
+   "key": "role.ceiling",
+   "area": "6 Vendors and their roles",
+   "en": "Ceiling",
+   "ur": "سیلنگ",
+   "placeholders": []
+  },
+  {
+   "key": "role.supplier",
+   "area": "6 Vendors and their roles",
+   "en": "Material supplier",
+   "ur": "میٹیریل سپلائر",
+   "placeholders": []
+  },
+  {
+   "key": "role.machinery",
+   "area": "6 Vendors and their roles",
+   "en": "Machinery",
+   "ur": "مشینری",
+   "placeholders": []
+  },
+  {
+   "key": "role.other",
+   "area": "6 Vendors and their roles",
+   "en": "Other",
+   "ur": "دیگر",
+   "placeholders": []
+  },
+  {
+   "key": "phase.planning",
+   "area": "5 Phases (stages of the build)",
+   "en": "Planning and approvals",
+   "ur": "منصوبہ بندی اور منظوری",
+   "placeholders": []
+  },
+  {
+   "key": "phase.site",
+   "area": "5 Phases (stages of the build)",
+   "en": "Site preparation",
+   "ur": "سائٹ کی تیاری",
+   "placeholders": []
+  },
+  {
+   "key": "phase.foundation",
+   "area": "5 Phases (stages of the build)",
+   "en": "Excavation and foundation",
+   "ur": "کھدائی اور بنیاد",
+   "placeholders": []
+  },
+  {
+   "key": "phase.grey",
+   "area": "5 Phases (stages of the build)",
+   "en": "Grey structure",
+   "ur": "گرے سٹرکچر",
+   "placeholders": []
+  },
+  {
+   "key": "phase.services",
+   "area": "5 Phases (stages of the build)",
+   "en": "Rough services",
+   "ur": "ابتدائی بجلی اور پلمبنگ",
+   "placeholders": []
+  },
+  {
+   "key": "phase.windows",
+   "area": "5 Phases (stages of the build)",
+   "en": "Windows, doors and gates",
+   "ur": "کھڑکیاں، دروازے اور گیٹ",
+   "placeholders": []
+  },
+  {
+   "key": "phase.ceiling",
+   "area": "5 Phases (stages of the build)",
+   "en": "Ceiling and walls",
+   "ur": "سیلنگ اور دیواریں",
+   "placeholders": []
+  },
+  {
+   "key": "phase.flooring",
+   "area": "5 Phases (stages of the build)",
+   "en": "Flooring and tiles",
+   "ur": "فرش اور ٹائلیں",
+   "placeholders": []
+  },
+  {
+   "key": "phase.woodwork",
+   "area": "5 Phases (stages of the build)",
+   "en": "Woodwork and kitchen",
+   "ur": "لکڑی کا کام اور کچن",
+   "placeholders": []
+  },
+  {
+   "key": "phase.paint",
+   "area": "5 Phases (stages of the build)",
+   "en": "Paint and polish",
+   "ur": "رنگ و روغن اور پالش",
+   "placeholders": []
+  },
+  {
+   "key": "phase.finishing",
+   "area": "5 Phases (stages of the build)",
+   "en": "Fixtures and finishing",
+   "ur": "فکسچرز اور فنشنگ",
+   "placeholders": []
+  },
+  {
+   "key": "phase.handover",
+   "area": "5 Phases (stages of the build)",
+   "en": "Utilities and handover",
+   "ur": "یوٹیلیٹی کنکشن اور حوالگی",
+   "placeholders": []
+  },
+  {
+   "key": "welcome.title",
+   "area": "2 First screen and sign in",
+   "en": "Start your first project",
+   "ur": "اپنا پہلا پراجیکٹ شروع کریں",
+   "placeholders": []
+  },
+  {
+   "key": "welcome.body",
+   "area": "2 First screen and sign in",
+   "en": "Track every payment on your house build, phase by phase. Everything is saved on this phone, even without a signal.",
+   "ur": "اپنے گھر کی تعمیر کی ہر ادائیگی مرحلہ وار ریکارڈ کریں۔ سب کچھ اس فون پر محفوظ رہتا ہے، سگنل نہ ہو تب بھی۔",
+   "placeholders": []
+  },
+  {
+   "key": "welcome.cta",
+   "area": "2 First screen and sign in",
+   "en": "Create project",
+   "ur": "پراجیکٹ بنائیں",
+   "placeholders": []
+  },
+  {
+   "key": "projects.title",
+   "area": "3 Projects and the new-project form",
+   "en": "Projects",
+   "ur": "پراجیکٹس",
+   "placeholders": []
+  },
+  {
+   "key": "projects.new",
+   "area": "3 Projects and the new-project form",
+   "en": "New project",
+   "ur": "نیا پراجیکٹ",
+   "placeholders": []
+  },
+  {
+   "key": "projects.current",
+   "area": "3 Projects and the new-project form",
+   "en": "Current",
+   "ur": "موجودہ",
+   "placeholders": []
+  },
+  {
+   "key": "projects.open",
+   "area": "3 Projects and the new-project form",
+   "en": "Open",
+   "ur": "کھولیں",
+   "placeholders": []
+  },
+  {
+   "key": "projects.spent",
+   "area": "3 Projects and the new-project form",
+   "en": "Spent so far",
+   "ur": "اب تک خرچ",
+   "placeholders": []
+  },
+  {
+   "key": "pf.new",
+   "area": "3 Projects and the new-project form",
+   "en": "New project",
+   "ur": "نیا پراجیکٹ",
+   "placeholders": []
+  },
+  {
+   "key": "pf.edit",
+   "area": "3 Projects and the new-project form",
+   "en": "Edit project",
+   "ur": "پراجیکٹ میں ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "pf.name",
+   "area": "3 Projects and the new-project form",
+   "en": "Project name",
+   "ur": "پراجیکٹ کا نام",
+   "placeholders": []
+  },
+  {
+   "key": "pf.location",
+   "area": "3 Projects and the new-project form",
+   "en": "Location",
+   "ur": "مقام",
+   "placeholders": []
+  },
+  {
+   "key": "pf.thumb",
+   "area": "3 Projects and the new-project form",
+   "en": "Thumbnail photo",
+   "ur": "تھمب نیل تصویر",
+   "placeholders": []
+  },
+  {
+   "key": "pf.thumbHint",
+   "area": "3 Projects and the new-project form",
+   "en": "A photo of the plot or the elevation drawing",
+   "ur": "پلاٹ کی تصویر یا ایلیویشن ڈرائنگ",
+   "placeholders": []
+  },
+  {
+   "key": "pf.chooseThumb",
+   "area": "3 Projects and the new-project form",
+   "en": "Choose photo",
+   "ur": "تصویر چنیں",
+   "placeholders": []
+  },
+  {
+   "key": "pf.plot",
+   "area": "3 Projects and the new-project form",
+   "en": "Plot size",
+   "ur": "پلاٹ کا سائز",
+   "placeholders": []
+  },
+  {
+   "key": "pf.plotHint",
+   "area": "3 Projects and the new-project form",
+   "en": "For example 5 marla",
+   "ur": "مثلاً 5 مرلہ",
+   "placeholders": []
+  },
+  {
+   "key": "pf.area",
+   "area": "3 Projects and the new-project form",
+   "en": "Covered area (sq ft)",
+   "ur": "کورڈ ایریا (مربع فٹ)",
+   "placeholders": []
+  },
+  {
+   "key": "pf.floors",
+   "area": "3 Projects and the new-project form",
+   "en": "Floors",
+   "ur": "منزلیں",
+   "placeholders": []
+  },
+  {
+   "key": "pf.start",
+   "area": "3 Projects and the new-project form",
+   "en": "Start date",
+   "ur": "آغاز کی تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "pf.finish",
+   "area": "3 Projects and the new-project form",
+   "en": "Target finish",
+   "ur": "مکمل کرنے کی تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "pf.budget",
+   "area": "3 Projects and the new-project form",
+   "en": "Total budget ({cur})",
+   "ur": "کل بجٹ ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "pf.template",
+   "area": "3 Projects and the new-project form",
+   "en": "Phases",
+   "ur": "مراحل",
+   "placeholders": []
+  },
+  {
+   "key": "pf.templateStd",
+   "area": "3 Projects and the new-project form",
+   "en": "Standard house build (12 phases)",
+   "ur": "معیاری گھر کی تعمیر (12 مراحل)",
+   "placeholders": []
+  },
+  {
+   "key": "pf.templateBlank",
+   "area": "3 Projects and the new-project form",
+   "en": "Blank list",
+   "ur": "خالی فہرست",
+   "placeholders": []
+  },
+  {
+   "key": "pf.create",
+   "area": "3 Projects and the new-project form",
+   "en": "Create project",
+   "ur": "پراجیکٹ بنائیں",
+   "placeholders": []
+  },
+  {
+   "key": "pf.nameRequired",
+   "area": "3 Projects and the new-project form",
+   "en": "Enter a project name",
+   "ur": "پراجیکٹ کا نام لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "pf.created",
+   "area": "3 Projects and the new-project form",
+   "en": "Project created",
+   "ur": "پراجیکٹ بن گیا",
+   "placeholders": []
+  },
+  {
+   "key": "home.spent",
+   "area": "4 Home screen",
+   "en": "Spent",
+   "ur": "خرچ",
+   "placeholders": []
+  },
+  {
+   "key": "home.budget",
+   "area": "4 Home screen",
+   "en": "Budget",
+   "ur": "بجٹ",
+   "placeholders": []
+  },
+  {
+   "key": "home.left",
+   "area": "4 Home screen",
+   "en": "Budget left",
+   "ur": "بچا ہوا بجٹ",
+   "placeholders": []
+  },
+  {
+   "key": "home.planned",
+   "area": "4 Home screen",
+   "en": "Planned",
+   "ur": "منصوبہ شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "home.due",
+   "area": "4 Home screen",
+   "en": "Due and upcoming",
+   "ur": "واجب الادا اور آنے والی",
+   "placeholders": []
+  },
+  {
+   "key": "home.dueEmpty",
+   "area": "4 Home screen",
+   "en": "Nothing planned. A payment with status Planned shows here.",
+   "ur": "کچھ منصوبہ شدہ نہیں۔ \"منصوبہ شدہ\" حیثیت والی ادائیگی یہاں نظر آئے گی۔",
+   "placeholders": []
+  },
+  {
+   "key": "home.recent",
+   "area": "4 Home screen",
+   "en": "Recent payments",
+   "ur": "حالیہ ادائیگیاں",
+   "placeholders": []
+  },
+  {
+   "key": "home.recentEmpty",
+   "area": "4 Home screen",
+   "en": "No payments yet",
+   "ur": "ابھی کوئی ادائیگی نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "home.phaseProgress",
+   "area": "4 Home screen",
+   "en": "Phase progress",
+   "ur": "مراحل کی پیش رفت",
+   "placeholders": []
+  },
+  {
+   "key": "home.markPaid",
+   "area": "4 Home screen",
+   "en": "Mark paid",
+   "ur": "ادا شدہ لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "home.noBudget",
+   "area": "4 Home screen",
+   "en": "No budget set",
+   "ur": "بجٹ مقرر نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "home.viewAll",
+   "area": "4 Home screen",
+   "en": "View all",
+   "ur": "سب دیکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "home.budgetUsed",
+   "area": "4 Home screen",
+   "en": "{pct}% of budget used",
+   "ur": "بجٹ کا {pct}% استعمال ہو چکا",
+   "placeholders": [
+    "{pct}"
+   ]
+  },
+  {
+   "key": "phases.title",
+   "area": "5 Phases (stages of the build)",
+   "en": "Phases",
+   "ur": "مراحل",
+   "placeholders": []
+  },
+  {
+   "key": "phases.add",
+   "area": "5 Phases (stages of the build)",
+   "en": "Add phase",
+   "ur": "مرحلہ شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "phases.name",
+   "area": "5 Phases (stages of the build)",
+   "en": "Phase name",
+   "ur": "مرحلے کا نام",
+   "placeholders": []
+  },
+  {
+   "key": "phases.budget",
+   "area": "5 Phases (stages of the build)",
+   "en": "Budget ({cur})",
+   "ur": "بجٹ ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "phases.spent",
+   "area": "5 Phases (stages of the build)",
+   "en": "Spent",
+   "ur": "خرچ",
+   "placeholders": []
+  },
+  {
+   "key": "phases.setBudget",
+   "area": "5 Phases (stages of the build)",
+   "en": "Set budget",
+   "ur": "بجٹ مقرر کریں",
+   "placeholders": []
+  },
+  {
+   "key": "phases.moveUp",
+   "area": "5 Phases (stages of the build)",
+   "en": "Move up",
+   "ur": "اوپر کریں",
+   "placeholders": []
+  },
+  {
+   "key": "phases.moveDown",
+   "area": "5 Phases (stages of the build)",
+   "en": "Move down",
+   "ur": "نیچے کریں",
+   "placeholders": []
+  },
+  {
+   "key": "phases.deleteConfirm",
+   "area": "5 Phases (stages of the build)",
+   "en": "Delete this phase? Its payments stay, with no phase.",
+   "ur": "یہ مرحلہ حذف کریں؟ اس کی ادائیگیاں بغیر مرحلے کے رہیں گی۔",
+   "placeholders": []
+  },
+  {
+   "key": "phases.payments",
+   "area": "5 Phases (stages of the build)",
+   "en": "Payments in this phase",
+   "ur": "اس مرحلے کی ادائیگیاں",
+   "placeholders": []
+  },
+  {
+   "key": "phases.empty",
+   "area": "5 Phases (stages of the build)",
+   "en": "Add your first phase",
+   "ur": "اپنا پہلا مرحلہ شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "phases.emptyBody",
+   "area": "5 Phases (stages of the build)",
+   "en": "Phases are the stages of the build, such as the foundation and the grey structure. Each can have its own budget.",
+   "ur": "مراحل تعمیر کے پڑاؤ ہوتے ہیں، جیسے بنیاد اور گرے سٹرکچر۔ ہر مرحلے کا اپنا بجٹ ہو سکتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "phases.used",
+   "area": "5 Phases (stages of the build)",
+   "en": "{pct}% used",
+   "ur": "{pct}% استعمال",
+   "placeholders": [
+    "{pct}"
+   ]
+  },
+  {
+   "key": "phases.planned",
+   "area": "5 Phases (stages of the build)",
+   "en": "Planned",
+   "ur": "منصوبہ شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.title",
+   "area": "6 Vendors and their roles",
+   "en": "Vendors",
+   "ur": "وینڈرز",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.add",
+   "area": "6 Vendors and their roles",
+   "en": "Add vendor",
+   "ur": "وینڈر شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.new",
+   "area": "6 Vendors and their roles",
+   "en": "New vendor",
+   "ur": "نیا وینڈر",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.edit",
+   "area": "6 Vendors and their roles",
+   "en": "Edit vendor",
+   "ur": "وینڈر میں ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.name",
+   "area": "6 Vendors and their roles",
+   "en": "Name",
+   "ur": "نام",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.role",
+   "area": "6 Vendors and their roles",
+   "en": "Role",
+   "ur": "کام",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.phone",
+   "area": "6 Vendors and their roles",
+   "en": "Phone",
+   "ur": "فون",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.account",
+   "area": "6 Vendors and their roles",
+   "en": "Bank account",
+   "ur": "بینک اکاؤنٹ",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.notes",
+   "area": "6 Vendors and their roles",
+   "en": "Notes",
+   "ur": "نوٹس",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.empty",
+   "area": "6 Vendors and their roles",
+   "en": "Add your first vendor",
+   "ur": "اپنا پہلا وینڈر شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.emptyBody",
+   "area": "6 Vendors and their roles",
+   "en": "Add the people and shops you pay. Each one gets its own list of payments.",
+   "ur": "جن لوگوں اور دکانوں کو آپ ادائیگی کرتے ہیں انہیں شامل کریں۔ ہر ایک کی ادائیگیوں کی اپنی فہرست بنتی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.noMatch",
+   "area": "6 Vendors and their roles",
+   "en": "No vendors match",
+   "ur": "کوئی وینڈر نہیں ملا",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.noMatchBody",
+   "area": "6 Vendors and their roles",
+   "en": "Check the spelling or clear the search.",
+   "ur": "ہجے دیکھیں یا تلاش صاف کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.clearSearch",
+   "area": "6 Vendors and their roles",
+   "en": "Clear search",
+   "ur": "تلاش صاف کریں",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.paid",
+   "area": "6 Vendors and their roles",
+   "en": "Paid",
+   "ur": "ادا شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.planned",
+   "area": "6 Vendors and their roles",
+   "en": "Planned",
+   "ur": "منصوبہ شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.payments",
+   "area": "6 Vendors and their roles",
+   "en": "Payments",
+   "ur": "ادائیگیاں",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.statement",
+   "area": "6 Vendors and their roles",
+   "en": "Share statement",
+   "ur": "اسٹیٹمنٹ شیئر کریں",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.copyAccount",
+   "area": "6 Vendors and their roles",
+   "en": "Copy account",
+   "ur": "اکاؤنٹ کاپی کریں",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.copied",
+   "area": "6 Vendors and their roles",
+   "en": "Account copied",
+   "ur": "اکاؤنٹ کاپی ہو گیا",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.search",
+   "area": "6 Vendors and their roles",
+   "en": "Search vendors",
+   "ur": "وینڈر تلاش کریں",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.nameRequired",
+   "area": "6 Vendors and their roles",
+   "en": "Enter a name",
+   "ur": "نام لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "vendors.saved",
+   "area": "6 Vendors and their roles",
+   "en": "Vendor saved",
+   "ur": "وینڈر محفوظ ہو گیا",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.title",
+   "area": "7 Ledger (list of payments)",
+   "en": "Ledger",
+   "ur": "کھاتہ",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.search",
+   "area": "7 Ledger (list of payments)",
+   "en": "Search purpose, vendor, note",
+   "ur": "مقصد، وینڈر، نوٹ تلاش کریں",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.filtersLabel",
+   "area": "7 Ledger (list of payments)",
+   "en": "Search and filter payments",
+   "ur": "ادائیگیاں تلاش کریں اور فلٹر کریں",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.phase",
+   "area": "7 Ledger (list of payments)",
+   "en": "Phase",
+   "ur": "مرحلہ",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.vendor",
+   "area": "7 Ledger (list of payments)",
+   "en": "Vendor",
+   "ur": "وینڈر",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.category",
+   "area": "7 Ledger (list of payments)",
+   "en": "Category",
+   "ur": "زمرہ",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.status",
+   "area": "7 Ledger (list of payments)",
+   "en": "Status",
+   "ur": "حیثیت",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.mode",
+   "area": "7 Ledger (list of payments)",
+   "en": "Mode",
+   "ur": "طریقہ",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.month",
+   "area": "7 Ledger (list of payments)",
+   "en": "Month",
+   "ur": "مہینہ",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.empty",
+   "area": "7 Ledger (list of payments)",
+   "en": "No payments match",
+   "ur": "کوئی ادائیگی نہیں ملی",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.noMatchBody",
+   "area": "7 Ledger (list of payments)",
+   "en": "Try other filters or different search words.",
+   "ur": "دوسرے فلٹر یا تلاش کے الفاظ آزمائیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.clearFilters",
+   "area": "7 Ledger (list of payments)",
+   "en": "Clear filters",
+   "ur": "فلٹر ہٹائیں",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.emptyAll",
+   "area": "7 Ledger (list of payments)",
+   "en": "Add your first payment",
+   "ur": "اپنی پہلی ادائیگی شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.emptyAllBody",
+   "area": "7 Ledger (list of payments)",
+   "en": "Every payment you record shows here, with its phase, vendor and approval.",
+   "ur": "آپ جو بھی ادائیگی درج کریں گے وہ یہاں مرحلے، وینڈر اور منظوری کے ساتھ نظر آئے گی۔",
+   "placeholders": []
+  },
+  {
+   "key": "reports.empty",
+   "area": "16 Reports",
+   "en": "No payments to report yet",
+   "ur": "رپورٹ کے لیے ابھی کوئی ادائیگی نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "reports.noData",
+   "area": "16 Reports",
+   "en": "Nothing to show here yet.",
+   "ur": "یہاں دکھانے کے لیے ابھی کچھ نہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "reports.emptyBody",
+   "area": "16 Reports",
+   "en": "Totals by phase, vendor, month and cash or bank appear once you add payments.",
+   "ur": "ادائیگیاں شامل کرتے ہی مرحلے، وینڈر، مہینے اور نقد یا بینک کے مطابق مجموعے یہاں نظر آئیں گے۔",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.shown",
+   "area": "7 Ledger (list of payments)",
+   "en": "{count} payments, {total}",
+   "ur": "{count} ادائیگیاں، {total}",
+   "placeholders": [
+    "{count}",
+    "{total}"
+   ]
+  },
+  {
+   "key": "ledger.date",
+   "area": "7 Ledger (list of payments)",
+   "en": "Date",
+   "ur": "تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.purpose",
+   "area": "7 Ledger (list of payments)",
+   "en": "Purpose",
+   "ur": "مقصد",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.amount",
+   "area": "7 Ledger (list of payments)",
+   "en": "Amount",
+   "ur": "رقم",
+   "placeholders": []
+  },
+  {
+   "key": "ledger.paidBy",
+   "area": "7 Ledger (list of payments)",
+   "en": "Paid by",
+   "ur": "ادا کرنے والا",
+   "placeholders": []
+  },
+  {
+   "key": "pay.add",
+   "area": "8 Adding or editing a payment",
+   "en": "Add payment",
+   "ur": "ادائیگی شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "pay.edit",
+   "area": "8 Adding or editing a payment",
+   "en": "Edit payment",
+   "ur": "ادائیگی میں ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "pay.kind",
+   "area": "8 Adding or editing a payment",
+   "en": "Kind of payment",
+   "ur": "ادائیگی کی قسم",
+   "placeholders": []
+  },
+  {
+   "key": "pay.standard",
+   "area": "8 Adding or editing a payment",
+   "en": "Standard",
+   "ur": "عام",
+   "placeholders": []
+  },
+  {
+   "key": "pay.misc",
+   "area": "8 Adding or editing a payment",
+   "en": "Miscellaneous",
+   "ur": "متفرق",
+   "placeholders": []
+  },
+  {
+   "key": "pay.miscHint",
+   "area": "8 Adding or editing a payment",
+   "en": "For costs with no vendor, such as meals, carriage or the meter installation.",
+   "ur": "ایسے اخراجات کے لیے جن کا کوئی وینڈر نہیں، جیسے کھانا، کرایہ یا میٹر کی تنصیب۔",
+   "placeholders": []
+  },
+  {
+   "key": "pay.amount",
+   "area": "8 Adding or editing a payment",
+   "en": "Amount ({cur})",
+   "ur": "رقم ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "pay.date",
+   "area": "8 Adding or editing a payment",
+   "en": "Date",
+   "ur": "تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "pay.purpose",
+   "area": "8 Adding or editing a payment",
+   "en": "Purpose",
+   "ur": "مقصد",
+   "placeholders": []
+  },
+  {
+   "key": "pay.purposeMisc",
+   "area": "8 Adding or editing a payment",
+   "en": "What was it for?",
+   "ur": "یہ کس چیز کے لیے تھا؟",
+   "placeholders": []
+  },
+  {
+   "key": "pay.vendor",
+   "area": "8 Adding or editing a payment",
+   "en": "Vendor",
+   "ur": "وینڈر",
+   "placeholders": []
+  },
+  {
+   "key": "pay.payee",
+   "area": "8 Adding or editing a payment",
+   "en": "Payee name",
+   "ur": "وصول کرنے والے کا نام",
+   "placeholders": []
+  },
+  {
+   "key": "pay.phase",
+   "area": "8 Adding or editing a payment",
+   "en": "Phase",
+   "ur": "مرحلہ",
+   "placeholders": []
+  },
+  {
+   "key": "pay.category",
+   "area": "8 Adding or editing a payment",
+   "en": "Category",
+   "ur": "زمرہ",
+   "placeholders": []
+  },
+  {
+   "key": "pay.miscType",
+   "area": "8 Adding or editing a payment",
+   "en": "Type",
+   "ur": "قسم",
+   "placeholders": []
+  },
+  {
+   "key": "pay.status",
+   "area": "8 Adding or editing a payment",
+   "en": "Status",
+   "ur": "حیثیت",
+   "placeholders": []
+  },
+  {
+   "key": "pay.mode",
+   "area": "8 Adding or editing a payment",
+   "en": "Mode",
+   "ur": "طریقہ",
+   "placeholders": []
+  },
+  {
+   "key": "pay.paidBy",
+   "area": "8 Adding or editing a payment",
+   "en": "Paid by",
+   "ur": "ادا کرنے والا",
+   "placeholders": []
+  },
+  {
+   "key": "pay.receipts",
+   "area": "8 Adding or editing a payment",
+   "en": "Receipt photos",
+   "ur": "رسید کی تصاویر",
+   "placeholders": []
+  },
+  {
+   "key": "pay.addReceipt",
+   "area": "8 Adding or editing a payment",
+   "en": "Add receipt photo",
+   "ur": "رسید کی تصویر شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "pay.note",
+   "area": "8 Adding or editing a payment",
+   "en": "Note",
+   "ur": "نوٹ",
+   "placeholders": []
+  },
+  {
+   "key": "pay.save",
+   "area": "8 Adding or editing a payment",
+   "en": "Save payment",
+   "ur": "ادائیگی محفوظ کریں",
+   "placeholders": []
+  },
+  {
+   "key": "pay.noVendor",
+   "area": "8 Adding or editing a payment",
+   "en": "No vendor",
+   "ur": "کوئی وینڈر نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "pay.newVendor",
+   "area": "8 Adding or editing a payment",
+   "en": "New vendor…",
+   "ur": "نیا وینڈر…",
+   "placeholders": []
+  },
+  {
+   "key": "pay.noPhase",
+   "area": "8 Adding or editing a payment",
+   "en": "Whole project",
+   "ur": "پورا پراجیکٹ",
+   "placeholders": []
+  },
+  {
+   "key": "pay.dupTitle",
+   "area": "8 Adding or editing a payment",
+   "en": "Possible duplicate",
+   "ur": "ممکنہ دہرائی ہوئی ادائیگی",
+   "placeholders": []
+  },
+  {
+   "key": "pay.dupBody",
+   "area": "8 Adding or editing a payment",
+   "en": "A payment with the same date and amount to the same payee already exists.",
+   "ur": "اسی تاریخ اور اسی رقم کی ادائیگی اسی وصول کنندہ کو پہلے سے موجود ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "pay.saveAnyway",
+   "area": "8 Adding or editing a payment",
+   "en": "Save anyway",
+   "ur": "پھر بھی محفوظ کریں",
+   "placeholders": []
+  },
+  {
+   "key": "pay.errAmount",
+   "area": "8 Adding or editing a payment",
+   "en": "Enter an amount above zero",
+   "ur": "صفر سے زیادہ رقم لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "pay.errPurpose",
+   "area": "8 Adding or editing a payment",
+   "en": "Say what it was for",
+   "ur": "لکھیں کہ یہ کس لیے تھا",
+   "placeholders": []
+  },
+  {
+   "key": "pay.errDate",
+   "area": "8 Adding or editing a payment",
+   "en": "Choose a date",
+   "ur": "تاریخ چنیں",
+   "placeholders": []
+  },
+  {
+   "key": "pay.saved",
+   "area": "8 Adding or editing a payment",
+   "en": "Payment saved",
+   "ur": "ادائیگی محفوظ ہو گئی",
+   "placeholders": []
+  },
+  {
+   "key": "pay.savedLocal",
+   "area": "8 Adding or editing a payment",
+   "en": "Saved on this phone",
+   "ur": "اس فون پر محفوظ ہو گئی",
+   "placeholders": []
+  },
+  {
+   "key": "pay.updated",
+   "area": "8 Adding or editing a payment",
+   "en": "Payment updated",
+   "ur": "ادائیگی اپ ڈیٹ ہو گئی",
+   "placeholders": []
+  },
+  {
+   "key": "pay.deleted",
+   "area": "8 Adding or editing a payment",
+   "en": "Moved to bin",
+   "ur": "ردی میں منتقل",
+   "placeholders": []
+  },
+  {
+   "key": "pay.delete",
+   "area": "8 Adding or editing a payment",
+   "en": "Delete payment",
+   "ur": "ادائیگی حذف کریں",
+   "placeholders": []
+  },
+  {
+   "key": "pay.removePhoto",
+   "area": "8 Adding or editing a payment",
+   "en": "Remove photo",
+   "ur": "تصویر ہٹائیں",
+   "placeholders": []
+  },
+  {
+   "key": "reports.title",
+   "area": "16 Reports",
+   "en": "Reports",
+   "ur": "رپورٹس",
+   "placeholders": []
+  },
+  {
+   "key": "reports.byPhase",
+   "area": "16 Reports",
+   "en": "By phase",
+   "ur": "مرحلے کے لحاظ سے",
+   "placeholders": []
+  },
+  {
+   "key": "reports.byVendor",
+   "area": "16 Reports",
+   "en": "By vendor",
+   "ur": "وینڈر کے لحاظ سے",
+   "placeholders": []
+  },
+  {
+   "key": "reports.byCategory",
+   "area": "16 Reports",
+   "en": "By category",
+   "ur": "زمرے کے لحاظ سے",
+   "placeholders": []
+  },
+  {
+   "key": "reports.byMonth",
+   "area": "16 Reports",
+   "en": "By month",
+   "ur": "مہینے کے لحاظ سے",
+   "placeholders": []
+  },
+  {
+   "key": "reports.byMode",
+   "area": "16 Reports",
+   "en": "Cash and bank",
+   "ur": "نقد اور بینک",
+   "placeholders": []
+  },
+  {
+   "key": "reports.noPhase",
+   "area": "16 Reports",
+   "en": "No phase",
+   "ur": "کوئی مرحلہ نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "reports.noVendor",
+   "area": "16 Reports",
+   "en": "No vendor",
+   "ur": "کوئی وینڈر نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "mat.title",
+   "area": "12 Materials",
+   "en": "Materials",
+   "ur": "میٹیریل",
+   "placeholders": []
+  },
+  {
+   "key": "mat.add",
+   "area": "12 Materials",
+   "en": "Add purchase",
+   "ur": "خریداری شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "mat.edit",
+   "area": "12 Materials",
+   "en": "Edit purchase",
+   "ur": "خریداری میں ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "mat.prices",
+   "area": "12 Materials",
+   "en": "Price per unit",
+   "ur": "فی یونٹ قیمت",
+   "placeholders": []
+  },
+  {
+   "key": "mat.pricesNote",
+   "area": "12 Materials",
+   "en": "Rates you paid, from your purchases.",
+   "ur": "آپ کی خریداریوں سے وہ ریٹ جو آپ نے ادا کیے۔",
+   "placeholders": []
+  },
+  {
+   "key": "mat.purchases",
+   "area": "12 Materials",
+   "en": "Purchases",
+   "ur": "خریداریاں",
+   "placeholders": []
+  },
+  {
+   "key": "mat.empty",
+   "area": "12 Materials",
+   "en": "Add your first purchase",
+   "ur": "اپنی پہلی خریداری شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "mat.emptyBody",
+   "area": "12 Materials",
+   "en": "See what you paid per unit and how the price moves.",
+   "ur": "دیکھیں کہ فی یونٹ کتنی قیمت ادا کی اور قیمت کیسے بدلتی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "mat.item",
+   "area": "12 Materials",
+   "en": "Item",
+   "ur": "چیز",
+   "placeholders": []
+  },
+  {
+   "key": "mat.itemHint",
+   "area": "12 Materials",
+   "en": "For example Cement, Bricks, Sariya. Use the same name each time so prices line up.",
+   "ur": "مثلاً سیمنٹ، اینٹ، سریا۔ ہر بار ایک ہی نام لکھیں تاکہ قیمتیں ایک ساتھ آئیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "mat.quantity",
+   "area": "12 Materials",
+   "en": "Quantity",
+   "ur": "مقدار",
+   "placeholders": []
+  },
+  {
+   "key": "mat.unit",
+   "area": "12 Materials",
+   "en": "Unit",
+   "ur": "یونٹ",
+   "placeholders": []
+  },
+  {
+   "key": "mat.rate",
+   "area": "12 Materials",
+   "en": "Rate per unit ({cur})",
+   "ur": "فی یونٹ ریٹ ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "mat.total",
+   "area": "12 Materials",
+   "en": "Total",
+   "ur": "کل",
+   "placeholders": []
+  },
+  {
+   "key": "mat.supplier",
+   "area": "12 Materials",
+   "en": "Supplier or shop",
+   "ur": "سپلائر یا دکان",
+   "placeholders": []
+  },
+  {
+   "key": "mat.phase",
+   "area": "12 Materials",
+   "en": "Phase",
+   "ur": "مرحلہ",
+   "placeholders": []
+  },
+  {
+   "key": "mat.noPhase",
+   "area": "12 Materials",
+   "en": "No phase",
+   "ur": "کوئی مرحلہ نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "mat.date",
+   "area": "12 Materials",
+   "en": "Date",
+   "ur": "تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "mat.note",
+   "area": "12 Materials",
+   "en": "Note",
+   "ur": "نوٹ",
+   "placeholders": []
+  },
+  {
+   "key": "mat.asPayment",
+   "area": "12 Materials",
+   "en": "Also record this as a payment",
+   "ur": "اسے ادائیگی کے طور پر بھی درج کریں",
+   "placeholders": []
+  },
+  {
+   "key": "mat.asPaymentHint",
+   "area": "12 Materials",
+   "en": "Adds a Paid material payment for the total, so the spend counts once. Editing the purchase later does not change that payment.",
+   "ur": "کل رقم کی ادا شدہ میٹیریل ادائیگی بنتی ہے تاکہ خرچ ایک ہی بار گنا جائے۔ بعد میں خریداری بدلنے سے وہ ادائیگی نہیں بدلتی۔",
+   "placeholders": []
+  },
+  {
+   "key": "mat.errItem",
+   "area": "12 Materials",
+   "en": "Enter the item name.",
+   "ur": "چیز کا نام لکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "mat.errQty",
+   "area": "12 Materials",
+   "en": "Enter a quantity above zero.",
+   "ur": "صفر سے زیادہ مقدار لکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "mat.errRate",
+   "area": "12 Materials",
+   "en": "Enter a rate above zero.",
+   "ur": "صفر سے زیادہ ریٹ لکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "mat.saved",
+   "area": "12 Materials",
+   "en": "Purchase saved.",
+   "ur": "خریداری محفوظ ہو گئی۔",
+   "placeholders": []
+  },
+  {
+   "key": "mat.deleted",
+   "area": "12 Materials",
+   "en": "Purchase deleted.",
+   "ur": "خریداری حذف ہو گئی۔",
+   "placeholders": []
+  },
+  {
+   "key": "mat.last",
+   "area": "12 Materials",
+   "en": "Last rate",
+   "ur": "آخری ریٹ",
+   "placeholders": []
+  },
+  {
+   "key": "mat.min",
+   "area": "12 Materials",
+   "en": "Lowest",
+   "ur": "کم سے کم",
+   "placeholders": []
+  },
+  {
+   "key": "mat.max",
+   "area": "12 Materials",
+   "en": "Highest",
+   "ur": "زیادہ سے زیادہ",
+   "placeholders": []
+  },
+  {
+   "key": "mat.avg",
+   "area": "12 Materials",
+   "en": "Average paid",
+   "ur": "اوسط ادا شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "mat.bought",
+   "area": "12 Materials",
+   "en": "Bought",
+   "ur": "خریدا",
+   "placeholders": []
+  },
+  {
+   "key": "mat.spent",
+   "area": "12 Materials",
+   "en": "Spent",
+   "ur": "خرچ",
+   "placeholders": []
+  },
+  {
+   "key": "mat.timesOne",
+   "area": "12 Materials",
+   "en": "1 purchase",
+   "ur": "1 خریداری",
+   "placeholders": []
+  },
+  {
+   "key": "mat.times",
+   "area": "12 Materials",
+   "en": "{count} purchases",
+   "ur": "{count} خریداریاں",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "mat.up",
+   "area": "12 Materials",
+   "en": "Up {pct}% on the previous purchase",
+   "ur": "پچھلی خریداری سے {pct}% زیادہ",
+   "placeholders": [
+    "{pct}"
+   ]
+  },
+  {
+   "key": "mat.down",
+   "area": "12 Materials",
+   "en": "Down {pct}% on the previous purchase",
+   "ur": "پچھلی خریداری سے {pct}% کم",
+   "placeholders": [
+    "{pct}"
+   ]
+  },
+  {
+   "key": "mat.same",
+   "area": "12 Materials",
+   "en": "Same as the previous purchase",
+   "ur": "پچھلی خریداری کے برابر",
+   "placeholders": []
+  },
+  {
+   "key": "mat.at",
+   "area": "12 Materials",
+   "en": "{qty} {unit} at {rate}",
+   "ur": "{qty} {unit}، ریٹ {rate}",
+   "placeholders": [
+    "{qty}",
+    "{unit}",
+    "{rate}"
+   ]
+  },
+  {
+   "key": "unit.bag",
+   "area": "12 Materials",
+   "en": "bag",
+   "ur": "بوری",
+   "placeholders": []
+  },
+  {
+   "key": "unit.kg",
+   "area": "12 Materials",
+   "en": "kg",
+   "ur": "کلو",
+   "placeholders": []
+  },
+  {
+   "key": "unit.ton",
+   "area": "12 Materials",
+   "en": "ton",
+   "ur": "ٹن",
+   "placeholders": []
+  },
+  {
+   "key": "unit.piece",
+   "area": "12 Materials",
+   "en": "piece",
+   "ur": "عدد",
+   "placeholders": []
+  },
+  {
+   "key": "unit.cft",
+   "area": "12 Materials",
+   "en": "cft",
+   "ur": "کیوبک فٹ",
+   "placeholders": []
+  },
+  {
+   "key": "unit.sqft",
+   "area": "12 Materials",
+   "en": "sqft",
+   "ur": "مربع فٹ",
+   "placeholders": []
+  },
+  {
+   "key": "unit.rft",
+   "area": "12 Materials",
+   "en": "rft",
+   "ur": "رننگ فٹ",
+   "placeholders": []
+  },
+  {
+   "key": "unit.trip",
+   "area": "12 Materials",
+   "en": "trip",
+   "ur": "ٹرپ",
+   "placeholders": []
+  },
+  {
+   "key": "unit.box",
+   "area": "12 Materials",
+   "en": "box",
+   "ur": "ڈبہ",
+   "placeholders": []
+  },
+  {
+   "key": "unit.litre",
+   "area": "12 Materials",
+   "en": "litre",
+   "ur": "لیٹر",
+   "placeholders": []
+  },
+  {
+   "key": "unit.other",
+   "area": "12 Materials",
+   "en": "other",
+   "ur": "دیگر",
+   "placeholders": []
+  },
+  {
+   "key": "files.add",
+   "area": "15 Files and photos",
+   "en": "Add files",
+   "ur": "فائلیں شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "files.edit",
+   "area": "15 Files and photos",
+   "en": "Edit details",
+   "ur": "تفصیل میں ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "files.photos",
+   "area": "15 Files and photos",
+   "en": "Photos",
+   "ur": "تصاویر",
+   "placeholders": []
+  },
+  {
+   "key": "files.documents",
+   "area": "15 Files and photos",
+   "en": "Documents",
+   "ur": "دستاویزات",
+   "placeholders": []
+  },
+  {
+   "key": "files.kind",
+   "area": "15 Files and photos",
+   "en": "What are you adding?",
+   "ur": "آپ کیا شامل کر رہے ہیں؟",
+   "placeholders": []
+  },
+  {
+   "key": "files.pick",
+   "area": "15 Files and photos",
+   "en": "Choose files",
+   "ur": "فائلیں منتخب کریں",
+   "placeholders": []
+  },
+  {
+   "key": "files.pickPhoto",
+   "area": "15 Files and photos",
+   "en": "Take or choose photos",
+   "ur": "تصویر لیں یا منتخب کریں",
+   "placeholders": []
+  },
+  {
+   "key": "files.chosen",
+   "area": "15 Files and photos",
+   "en": "{count} selected",
+   "ur": "{count} منتخب",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "files.none",
+   "area": "15 Files and photos",
+   "en": "No file chosen yet.",
+   "ur": "ابھی کوئی فائل منتخب نہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.titleField",
+   "area": "15 Files and photos",
+   "en": "Title",
+   "ur": "عنوان",
+   "placeholders": []
+  },
+  {
+   "key": "files.titleHint",
+   "area": "15 Files and photos",
+   "en": "Leave empty to use the file name.",
+   "ur": "خالی چھوڑیں تو فائل کا نام استعمال ہوگا۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.docType",
+   "area": "15 Files and photos",
+   "en": "Document type",
+   "ur": "دستاویز کی قسم",
+   "placeholders": []
+  },
+  {
+   "key": "files.phase",
+   "area": "15 Files and photos",
+   "en": "Phase",
+   "ur": "مرحلہ",
+   "placeholders": []
+  },
+  {
+   "key": "files.noPhase",
+   "area": "15 Files and photos",
+   "en": "No phase",
+   "ur": "کوئی مرحلہ نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "files.date",
+   "area": "15 Files and photos",
+   "en": "Date",
+   "ur": "تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "files.note",
+   "area": "15 Files and photos",
+   "en": "Note",
+   "ur": "نوٹ",
+   "placeholders": []
+  },
+  {
+   "key": "files.allPhases",
+   "area": "15 Files and photos",
+   "en": "All phases",
+   "ur": "تمام مراحل",
+   "placeholders": []
+  },
+  {
+   "key": "files.allTypes",
+   "area": "15 Files and photos",
+   "en": "All types",
+   "ur": "تمام اقسام",
+   "placeholders": []
+  },
+  {
+   "key": "files.emptyPhotos",
+   "area": "15 Files and photos",
+   "en": "Add your first progress photo",
+   "ur": "اپنی پہلی پراگریس تصویر شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "files.emptyPhotosBody",
+   "area": "15 Files and photos",
+   "en": "Photos from the site keep a dated record of each phase.",
+   "ur": "سائٹ کی تصاویر ہر مرحلے کا تاریخ وار ریکارڈ رکھتی ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.emptyDocs",
+   "area": "15 Files and photos",
+   "en": "Add your first document",
+   "ur": "اپنی پہلی دستاویز شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "files.emptyDocsBody",
+   "area": "15 Files and photos",
+   "en": "Keep contracts, approvals, quotations, drawings and bills together here.",
+   "ur": "معاہدے، منظوریاں، کوٹیشن، ڈرائنگ اور بل یہاں ایک جگہ رکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.noMatch",
+   "area": "15 Files and photos",
+   "en": "Nothing matches these filters",
+   "ur": "ان فلٹرز سے کچھ نہیں ملا",
+   "placeholders": []
+  },
+  {
+   "key": "files.noMatchBody",
+   "area": "15 Files and photos",
+   "en": "Try other filters.",
+   "ur": "دوسرے فلٹر آزمائیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.clearFilters",
+   "area": "15 Files and photos",
+   "en": "Clear filters",
+   "ur": "فلٹر ہٹائیں",
+   "placeholders": []
+  },
+  {
+   "key": "files.saved",
+   "area": "15 Files and photos",
+   "en": "Saved.",
+   "ur": "محفوظ ہو گیا۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.deleted",
+   "area": "15 Files and photos",
+   "en": "Deleted.",
+   "ur": "حذف ہو گیا۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.errNone",
+   "area": "15 Files and photos",
+   "en": "Choose at least one file.",
+   "ur": "کم از کم ایک فائل منتخب کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.errTitle",
+   "area": "15 Files and photos",
+   "en": "Enter a title.",
+   "ur": "عنوان لکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.tooBig",
+   "area": "15 Files and photos",
+   "en": "{name} is larger than 15 MB and was skipped.",
+   "ur": "{name} پندرہ ایم بی سے بڑی ہے، اس لیے چھوڑ دی گئی۔",
+   "placeholders": [
+    "{name}"
+   ]
+  },
+  {
+   "key": "files.open",
+   "area": "15 Files and photos",
+   "en": "Open",
+   "ur": "کھولیں",
+   "placeholders": []
+  },
+  {
+   "key": "files.download",
+   "area": "15 Files and photos",
+   "en": "Save to device",
+   "ur": "ڈیوائس میں محفوظ کریں",
+   "placeholders": []
+  },
+  {
+   "key": "files.close",
+   "area": "15 Files and photos",
+   "en": "Close",
+   "ur": "بند کریں",
+   "placeholders": []
+  },
+  {
+   "key": "files.fetchFail",
+   "area": "15 Files and photos",
+   "en": "This file is not on this device yet and could not be downloaded. Check your connection and try again.",
+   "ur": "یہ فائل ابھی اس ڈیوائس پر نہیں ہے اور ڈاؤن لوڈ نہیں ہو سکی۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "files.loading",
+   "area": "15 Files and photos",
+   "en": "Loading the file…",
+   "ur": "فائل لوڈ ہو رہی ہے…",
+   "placeholders": []
+  },
+  {
+   "key": "files.count",
+   "area": "15 Files and photos",
+   "en": "{count} files",
+   "ur": "{count} فائلیں",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "ftype.contract",
+   "area": "15 Files and photos",
+   "en": "Contract",
+   "ur": "معاہدہ",
+   "placeholders": []
+  },
+  {
+   "key": "ftype.approval",
+   "area": "15 Files and photos",
+   "en": "Approval",
+   "ur": "منظوری",
+   "placeholders": []
+  },
+  {
+   "key": "ftype.quotation",
+   "area": "15 Files and photos",
+   "en": "Quotation",
+   "ur": "کوٹیشن",
+   "placeholders": []
+  },
+  {
+   "key": "ftype.drawing",
+   "area": "15 Files and photos",
+   "en": "Drawing",
+   "ur": "ڈرائنگ",
+   "placeholders": []
+  },
+  {
+   "key": "ftype.bill",
+   "area": "15 Files and photos",
+   "en": "Bill or invoice",
+   "ur": "بل یا انوائس",
+   "placeholders": []
+  },
+  {
+   "key": "ftype.other",
+   "area": "15 Files and photos",
+   "en": "Other",
+   "ur": "دیگر",
+   "placeholders": []
+  },
+  {
+   "key": "approval.pending",
+   "area": "9 Approval of the builder's entries",
+   "en": "Awaiting approval",
+   "ur": "منظوری کا منتظر",
+   "placeholders": []
+  },
+  {
+   "key": "approval.approved",
+   "area": "9 Approval of the builder's entries",
+   "en": "Approved",
+   "ur": "منظور شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "approval.rejected",
+   "area": "9 Approval of the builder's entries",
+   "en": "Rejected",
+   "ur": "مسترد",
+   "placeholders": []
+  },
+  {
+   "key": "approval.title",
+   "area": "9 Approval of the builder's entries",
+   "en": "Awaiting your approval",
+   "ur": "آپ کی منظوری کا انتظار",
+   "placeholders": []
+  },
+  {
+   "key": "approval.titleBuilder",
+   "area": "9 Approval of the builder's entries",
+   "en": "Entries waiting or sent back",
+   "ur": "منتظر یا واپس آئی ہوئی اندراجات",
+   "placeholders": []
+  },
+  {
+   "key": "approval.approve",
+   "area": "9 Approval of the builder's entries",
+   "en": "Approve",
+   "ur": "منظور کریں",
+   "placeholders": []
+  },
+  {
+   "key": "approval.reject",
+   "area": "9 Approval of the builder's entries",
+   "en": "Reject",
+   "ur": "مسترد کریں",
+   "placeholders": []
+  },
+  {
+   "key": "approval.approveAll",
+   "area": "9 Approval of the builder's entries",
+   "en": "Approve all ({count})",
+   "ur": "سب منظور کریں ({count})",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "approval.approvedToast",
+   "area": "9 Approval of the builder's entries",
+   "en": "Approved.",
+   "ur": "منظور ہو گیا۔",
+   "placeholders": []
+  },
+  {
+   "key": "approval.allApprovedToast",
+   "area": "9 Approval of the builder's entries",
+   "en": "{count} entries approved.",
+   "ur": "{count} اندراجات منظور ہو گئیں۔",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "approval.rejectedToast",
+   "area": "9 Approval of the builder's entries",
+   "en": "Rejected. The builder can correct it and send it again.",
+   "ur": "مسترد کر دیا گیا۔ بلڈر اسے درست کر کے دوبارہ بھیج سکتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "approval.rejectTitle",
+   "area": "9 Approval of the builder's entries",
+   "en": "Reject this entry?",
+   "ur": "کیا یہ اندراج مسترد کریں؟",
+   "placeholders": []
+  },
+  {
+   "key": "approval.rejectReason",
+   "area": "9 Approval of the builder's entries",
+   "en": "Reason (optional)",
+   "ur": "وجہ (اختیاری)",
+   "placeholders": []
+  },
+  {
+   "key": "approval.rejectHint",
+   "area": "9 Approval of the builder's entries",
+   "en": "The builder sees this, and can correct the entry and send it again.",
+   "ur": "بلڈر یہ وجہ دیکھتا ہے اور اندراج درست کر کے دوبارہ بھیج سکتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "approval.addedBy",
+   "area": "9 Approval of the builder's entries",
+   "en": "Added by {name}",
+   "ur": "{name} نے شامل کیا",
+   "placeholders": [
+    "{name}"
+   ]
+  },
+  {
+   "key": "approval.total",
+   "area": "9 Approval of the builder's entries",
+   "en": "{amount} is not counted in the totals until you approve it.",
+   "ur": "{amount} آپ کی منظوری تک کل رقم میں شامل نہیں۔",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "approval.totalBuilder",
+   "area": "9 Approval of the builder's entries",
+   "en": "{amount} is not counted in the totals until the investor approves it.",
+   "ur": "{amount} انویسٹر کی منظوری تک کل رقم میں شامل نہیں۔",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "approval.fix",
+   "area": "9 Approval of the builder's entries",
+   "en": "Correct and send again",
+   "ur": "درست کر کے دوبارہ بھیجیں",
+   "placeholders": []
+  },
+  {
+   "key": "approval.noticePendingInvestor",
+   "area": "9 Approval of the builder's entries",
+   "en": "Added by {name}. It is not counted in the totals until you approve it.",
+   "ur": "{name} نے شامل کیا۔ آپ کی منظوری تک یہ کل رقم میں شامل نہیں۔",
+   "placeholders": [
+    "{name}"
+   ]
+  },
+  {
+   "key": "approval.noticePendingBuilder",
+   "area": "9 Approval of the builder's entries",
+   "en": "Waiting for the investor to approve this. It is not counted in the totals yet.",
+   "ur": "انویسٹر کی منظوری کا انتظار ہے۔ ابھی یہ کل رقم میں شامل نہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "approval.noticeRejectedInvestor",
+   "area": "9 Approval of the builder's entries",
+   "en": "You rejected this entry. It is not counted in the totals.",
+   "ur": "آپ نے یہ اندراج مسترد کیا۔ یہ کل رقم میں شامل نہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "approval.noticeRejectedBuilder",
+   "area": "9 Approval of the builder's entries",
+   "en": "The investor rejected this entry. Correct it and save, and it goes for approval again.",
+   "ur": "انویسٹر نے یہ اندراج مسترد کر دیا۔ اسے درست کر کے محفوظ کریں تو دوبارہ منظوری کے لیے جائے گا۔",
+   "placeholders": []
+  },
+  {
+   "key": "approval.noticeApproved",
+   "area": "9 Approval of the builder's entries",
+   "en": "Approved by {name} on {date}.",
+   "ur": "{name} نے {date} کو منظور کیا۔",
+   "placeholders": [
+    "{name}",
+    "{date}"
+   ]
+  },
+  {
+   "key": "approval.reasonIs",
+   "area": "9 Approval of the builder's entries",
+   "en": "Reason: {reason}",
+   "ur": "وجہ: {reason}",
+   "placeholders": [
+    "{reason}"
+   ]
+  },
+  {
+   "key": "approval.editAgain",
+   "area": "9 Approval of the builder's entries",
+   "en": "If you change and save it, it goes for approval again.",
+   "ur": "اگر آپ اسے بدل کر محفوظ کریں تو یہ دوبارہ منظوری کے لیے جائے گا۔",
+   "placeholders": []
+  },
+  {
+   "key": "notif.pending",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "{count} entries are waiting for your approval",
+   "ur": "{count} اندراجات آپ کی منظوری کی منتظر ہیں",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "notif.rejected",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "{count} of your entries were rejected",
+   "ur": "آپ کی {count} اندراجات مسترد ہوئیں",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "home.awaiting",
+   "area": "4 Home screen",
+   "en": "+ {amount} awaiting approval",
+   "ur": "+ {amount} منظوری کا منتظر",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "stl.pendingNote",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "{amount} in entries awaiting approval is not included.",
+   "ur": "منظوری کے منتظر اندراجات کی {amount} شامل نہیں۔",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "ledger.approval",
+   "area": "7 Ledger (list of payments)",
+   "en": "Approval",
+   "ur": "منظوری",
+   "placeholders": []
+  },
+  {
+   "key": "nav.contracts",
+   "area": "1 Menu, buttons and general words",
+   "en": "Contracts",
+   "ur": "معاہدے",
+   "placeholders": []
+  },
+  {
+   "key": "contract.state.notStarted",
+   "area": "13 Contracts",
+   "en": "Not started",
+   "ur": "شروع نہیں ہوا",
+   "placeholders": []
+  },
+  {
+   "key": "contract.state.inProgress",
+   "area": "13 Contracts",
+   "en": "In progress",
+   "ur": "جاری",
+   "placeholders": []
+  },
+  {
+   "key": "contract.state.fullyPaid",
+   "area": "13 Contracts",
+   "en": "Fully paid",
+   "ur": "مکمل ادا",
+   "placeholders": []
+  },
+  {
+   "key": "contract.state.overpaid",
+   "area": "13 Contracts",
+   "en": "Overpaid",
+   "ur": "زیادہ ادا",
+   "placeholders": []
+  },
+  {
+   "key": "contract.status",
+   "area": "13 Contracts",
+   "en": "Status",
+   "ur": "حالت",
+   "placeholders": []
+  },
+  {
+   "key": "contract.status.active",
+   "area": "13 Contracts",
+   "en": "Active",
+   "ur": "فعال",
+   "placeholders": []
+  },
+  {
+   "key": "contract.status.completed",
+   "area": "13 Contracts",
+   "en": "Completed",
+   "ur": "مکمل",
+   "placeholders": []
+  },
+  {
+   "key": "contract.status.cancelled",
+   "area": "13 Contracts",
+   "en": "Cancelled",
+   "ur": "منسوخ",
+   "placeholders": []
+  },
+  {
+   "key": "contract.add",
+   "area": "13 Contracts",
+   "en": "Add contract",
+   "ur": "معاہدہ شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.edit",
+   "area": "13 Contracts",
+   "en": "Edit contract",
+   "ur": "معاہدے میں ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "contract.empty",
+   "area": "13 Contracts",
+   "en": "Add your first contract",
+   "ur": "اپنا پہلا معاہدہ شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.emptyBody",
+   "area": "13 Contracts",
+   "en": "Write down what you agreed with each vendor or contractor, for example the grey structure labour for Rs 2,500,000. Link payments to it and the app shows what is paid and what is left.",
+   "ur": "ہر وینڈر یا ٹھیکیدار کے ساتھ جو طے ہوا وہ لکھیں، مثلاً گرے سٹرکچر کی مزدوری 2,500,000 روپے۔ ادائیگیاں اس سے جوڑیں تو ایپ بتائے گی کتنا ادا ہوا اور کتنا باقی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.summary",
+   "area": "13 Contracts",
+   "en": "Summary",
+   "ur": "خلاصہ",
+   "placeholders": []
+  },
+  {
+   "key": "contract.summaryNote",
+   "area": "13 Contracts",
+   "en": "Totals are for active contracts.",
+   "ur": "کل رقوم فعال معاہدوں کی ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.agreed",
+   "area": "13 Contracts",
+   "en": "Agreed",
+   "ur": "طے شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "contract.paid",
+   "area": "13 Contracts",
+   "en": "Paid",
+   "ur": "ادا شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "contract.remaining",
+   "area": "13 Contracts",
+   "en": "Remaining",
+   "ur": "باقی",
+   "placeholders": []
+  },
+  {
+   "key": "contract.awaiting",
+   "area": "13 Contracts",
+   "en": "Awaiting approval",
+   "ur": "منظوری کا منتظر",
+   "placeholders": []
+  },
+  {
+   "key": "contract.noMatch",
+   "area": "13 Contracts",
+   "en": "No contracts with this status",
+   "ur": "اس حالت کا کوئی معاہدہ نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.showAll",
+   "area": "13 Contracts",
+   "en": "Show all contracts",
+   "ur": "تمام معاہدے دکھائیں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.paidPct",
+   "area": "13 Contracts",
+   "en": "{pct}% paid",
+   "ur": "{pct}% ادا",
+   "placeholders": [
+    "{pct}"
+   ]
+  },
+  {
+   "key": "contract.overBy",
+   "area": "13 Contracts",
+   "en": "Over by {amount}",
+   "ur": "{amount} زیادہ",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "contract.left",
+   "area": "13 Contracts",
+   "en": "{amount} left",
+   "ur": "{amount} باقی",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "contract.addPayment",
+   "area": "13 Contracts",
+   "en": "Add payment",
+   "ur": "ادائیگی شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.original",
+   "area": "13 Contracts",
+   "en": "Original amount",
+   "ur": "اصل رقم",
+   "placeholders": []
+  },
+  {
+   "key": "contract.variationsTotal",
+   "area": "13 Contracts",
+   "en": "Variations",
+   "ur": "تبدیلیاں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.total",
+   "area": "13 Contracts",
+   "en": "Total now",
+   "ur": "اب کل",
+   "placeholders": []
+  },
+  {
+   "key": "contract.overpaid",
+   "area": "13 Contracts",
+   "en": "Overpaid by",
+   "ur": "زیادہ ادا",
+   "placeholders": []
+  },
+  {
+   "key": "contract.planned",
+   "area": "13 Contracts",
+   "en": "Planned payments",
+   "ur": "منصوبہ بند ادائیگیاں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.awaitingNote",
+   "area": "13 Contracts",
+   "en": "{amount} is waiting for approval and is not counted as paid yet.",
+   "ur": "{amount} منظوری کا منتظر ہے اور ابھی ادا شدہ میں شمار نہیں۔",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "contract.overNote",
+   "area": "13 Contracts",
+   "en": "More has been paid than was agreed, by {amount}. Check the payments below or add a variation if the work grew.",
+   "ur": "طے شدہ سے {amount} زیادہ ادا ہو چکا ہے۔ نیچے ادائیگیاں دیکھیں، یا اگر کام بڑھا ہو تو تبدیلی شامل کریں۔",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "contract.markCompleted",
+   "area": "13 Contracts",
+   "en": "Mark completed",
+   "ur": "مکمل قرار دیں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.markCancelled",
+   "area": "13 Contracts",
+   "en": "Mark cancelled",
+   "ur": "منسوخ قرار دیں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.reopen",
+   "area": "13 Contracts",
+   "en": "Reopen",
+   "ur": "دوبارہ کھولیں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.variations",
+   "area": "13 Contracts",
+   "en": "Variations",
+   "ur": "تبدیلیاں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.addVariation",
+   "area": "13 Contracts",
+   "en": "Add variation",
+   "ur": "تبدیلی شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.editVariation",
+   "area": "13 Contracts",
+   "en": "Edit variation",
+   "ur": "تبدیلی میں ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "contract.noVariations",
+   "area": "13 Contracts",
+   "en": "No variations. Add one when the work or the price changes after you agreed.",
+   "ur": "کوئی تبدیلی نہیں۔ طے ہونے کے بعد کام یا قیمت بدلے تو یہاں شامل کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.payments",
+   "area": "13 Contracts",
+   "en": "Payments",
+   "ur": "ادائیگیاں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.noPayments",
+   "area": "13 Contracts",
+   "en": "No payments linked yet",
+   "ur": "ابھی کوئی ادائیگی نہیں جڑی",
+   "placeholders": []
+  },
+  {
+   "key": "contract.noPaymentsBody",
+   "area": "13 Contracts",
+   "en": "Add a payment and choose this contract.",
+   "ur": "ادائیگی شامل کریں اور یہ معاہدہ منتخب کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.saved",
+   "area": "13 Contracts",
+   "en": "Saved.",
+   "ur": "محفوظ ہو گیا۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.deleted",
+   "area": "13 Contracts",
+   "en": "Contract deleted.",
+   "ur": "معاہدہ حذف ہو گیا۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.errTitle",
+   "area": "13 Contracts",
+   "en": "Enter a name.",
+   "ur": "نام لکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.errAmount",
+   "area": "13 Contracts",
+   "en": "Enter an amount above zero.",
+   "ur": "صفر سے زیادہ رقم لکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.titleField",
+   "area": "13 Contracts",
+   "en": "Name",
+   "ur": "نام",
+   "placeholders": []
+  },
+  {
+   "key": "contract.titleHint",
+   "area": "13 Contracts",
+   "en": "For example Grey structure labour, or Electrical wiring.",
+   "ur": "مثلاً گرے سٹرکچر کی مزدوری، یا بجلی کی وائرنگ۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.amount",
+   "area": "13 Contracts",
+   "en": "Agreed amount ({cur})",
+   "ur": "طے شدہ رقم ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "contract.amountHint",
+   "area": "13 Contracts",
+   "en": "The price you agreed at the start. Changes later go in as variations.",
+   "ur": "جو قیمت شروع میں طے ہوئی۔ بعد کی تبدیلیاں \"تبدیلی\" کے طور پر شامل ہوں گی۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.vendor",
+   "area": "13 Contracts",
+   "en": "Vendor or contractor",
+   "ur": "وینڈر یا ٹھیکیدار",
+   "placeholders": []
+  },
+  {
+   "key": "contract.noVendor",
+   "area": "13 Contracts",
+   "en": "No vendor chosen",
+   "ur": "کوئی وینڈر منتخب نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.phase",
+   "area": "13 Contracts",
+   "en": "Phase",
+   "ur": "مرحلہ",
+   "placeholders": []
+  },
+  {
+   "key": "contract.noPhase",
+   "area": "13 Contracts",
+   "en": "No phase",
+   "ur": "کوئی مرحلہ نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "contract.date",
+   "area": "13 Contracts",
+   "en": "Date",
+   "ur": "تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "contract.note",
+   "area": "13 Contracts",
+   "en": "Note",
+   "ur": "نوٹ",
+   "placeholders": []
+  },
+  {
+   "key": "contract.variationSaved",
+   "area": "13 Contracts",
+   "en": "Variation saved.",
+   "ur": "تبدیلی محفوظ ہو گئی۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.variationHint",
+   "area": "13 Contracts",
+   "en": "Extra work raises the contract. A deduction lowers it.",
+   "ur": "اضافی کام معاہدے کی رقم بڑھاتا ہے۔ کٹوتی اسے کم کرتی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "contract.variationKind",
+   "area": "13 Contracts",
+   "en": "Type",
+   "ur": "قسم",
+   "placeholders": []
+  },
+  {
+   "key": "contract.extra",
+   "area": "13 Contracts",
+   "en": "Extra work (adds)",
+   "ur": "اضافی کام (اضافہ)",
+   "placeholders": []
+  },
+  {
+   "key": "contract.deduction",
+   "area": "13 Contracts",
+   "en": "Deduction (subtracts)",
+   "ur": "کٹوتی (کمی)",
+   "placeholders": []
+  },
+  {
+   "key": "contract.variationAmount",
+   "area": "13 Contracts",
+   "en": "Amount ({cur})",
+   "ur": "رقم ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "pay.contract",
+   "area": "8 Adding or editing a payment",
+   "en": "Contract",
+   "ur": "معاہدہ",
+   "placeholders": []
+  },
+  {
+   "key": "pay.contractHint",
+   "area": "8 Adding or editing a payment",
+   "en": "The payment counts against this contract.",
+   "ur": "یہ ادائیگی اس معاہدے کے مقابل شمار ہوگی۔",
+   "placeholders": []
+  },
+  {
+   "key": "pay.noContract",
+   "area": "8 Adding or editing a payment",
+   "en": "Not linked to a contract",
+   "ur": "کسی معاہدے سے نہیں جڑی",
+   "placeholders": []
+  },
+  {
+   "key": "notif.contractOver",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "{name} is overpaid by {amount}",
+   "ur": "{name} میں {amount} زیادہ ادا ہو چکے ہیں",
+   "placeholders": [
+    "{name}",
+    "{amount}"
+   ]
+  },
+  {
+   "key": "nav.statements",
+   "area": "1 Menu, buttons and general words",
+   "en": "Statements",
+   "ur": "اسٹیٹمنٹس",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.open",
+   "area": "14 Statements (print or PDF)",
+   "en": "Statement",
+   "ur": "اسٹیٹمنٹ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.print",
+   "area": "14 Statements (print or PDF)",
+   "en": "Print or save as PDF",
+   "ur": "پرنٹ کریں یا PDF محفوظ کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.share",
+   "area": "14 Statements (print or PDF)",
+   "en": "Share",
+   "ur": "شیئر کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.copied",
+   "area": "14 Statements (print or PDF)",
+   "en": "Statement copied. Paste it into a message.",
+   "ur": "اسٹیٹمنٹ کاپی ہو گئی۔ اسے پیغام میں پیسٹ کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.pdfHint",
+   "area": "14 Statements (print or PDF)",
+   "en": "To get a PDF file, choose Print, then Save as PDF as the printer.",
+   "ur": "PDF فائل کے لیے پرنٹ منتخب کریں، پھر پرنٹر کی جگہ \"PDF کے طور پر محفوظ کریں\" چنیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.scope",
+   "area": "14 Statements (print or PDF)",
+   "en": "What the statement covers",
+   "ur": "اسٹیٹمنٹ کس کی ہو",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.scope.all",
+   "area": "14 Statements (print or PDF)",
+   "en": "Whole project",
+   "ur": "پورا پروجیکٹ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.scope.vendor",
+   "area": "14 Statements (print or PDF)",
+   "en": "One vendor",
+   "ur": "ایک وینڈر",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.scope.phase",
+   "area": "14 Statements (print or PDF)",
+   "en": "One phase",
+   "ur": "ایک مرحلہ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.scope.contract",
+   "area": "14 Statements (print or PDF)",
+   "en": "One contract",
+   "ur": "ایک معاہدہ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.chooseVendor",
+   "area": "14 Statements (print or PDF)",
+   "en": "Choose a vendor",
+   "ur": "وینڈر منتخب کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.choosePhase",
+   "area": "14 Statements (print or PDF)",
+   "en": "Choose a phase",
+   "ur": "مرحلہ منتخب کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.chooseContract",
+   "area": "14 Statements (print or PDF)",
+   "en": "Choose a contract",
+   "ur": "معاہدہ منتخب کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.from",
+   "area": "14 Statements (print or PDF)",
+   "en": "From date",
+   "ur": "شروع کی تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.to",
+   "area": "14 Statements (print or PDF)",
+   "en": "To date",
+   "ur": "آخری تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.includePlanned",
+   "area": "14 Statements (print or PDF)",
+   "en": "Also list planned payments (not counted in the total)",
+   "ur": "منصوبہ بند ادائیگیاں بھی دکھائیں (کل میں شامل نہیں)",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.includePending",
+   "area": "14 Statements (print or PDF)",
+   "en": "Also list the builder's entries awaiting approval (not counted in the total)",
+   "ur": "بلڈر کی منظوری کی منتظر اندراجات بھی دکھائیں (کل میں شامل نہیں)",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.pickFirst",
+   "area": "14 Statements (print or PDF)",
+   "en": "Choose what the statement covers.",
+   "ur": "منتخب کریں کہ اسٹیٹمنٹ کس کی ہو۔",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.pickFirstBody",
+   "area": "14 Statements (print or PDF)",
+   "en": "The statement then appears here, ready to print or save as PDF.",
+   "ur": "پھر بیان یہاں نظر آئے گا، پرنٹ یا PDF محفوظ کرنے کے لیے تیار۔",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.heading",
+   "area": "14 Statements (print or PDF)",
+   "en": "Statement of payments",
+   "ur": "ادائیگیوں کی اسٹیٹمنٹ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.forProject",
+   "area": "14 Statements (print or PDF)",
+   "en": "Whole project",
+   "ur": "پورا پروجیکٹ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.forWhat",
+   "area": "14 Statements (print or PDF)",
+   "en": "{what}",
+   "ur": "{what}",
+   "placeholders": [
+    "{what}"
+   ]
+  },
+  {
+   "key": "stmt.period",
+   "area": "14 Statements (print or PDF)",
+   "en": "{from} to {to}",
+   "ur": "{from} سے {to}",
+   "placeholders": [
+    "{from}",
+    "{to}"
+   ]
+  },
+  {
+   "key": "stmt.allDates",
+   "area": "14 Statements (print or PDF)",
+   "en": "All dates",
+   "ur": "تمام تاریخیں",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.preparedOn",
+   "area": "14 Statements (print or PDF)",
+   "en": "Prepared on {date}",
+   "ur": "تیار کی گئی: {date}",
+   "placeholders": [
+    "{date}"
+   ]
+  },
+  {
+   "key": "stmt.preparedBy",
+   "area": "14 Statements (print or PDF)",
+   "en": "by {name}",
+   "ur": "از {name}",
+   "placeholders": [
+    "{name}"
+   ]
+  },
+  {
+   "key": "stmt.nothing",
+   "area": "14 Statements (print or PDF)",
+   "en": "No payments match these choices.",
+   "ur": "ان انتخابات سے کوئی ادائیگی نہیں ملی۔",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.col.date",
+   "area": "14 Statements (print or PDF)",
+   "en": "Date",
+   "ur": "تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.col.purpose",
+   "area": "14 Statements (print or PDF)",
+   "en": "Purpose",
+   "ur": "مقصد",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.col.payee",
+   "area": "14 Statements (print or PDF)",
+   "en": "Paid to",
+   "ur": "کس کو ادا کیا",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.col.phase",
+   "area": "14 Statements (print or PDF)",
+   "en": "Phase",
+   "ur": "مرحلہ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.col.mode",
+   "area": "14 Statements (print or PDF)",
+   "en": "Mode",
+   "ur": "طریقہ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.col.paidBy",
+   "area": "14 Statements (print or PDF)",
+   "en": "Paid by",
+   "ur": "کس نے ادا کیا",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.col.status",
+   "area": "14 Statements (print or PDF)",
+   "en": "Status",
+   "ur": "حالت",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.col.amount",
+   "area": "14 Statements (print or PDF)",
+   "en": "Amount",
+   "ur": "رقم",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.total",
+   "area": "14 Statements (print or PDF)",
+   "en": "Total paid",
+   "ur": "کل ادا شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.plannedTotal",
+   "area": "14 Statements (print or PDF)",
+   "en": "Planned, not paid yet",
+   "ur": "منصوبہ بند، ابھی ادا نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.pendingTotal",
+   "area": "14 Statements (print or PDF)",
+   "en": "Awaiting approval, not counted",
+   "ur": "منظوری کا منتظر، شمار نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.byMode",
+   "area": "14 Statements (print or PDF)",
+   "en": "Cash and bank",
+   "ur": "کیش اور بینک",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.byPaidBy",
+   "area": "14 Statements (print or PDF)",
+   "en": "Who paid",
+   "ur": "کس نے ادا کیا",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.byPhase",
+   "area": "14 Statements (print or PDF)",
+   "en": "By phase",
+   "ur": "مرحلہ وار",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.receivedBy",
+   "area": "14 Statements (print or PDF)",
+   "en": "Received by",
+   "ur": "وصول کنندہ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.signature",
+   "area": "14 Statements (print or PDF)",
+   "en": "Signature",
+   "ur": "دستخط",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.signDate",
+   "area": "14 Statements (print or PDF)",
+   "en": "Date",
+   "ur": "تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "stmt.footer",
+   "area": "14 Statements (print or PDF)",
+   "en": "Prepared with EndPoint Construction.",
+   "ur": "اینڈ پوائنٹ کنسٹرکشن کے ساتھ تیار کی گئی۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeOpt.tbd",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Decide at the end",
+   "ur": "آخر میں طے کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeOpt.fixed",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fixed amount",
+   "ur": "طے شدہ رقم",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeOpt.percent",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Percentage of construction cost",
+   "ur": "تعمیراتی لاگت کا فیصد",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeOpt.perPhase",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fee for each phase",
+   "ur": "ہر مرحلے کی فیس",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeOpt.retainer",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Monthly retainer",
+   "ur": "ماہانہ معاوضہ",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeHelp.tbd",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Leave it open now and agree the amount when the house is finished.",
+   "ur": "ابھی کھلا رہنے دیں اور گھر مکمل ہونے پر رقم طے کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeHelp.fixed",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "One agreed amount for the whole job.",
+   "ur": "پورے کام کے لیے ایک طے شدہ رقم۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeHelp.percent",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "A share of everything spent on the construction (approved payments only).",
+   "ur": "تعمیر پر خرچ ہونے والی رقم کا ایک حصہ (صرف منظور شدہ ادائیگیاں)۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeHelp.perPhase",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Give each phase its own fee. A fixed fee is earned when you mark the phase complete. A percentage is earned as the phase cost is paid.",
+   "ur": "ہر مرحلے کی اپنی فیس مقرر کریں۔ طے شدہ فیس مرحلہ مکمل قرار دینے پر ملتی ہے۔ فیصد فیس مرحلے کی لاگت ادا ہونے کے ساتھ ملتی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeHelp.retainer",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "A set amount for every month. Each month that has started counts in full.",
+   "ur": "ہر مہینے کی ایک طے شدہ رقم۔ جو مہینہ شروع ہو جائے وہ پورا شمار ہوتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feePhaseKind",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fee type",
+   "ur": "فیس کی قسم",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feePhaseNone",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "No fee",
+   "ur": "کوئی فیس نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feePhaseFixed",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fixed amount",
+   "ur": "طے شدہ رقم",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feePhasePercent",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Percent of the phase cost",
+   "ur": "مرحلے کی لاگت کا فیصد",
+   "placeholders": []
+  },
+  {
+   "key": "stl.retainerAmount",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Monthly amount ({cur})",
+   "ur": "ماہانہ رقم ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "stl.retainerStart",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Starts",
+   "ur": "شروع",
+   "placeholders": []
+  },
+  {
+   "key": "stl.retainerEnd",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Ends (optional)",
+   "ur": "ختم (اختیاری)",
+   "placeholders": []
+  },
+  {
+   "key": "stl.retainerEndHint",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Leave empty to keep counting months until the job is done.",
+   "ur": "خالی چھوڑیں تو کام مکمل ہونے تک مہینے گنے جاتے رہیں گے۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.errFeeAmount",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Enter an amount above zero.",
+   "ur": "صفر سے زیادہ رقم لکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.errFeePercent",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Enter a percentage between 0 and 100.",
+   "ur": "0 سے 100 کے درمیان فیصد لکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.errRetainerStart",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Choose the start date.",
+   "ur": "شروع کی تاریخ منتخب کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.errPhaseFee",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Each phase fee needs an amount above zero (a percentage up to 100).",
+   "ur": "ہر مرحلے کی فیس کے لیے صفر سے زیادہ رقم چاہیے (فیصد زیادہ سے زیادہ 100)۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeBasisPerPhase",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "A fee for each phase",
+   "ur": "ہر مرحلے کی فیس",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeBasisRetainer",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "{amount} a month",
+   "ur": "{amount} ماہانہ",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "stl.retainerLine",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "{months} months at {amount}",
+   "ur": "{months} مہینے، {amount} کے حساب سے",
+   "placeholders": [
+    "{months}",
+    "{amount}"
+   ]
+  },
+  {
+   "key": "stl.retainerSince",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "since {date}",
+   "ur": "{date} سے",
+   "placeholders": [
+    "{date}"
+   ]
+  },
+  {
+   "key": "stl.retainerUntil",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "until {date}",
+   "ur": "{date} تک",
+   "placeholders": [
+    "{date}"
+   ]
+  },
+  {
+   "key": "stl.feeByPhase",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fee by phase",
+   "ur": "مرحلہ وار فیس",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeNoPhases",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "No phase has a fee yet. Edit the fee and set one for each phase.",
+   "ur": "ابھی کسی مرحلے کی فیس مقرر نہیں۔ فیس میں ترمیم کر کے ہر مرحلے کی فیس لکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeLineFixedDone",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "{amount} fixed, phase complete",
+   "ur": "{amount} طے شدہ، مرحلہ مکمل",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "stl.feeLineFixedOpen",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "{amount} fixed, earned when the phase is complete",
+   "ur": "{amount} طے شدہ، مرحلہ مکمل ہونے پر ملے گی",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "stl.feeLinePercent",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "{pct}% of {cost} spent",
+   "ur": "{cost} خرچ کا {pct}%",
+   "placeholders": [
+    "{pct}",
+    "{cost}"
+   ]
+  },
+  {
+   "key": "phases.done",
+   "area": "5 Phases (stages of the build)",
+   "en": "Complete",
+   "ur": "مکمل",
+   "placeholders": []
+  },
+  {
+   "key": "phases.markDone",
+   "area": "5 Phases (stages of the build)",
+   "en": "Mark complete",
+   "ur": "مکمل قرار دیں",
+   "placeholders": []
+  },
+  {
+   "key": "phases.reopen",
+   "area": "5 Phases (stages of the build)",
+   "en": "Reopen",
+   "ur": "دوبارہ کھولیں",
+   "placeholders": []
+  },
+  {
+   "key": "set.appearance",
+   "area": "17 Settings and sync",
+   "en": "Appearance",
+   "ur": "ظاہری شکل",
+   "placeholders": []
+  },
+  {
+   "key": "set.theme.system",
+   "area": "17 Settings and sync",
+   "en": "Same as device",
+   "ur": "ڈیوائس کے مطابق",
+   "placeholders": []
+  },
+  {
+   "key": "set.theme.light",
+   "area": "17 Settings and sync",
+   "en": "Light",
+   "ur": "روشن",
+   "placeholders": []
+  },
+  {
+   "key": "set.theme.dark",
+   "area": "17 Settings and sync",
+   "en": "Dark",
+   "ur": "ڈارک",
+   "placeholders": []
+  },
+  {
+   "key": "set.themeHint",
+   "area": "17 Settings and sync",
+   "en": "Dark is easier on the eyes at night and saves battery on many phones. It is set for this device only. Printing and PDF statements always stay on white paper.",
+   "ur": "ڈارک رات کو آنکھوں پر کم زور ڈالتا ہے اور کئی فونز میں بیٹری بچاتا ہے۔ یہ صرف اسی ڈیوائس کے لیے ہے۔ پرنٹ اور PDF اسٹیٹمنٹ ہمیشہ سفید کاغذ پر رہتی ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.menu",
+   "area": "17 Settings and sync",
+   "en": "Settings sections",
+   "ur": "ترتیبات کے حصے",
+   "placeholders": []
+  },
+  {
+   "key": "set.sec.account",
+   "area": "17 Settings and sync",
+   "en": "Account",
+   "ur": "اکاؤنٹ",
+   "placeholders": []
+  },
+  {
+   "key": "set.sec.preferences",
+   "area": "17 Settings and sync",
+   "en": "Preferences",
+   "ur": "پسندیدہ ترتیبات",
+   "placeholders": []
+  },
+  {
+   "key": "set.sec.notifications",
+   "area": "17 Settings and sync",
+   "en": "Notifications",
+   "ur": "اطلاعات",
+   "placeholders": []
+  },
+  {
+   "key": "set.sec.project",
+   "area": "17 Settings and sync",
+   "en": "Project",
+   "ur": "پروجیکٹ",
+   "placeholders": []
+  },
+  {
+   "key": "set.sec.data",
+   "area": "17 Settings and sync",
+   "en": "Data and backup",
+   "ur": "ڈیٹا اور بیک اپ",
+   "placeholders": []
+  },
+  {
+   "key": "set.sec.about",
+   "area": "17 Settings and sync",
+   "en": "About",
+   "ur": "ایپ کے بارے میں",
+   "placeholders": []
+  },
+  {
+   "key": "set.nameHelp",
+   "area": "17 Settings and sync",
+   "en": "Shown next to the entries you add.",
+   "ur": "آپ کی شامل کردہ اندراجات کے ساتھ دکھایا جاتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.roleHelp",
+   "area": "17 Settings and sync",
+   "en": "Decides who approves entries. Set on each device.",
+   "ur": "طے کرتا ہے کہ اندراجات کی منظوری کون دیتا ہے۔ ہر ڈیوائس پر الگ سیٹ ہوتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.signIn",
+   "area": "17 Settings and sync",
+   "en": "Sign-in",
+   "ur": "سائن ان",
+   "placeholders": []
+  },
+  {
+   "key": "set.email",
+   "area": "17 Settings and sync",
+   "en": "Signed in as",
+   "ur": "سائن ان ای میل",
+   "placeholders": []
+  },
+  {
+   "key": "set.langHelp",
+   "area": "17 Settings and sync",
+   "en": "The language of the app and of notifications on this device.",
+   "ur": "اس ڈیوائس پر ایپ اور اطلاعات کی زبان۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.dt.title",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Dates and time",
+   "ur": "تاریخ اور وقت",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.dt.desc",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "How days and times are written on this device.",
+   "ur": "اس ڈیوائس پر دن اور وقت کیسے لکھے جاتے ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.week",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Week starts on",
+   "ur": "ہفتہ کس دن سے شروع ہو",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.weekHelp",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "The order of the days when you pick a weekday for a weekly payment.",
+   "ur": "ہفتہ وار ادائیگی کے لیے دن چنتے وقت دنوں کی ترتیب۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.clock",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Time format",
+   "ur": "وقت کی شکل",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.clock.12",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "12-hour",
+   "ur": "12 گھنٹے",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.clock.24",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "24-hour",
+   "ur": "24 گھنٹے",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.example",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Example: {example}",
+   "ur": "مثال: {example}",
+   "placeholders": [
+    "{example}"
+   ]
+  },
+  {
+   "key": "set.region.date",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Date format",
+   "ur": "تاریخ کی شکل",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.zone",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Time zone",
+   "ur": "ٹائم زون",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.zoneHelp",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Dates follow this device ({zone}). Reminders are always sent on Pakistan time.",
+   "ur": "تاریخیں اس ڈیوائس کے مطابق ہیں ({zone})۔ یاد دہانیاں ہمیشہ پاکستان کے وقت پر بھیجی جاتی ہیں۔",
+   "placeholders": [
+    "{zone}"
+   ]
+  },
+  {
+   "key": "set.region.zoneValue",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Asia/Karachi",
+   "ur": "Asia/Karachi",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.num.title",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Numbers and money",
+   "ur": "ہندسے اور رقم",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.num.desc",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "How amounts are written on this device.",
+   "ur": "اس ڈیوائس پر رقم کیسے لکھی جاتی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.grouping",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Number grouping",
+   "ur": "ہندسوں کی گروپ بندی",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.groupingHelp",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Thousands: a comma after every three digits. Lakh: after the last three, then after every two.",
+   "ur": "ہزار: ہر تین ہندسوں کے بعد کاما۔ لاکھ: آخری تین کے بعد، پھر ہر دو ہندسوں کے بعد۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.currency",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Currency",
+   "ur": "کرنسی",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.currency.auto",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Automatic",
+   "ur": "خودکار",
+   "placeholders": []
+  },
+  {
+   "key": "set.region.currencyHelp",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "Example: {example}. Automatic writes Rs in amounts, and field labels follow the language.",
+   "ur": "مثال: {example}۔ خودکار میں رقم کے ساتھ Rs لکھا جاتا ہے، اور خانوں کے نام زبان کے مطابق ہوتے ہیں۔",
+   "placeholders": [
+    "{example}"
+   ]
+  },
+  {
+   "key": "set.region.note",
+   "area": "21 Region and format (dates, numbers, money)",
+   "en": "These choices stay on this device. Exported CSV files keep plain dates and numbers so they open correctly in a spreadsheet, and reminders from the server use Rs and thousands.",
+   "ur": "یہ انتخاب اسی ڈیوائس پر رہتے ہیں۔ ایکسپورٹ کی گئی CSV فائلوں میں سادہ تاریخیں اور ہندسے رہتے ہیں تاکہ اسپریڈشیٹ میں درست کھلیں، اور سرور کی یاد دہانیاں Rs اور ہزار کی گروپ بندی استعمال کرتی ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.noProject",
+   "area": "17 Settings and sync",
+   "en": "There is no project yet.",
+   "ur": "ابھی کوئی پروجیکٹ نہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.projectDetails",
+   "area": "17 Settings and sync",
+   "en": "Project details",
+   "ur": "پروجیکٹ کی تفصیل",
+   "placeholders": []
+  },
+  {
+   "key": "set.projectDetailsHelp",
+   "area": "17 Settings and sync",
+   "en": "Name, location, budget and picture.",
+   "ur": "نام، مقام، بجٹ اور تصویر۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.allProjects",
+   "area": "17 Settings and sync",
+   "en": "All projects",
+   "ur": "تمام پروجیکٹس",
+   "placeholders": []
+  },
+  {
+   "key": "set.allProjectsHelp",
+   "area": "17 Settings and sync",
+   "en": "Open another project or start a new one.",
+   "ur": "کوئی دوسرا پروجیکٹ کھولیں یا نیا شروع کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.danger",
+   "area": "17 Settings and sync",
+   "en": "Danger zone",
+   "ur": "خطرناک حصہ",
+   "placeholders": []
+  },
+  {
+   "key": "set.deleteHelp",
+   "area": "17 Settings and sync",
+   "en": "Removes the project for everyone who can see it. Download a backup first if you may need it again.",
+   "ur": "پروجیکٹ ان سب کے لیے ہٹ جاتا ہے جو اسے دیکھ سکتے ہیں۔ دوبارہ ضرورت ہو سکتی ہو تو پہلے بیک اپ ڈاؤن لوڈ کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.syncStatus",
+   "area": "17 Settings and sync",
+   "en": "Sync status",
+   "ur": "سنک کی حالت",
+   "placeholders": []
+  },
+  {
+   "key": "set.exportHelp",
+   "area": "17 Settings and sync",
+   "en": "Saves everything on this device as one file.",
+   "ur": "اس ڈیوائس کی ہر چیز ایک فائل میں محفوظ کرتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.importHelp",
+   "area": "17 Settings and sync",
+   "en": "Replaces what is on this device with a backup file.",
+   "ur": "اس ڈیوائس کا ڈیٹا بیک اپ فائل سے بدل دیتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.installHelp",
+   "area": "17 Settings and sync",
+   "en": "Add the app to your home screen so it opens like any other app.",
+   "ur": "ایپ کو ہوم اسکرین پر شامل کریں تاکہ یہ کسی بھی دوسری ایپ کی طرح کھلے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.row.title",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Reminders on this device",
+   "ur": "اس ڈیوائس پر یاد دہانی",
+   "placeholders": []
+  },
+  {
+   "key": "push.row.testHelp",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Sends a notification to this device right now.",
+   "ur": "ابھی اس ڈیوائس پر ایک اطلاع بھیجتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.row.offHelp",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "You will get due payments, budget limits and approvals on the lock screen.",
+   "ur": "واجب الادا ادائیگیاں، بجٹ کی حدیں اور منظوریاں لاک اسکرین پر ملیں گی۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.langRegion",
+   "area": "17 Settings and sync",
+   "en": "Language and region",
+   "ur": "زبان اور خطہ",
+   "placeholders": []
+  },
+  {
+   "key": "set.themeLabel",
+   "area": "17 Settings and sync",
+   "en": "Theme",
+   "ur": "تھیم",
+   "placeholders": []
+  },
+  {
+   "key": "set.thisApp",
+   "area": "17 Settings and sync",
+   "en": "This app",
+   "ur": "یہ ایپ",
+   "placeholders": []
+  },
+  {
+   "key": "push.thisDevice",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "This device",
+   "ur": "یہ ڈیوائس",
+   "placeholders": []
+  },
+  {
+   "key": "set.password",
+   "area": "17 Settings and sync",
+   "en": "Password",
+   "ur": "پاس ورڈ",
+   "placeholders": []
+  },
+  {
+   "key": "set.passwordHelp",
+   "area": "17 Settings and sync",
+   "en": "The password you sign in with on every device.",
+   "ur": "وہ پاس ورڈ جس سے آپ ہر ڈیوائس پر سائن ان کرتے ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.signOutHelp",
+   "area": "17 Settings and sync",
+   "en": "Sign out of this device only. Reminders stop here. Your data stays on the server.",
+   "ur": "صرف اس ڈیوائس سے سائن آؤٹ کریں۔ یہاں یاد دہانی بند ہو جائے گی۔ آپ کا ڈیٹا سرور پر رہتا ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.title",
+   "area": "17 Settings and sync",
+   "en": "Change password",
+   "ur": "پاس ورڈ تبدیل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.intro",
+   "area": "17 Settings and sync",
+   "en": "Enter your current password to prove it is you, then choose a new one.",
+   "ur": "اپنا موجودہ پاس ورڈ لکھیں تاکہ تصدیق ہو کہ یہ آپ ہیں، پھر نیا پاس ورڈ چنیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.current",
+   "area": "17 Settings and sync",
+   "en": "Current password",
+   "ur": "موجودہ پاس ورڈ",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.new",
+   "area": "17 Settings and sync",
+   "en": "New password",
+   "ur": "نیا پاس ورڈ",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.hint",
+   "area": "17 Settings and sync",
+   "en": "At least {min} characters.",
+   "ur": "کم از کم {min} حروف۔",
+   "placeholders": [
+    "{min}"
+   ]
+  },
+  {
+   "key": "set.pw.repeat",
+   "area": "17 Settings and sync",
+   "en": "Repeat the new password",
+   "ur": "نیا پاس ورڈ دوبارہ لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.show",
+   "area": "17 Settings and sync",
+   "en": "Show passwords",
+   "ur": "پاس ورڈ دکھائیں",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.save",
+   "area": "17 Settings and sync",
+   "en": "Change password",
+   "ur": "پاس ورڈ تبدیل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.done",
+   "area": "17 Settings and sync",
+   "en": "Password changed.",
+   "ur": "پاس ورڈ تبدیل ہو گیا۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.failed",
+   "area": "17 Settings and sync",
+   "en": "Could not change the password. Check your connection and try again.",
+   "ur": "پاس ورڈ تبدیل نہیں ہو سکا۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.err.wrongCurrent",
+   "area": "17 Settings and sync",
+   "en": "That is not your current password.",
+   "ur": "یہ آپ کا موجودہ پاس ورڈ نہیں ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.err.tooShort",
+   "area": "17 Settings and sync",
+   "en": "Use at least {min} characters.",
+   "ur": "کم از کم {min} حروف استعمال کریں۔",
+   "placeholders": [
+    "{min}"
+   ]
+  },
+  {
+   "key": "set.pw.err.weak",
+   "area": "17 Settings and sync",
+   "en": "That password is too easy to guess. Choose a longer or less common one.",
+   "ur": "یہ پاس ورڈ اندازے میں بہت آسان ہے۔ لمبا یا کم عام پاس ورڈ چنیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.err.same",
+   "area": "17 Settings and sync",
+   "en": "Choose a password different from the current one.",
+   "ur": "موجودہ پاس ورڈ سے مختلف پاس ورڈ چنیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.pw.err.mismatch",
+   "area": "17 Settings and sync",
+   "en": "The two new passwords are not the same.",
+   "ur": "دونوں نئے پاس ورڈ ایک جیسے نہیں ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.out.title",
+   "area": "17 Settings and sync",
+   "en": "Sign out everywhere",
+   "ur": "ہر جگہ سے سائن آؤٹ",
+   "placeholders": []
+  },
+  {
+   "key": "set.out.help",
+   "area": "17 Settings and sync",
+   "en": "Ends your sign-in on every phone and computer, for example if you lost one.",
+   "ur": "ہر فون اور کمپیوٹر پر آپ کا سائن ان ختم کر دیتا ہے، مثلاً اگر کوئی ڈیوائس کھو جائے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.out.body",
+   "area": "17 Settings and sync",
+   "en": "This signs you out on all your devices.",
+   "ur": "اس سے آپ کی تمام ڈیوائسز سے سائن آؤٹ ہو جائے گا۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.out.point1",
+   "area": "17 Settings and sync",
+   "en": "Every phone and computer must sign in again with your password.",
+   "ur": "ہر فون اور کمپیوٹر کو آپ کے پاس ورڈ سے دوبارہ سائن ان کرنا ہوگا۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.out.point2",
+   "area": "17 Settings and sync",
+   "en": "Reminders stop on all of them until you turn them on again.",
+   "ur": "ان سب پر یاد دہانی اس وقت تک بند رہے گی جب تک آپ دوبارہ آن نہ کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.out.point3",
+   "area": "17 Settings and sync",
+   "en": "Your project and your data are not touched.",
+   "ur": "آپ کے پروجیکٹ اور ڈیٹا کو کچھ نہیں ہوتا۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.out.confirm",
+   "area": "17 Settings and sync",
+   "en": "Sign out everywhere",
+   "ur": "ہر جگہ سے سائن آؤٹ",
+   "placeholders": []
+  },
+  {
+   "key": "set.out.failed",
+   "area": "17 Settings and sync",
+   "en": "Could not sign out everywhere. Check your connection and try again.",
+   "ur": "ہر جگہ سے سائن آؤٹ نہیں ہو سکا۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "soon.title",
+   "area": "18 Other",
+   "en": "Coming in the next stage",
+   "ur": "اگلے مرحلے میں آ رہا ہے",
+   "placeholders": []
+  },
+  {
+   "key": "set.title",
+   "area": "17 Settings and sync",
+   "en": "Settings",
+   "ur": "ترتیبات",
+   "placeholders": []
+  },
+  {
+   "key": "set.language",
+   "area": "17 Settings and sync",
+   "en": "Language",
+   "ur": "زبان",
+   "placeholders": []
+  },
+  {
+   "key": "set.you",
+   "area": "17 Settings and sync",
+   "en": "You",
+   "ur": "آپ",
+   "placeholders": []
+  },
+  {
+   "key": "set.name",
+   "area": "17 Settings and sync",
+   "en": "Your name",
+   "ur": "آپ کا نام",
+   "placeholders": []
+  },
+  {
+   "key": "set.role",
+   "area": "17 Settings and sync",
+   "en": "Your role on this project",
+   "ur": "اس پراجیکٹ میں آپ کا کردار",
+   "placeholders": []
+  },
+  {
+   "key": "set.roleInvestor",
+   "area": "17 Settings and sync",
+   "en": "Investor",
+   "ur": "سرمایہ کار",
+   "placeholders": []
+  },
+  {
+   "key": "set.roleBuilder",
+   "area": "17 Settings and sync",
+   "en": "Builder",
+   "ur": "بلڈر",
+   "placeholders": []
+  },
+  {
+   "key": "set.install",
+   "area": "17 Settings and sync",
+   "en": "Install the app",
+   "ur": "ایپ انسٹال کریں",
+   "placeholders": []
+  },
+  {
+   "key": "set.installBtn",
+   "area": "17 Settings and sync",
+   "en": "Install EndPoint Construction",
+   "ur": "اینڈ پوائنٹ کنسٹرکشن انسٹال کریں",
+   "placeholders": []
+  },
+  {
+   "key": "set.installed",
+   "area": "17 Settings and sync",
+   "en": "The app is installed on this device.",
+   "ur": "ایپ اس ڈیوائس پر انسٹال ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.installIos",
+   "area": "17 Settings and sync",
+   "en": "On iPhone: tap Share, then Add to Home Screen. Notifications work only after that.",
+   "ur": "آئی فون پر: شیئر دبائیں، پھر \"ہوم اسکرین میں شامل کریں\" چنیں۔ نوٹیفکیشن اسی کے بعد کام کرتے ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.installNone",
+   "area": "17 Settings and sync",
+   "en": "To install, open this page in Chrome, Edge or Safari.",
+   "ur": "انسٹال کرنے کے لیے یہ صفحہ کروم، ایج یا سفاری میں کھولیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.intro",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Get a reminder on this device when a payment is due or overdue and when spending reaches 80% and 100% of the budget. You are also told at once when an entry needs your approval, and when yours is approved or rejected.",
+   "ur": "جب کوئی ادائیگی واجب الادا یا تاخیر کا شکار ہو اور جب خرچ بجٹ کے 80% اور 100% تک پہنچے تو اس ڈیوائس پر یاد دہانی حاصل کریں۔ جب کوئی اندراج آپ کی منظوری کا منتظر ہو، یا آپ کا اندراج منظور یا مسترد ہو، تو فوراً اطلاع بھی ملتی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.enable",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Turn on reminders",
+   "ur": "یاد دہانی آن کریں",
+   "placeholders": []
+  },
+  {
+   "key": "push.enabled",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Reminders are on for this device.",
+   "ur": "اس ڈیوائس پر یاد دہانی آن ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.disable",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Turn off",
+   "ur": "بند کریں",
+   "placeholders": []
+  },
+  {
+   "key": "push.test",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Send a test",
+   "ur": "ٹیسٹ بھیجیں",
+   "placeholders": []
+  },
+  {
+   "key": "push.testSent",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Test sent. It should arrive in a few seconds.",
+   "ur": "ٹیسٹ بھیج دیا گیا۔ چند سیکنڈ میں آ جانا چاہیے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.testFail",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "The test could not be sent. The reminder service may not be set up yet.",
+   "ur": "ٹیسٹ نہیں بھیجا جا سکا۔ ہو سکتا ہے یاد دہانی کی سروس ابھی سیٹ نہ ہوئی ہو۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.onDone",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Reminders are on.",
+   "ur": "یاد دہانی آن ہو گئی۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.offDone",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Reminders are off on this device.",
+   "ur": "اس ڈیوائس پر یاد دہانی بند ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.error",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Could not turn on reminders. Try again.",
+   "ur": "یاد دہانی آن نہیں ہو سکی۔ دوبارہ کوشش کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.signIn",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Sign in to turn on reminders.",
+   "ur": "یاد دہانی آن کرنے کے لیے سائن ان کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.iosInstall",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "On iPhone, first tap Share, then Add to Home Screen, and open the app from there. Then you can turn on reminders.",
+   "ur": "آئی فون پر پہلے شیئر دبائیں، پھر ہوم اسکرین میں شامل کریں، اور ایپ وہیں سے کھولیں۔ اس کے بعد یاد دہانی آن ہو سکتی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.devOnly",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Reminders work in the installed app, not in a development preview.",
+   "ur": "یاد دہانی انسٹال شدہ ایپ میں کام کرتی ہے، ڈیولپمنٹ پریویو میں نہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.prefs.title",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "What you receive",
+   "ur": "آپ کو کیا ملے گا",
+   "placeholders": []
+  },
+  {
+   "key": "push.prefs.unavailable",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Choices are not available yet",
+   "ur": "انتخاب ابھی دستیاب نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "push.prefs.oldSchema",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Choosing what to receive needs a database update. Until then this device gets everything at 9:00 am.",
+   "ur": "کیا وصول کرنا ہے، یہ چننے کے لیے ڈیٹابیس کی اپ ڈیٹ درکار ہے۔ تب تک اس ڈیوائس پر ہر چیز صبح 9:00 بجے ملے گی۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.prefs.error",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Could not load your choices for this device. Check your connection and try again.",
+   "ur": "اس ڈیوائس کے انتخاب لوڈ نہیں ہو سکے۔ کنکشن دیکھیں اور دوبارہ کوشش کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.prefs.saved",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Saved.",
+   "ur": "محفوظ ہو گیا۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.prefs.saveFail",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Could not save. Check your connection and try again.",
+   "ur": "محفوظ نہیں ہو سکا۔ کنکشن دیکھیں اور دوبارہ کوشش کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.quick.title",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Quick setup",
+   "ur": "فوری سیٹ اپ",
+   "placeholders": []
+  },
+  {
+   "key": "push.quick.desc",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "One tap sets all the switches below. Each device keeps its own choices.",
+   "ur": "ایک ٹیپ نیچے کے تمام سوئچ سیٹ کر دیتا ہے۔ ہر ڈیوائس اپنے انتخاب خود رکھتی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.quick.label",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Preset",
+   "ur": "پری سیٹ",
+   "placeholders": []
+  },
+  {
+   "key": "push.preset.recommended",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Recommended",
+   "ur": "تجویز کردہ",
+   "placeholders": []
+  },
+  {
+   "key": "push.preset.minimal",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Minimal",
+   "ur": "کم سے کم",
+   "placeholders": []
+  },
+  {
+   "key": "push.preset.approvals",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Approvals only",
+   "ur": "صرف منظوریاں",
+   "placeholders": []
+  },
+  {
+   "key": "push.preset.recommended.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Everything: due payments, budget limits and approvals.",
+   "ur": "ہر چیز: واجب الادا ادائیگیاں، بجٹ کی حدیں اور منظوریاں۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.preset.minimal.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Approvals and the budget limit only.",
+   "ur": "صرف منظوریاں اور بجٹ کی حد۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.preset.approvals.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Only entries that need approval, and what was decided.",
+   "ur": "صرف وہ اندراجات جو منظوری مانگتے ہیں، اور ان کا فیصلہ۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.preset.custom.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Your own mix, set with the switches below.",
+   "ur": "آپ کا اپنا انتخاب، جو نیچے کے سوئچز سے طے ہوا۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.hour.label",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Reminder time",
+   "ur": "یاد دہانی کا وقت",
+   "placeholders": []
+  },
+  {
+   "key": "push.hour.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "When due payments and budget limits arrive each day, Pakistan time. Approvals arrive at once.",
+   "ur": "واجب الادا ادائیگیاں اور بجٹ کی حدیں روزانہ اس وقت ملتی ہیں، پاکستان کے وقت کے مطابق۔ منظوریاں فوراً ملتی ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.types.title",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "What you are told about",
+   "ur": "کن باتوں کی اطلاع ملے",
+   "placeholders": []
+  },
+  {
+   "key": "push.types.desc",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "{on} of {total} on.",
+   "ur": "{total} میں سے {on} آن ہیں۔",
+   "placeholders": [
+    "{on}",
+    "{total}"
+   ]
+  },
+  {
+   "key": "push.type.due",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Payments due or overdue",
+   "ur": "واجب الادا یا تاخیر شدہ ادائیگیاں",
+   "placeholders": []
+  },
+  {
+   "key": "push.type.due.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "A reminder each day while a planned payment is due today or late.",
+   "ur": "جب تک کوئی طے شدہ ادائیگی آج واجب الادا ہو یا لیٹ ہو، روزانہ ایک یاد دہانی۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.type.budget80",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Budget 80% used",
+   "ur": "بجٹ کا 80% خرچ",
+   "placeholders": []
+  },
+  {
+   "key": "push.type.budget80.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Once, when spending reaches 80% of the budget.",
+   "ur": "ایک بار، جب خرچ بجٹ کے 80% تک پہنچے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.type.budget100",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Budget reached",
+   "ur": "بجٹ پورا ہو گیا",
+   "placeholders": []
+  },
+  {
+   "key": "push.type.budget100.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Once, when spending reaches the whole budget.",
+   "ur": "ایک بار، جب خرچ پورے بجٹ تک پہنچے۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.type.approvalRequests",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Entries waiting for approval",
+   "ur": "منظوری کے منتظر اندراجات",
+   "placeholders": []
+  },
+  {
+   "key": "push.type.approvalRequests.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "At once, when the builder adds an entry the investor must approve.",
+   "ur": "فوراً، جب بلڈر ایسا اندراج شامل کرے جسے سرمایہ کار نے منظور کرنا ہو۔",
+   "placeholders": []
+  },
+  {
+   "key": "push.type.approvalDecisions",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Approved or rejected entries",
+   "ur": "منظور یا مسترد اندراجات",
+   "placeholders": []
+  },
+  {
+   "key": "push.type.approvalDecisions.help",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "At once, when the investor approves or rejects an entry the builder added.",
+   "ur": "فوراً، جب سرمایہ کار بلڈر کا شامل کیا ہوا اندراج منظور یا مسترد کرے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.notifications",
+   "area": "17 Settings and sync",
+   "en": "Notifications",
+   "ur": "نوٹیفکیشن",
+   "placeholders": []
+  },
+  {
+   "key": "set.notifBtn",
+   "area": "17 Settings and sync",
+   "en": "Allow notifications",
+   "ur": "نوٹیفکیشن کی اجازت دیں",
+   "placeholders": []
+  },
+  {
+   "key": "set.notifGranted",
+   "area": "17 Settings and sync",
+   "en": "Notifications are allowed on this device.",
+   "ur": "اس ڈیوائس پر نوٹیفکیشن کی اجازت ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.notifDenied",
+   "area": "17 Settings and sync",
+   "en": "Notifications are blocked in your browser settings.",
+   "ur": "براؤزر کی ترتیبات میں نوٹیفکیشن بلاک ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.notifUnsupported",
+   "area": "17 Settings and sync",
+   "en": "This browser does not support notifications.",
+   "ur": "یہ براؤزر نوٹیفکیشن کو سپورٹ نہیں کرتا۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.notifNote",
+   "area": "17 Settings and sync",
+   "en": "The same alerts always show under the bell inside the app.",
+   "ur": "یہی الرٹس ایپ کے اندر گھنٹی کے نیچے بھی ہمیشہ نظر آتے ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.backup",
+   "area": "17 Settings and sync",
+   "en": "Backup",
+   "ur": "بیک اپ",
+   "placeholders": []
+  },
+  {
+   "key": "set.backupNote",
+   "area": "17 Settings and sync",
+   "en": "Everything is stored on this device. Download a backup file now and then.",
+   "ur": "سارا ڈیٹا اس ڈیوائس پر محفوظ ہے۔ وقتاً فوقتاً بیک اپ فائل ڈاؤن لوڈ کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.exportJson",
+   "area": "17 Settings and sync",
+   "en": "Download backup",
+   "ur": "بیک اپ ڈاؤن لوڈ کریں",
+   "placeholders": []
+  },
+  {
+   "key": "set.importJson",
+   "area": "17 Settings and sync",
+   "en": "Restore from backup",
+   "ur": "بیک اپ سے بحال کریں",
+   "placeholders": []
+  },
+  {
+   "key": "set.restored",
+   "area": "17 Settings and sync",
+   "en": "Backup restored",
+   "ur": "بیک اپ بحال ہو گیا",
+   "placeholders": []
+  },
+  {
+   "key": "set.restoreFailed",
+   "area": "17 Settings and sync",
+   "en": "That file is not a valid backup",
+   "ur": "یہ فائل درست بیک اپ نہیں ہے",
+   "placeholders": []
+  },
+  {
+   "key": "set.bin",
+   "area": "17 Settings and sync",
+   "en": "Bin (kept for 30 days)",
+   "ur": "ردی (30 دن تک)",
+   "placeholders": []
+  },
+  {
+   "key": "set.binEmpty",
+   "area": "17 Settings and sync",
+   "en": "The bin is empty.",
+   "ur": "ردی خالی ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.project",
+   "area": "17 Settings and sync",
+   "en": "This project",
+   "ur": "یہ پراجیکٹ",
+   "placeholders": []
+  },
+  {
+   "key": "set.deleteProject",
+   "area": "17 Settings and sync",
+   "en": "Delete this project",
+   "ur": "یہ پراجیکٹ حذف کریں",
+   "placeholders": []
+  },
+  {
+   "key": "set.deleteConfirm",
+   "area": "17 Settings and sync",
+   "en": "Type the project name to confirm",
+   "ur": "تصدیق کے لیے پراجیکٹ کا نام لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "set.del.title",
+   "area": "17 Settings and sync",
+   "en": "Delete \"{name}\"?",
+   "ur": "\"{name}\" ڈیلیٹ کریں؟",
+   "placeholders": [
+    "{name}"
+   ]
+  },
+  {
+   "key": "set.del.body",
+   "area": "17 Settings and sync",
+   "en": "The project and everything in it (payments, vendors, files) is removed from this device.",
+   "ur": "پروجیکٹ اور اس کی ہر چیز (ادائیگیاں، وینڈرز، فائلیں) اس ڈیوائس سے ہٹ جائے گی۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.del.bodyShared",
+   "area": "17 Settings and sync",
+   "en": "The project and everything in it (payments, vendors, files) is removed for everyone who can see it, on every device.",
+   "ur": "پروجیکٹ اور اس کی ہر چیز (ادائیگیاں، وینڈرز، فائلیں) ان سب کے لیے، ہر ڈیوائس پر، ہٹ جائے گی جو اسے دیکھ سکتے ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.del.backupTitle",
+   "area": "17 Settings and sync",
+   "en": "Keep a copy first?",
+   "ur": "پہلے ایک کاپی رکھ لیں؟",
+   "placeholders": []
+  },
+  {
+   "key": "set.del.backupHelp",
+   "area": "17 Settings and sync",
+   "en": "A backup file holds everything on this device. You can restore it later in Settings, Data and backup.",
+   "ur": "بیک اپ فائل میں اس ڈیوائس کی ہر چیز ہوتی ہے۔ بعد میں اسے ترتیبات، ڈیٹا اور بیک اپ میں واپس لا سکتے ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.del.backedUp",
+   "area": "17 Settings and sync",
+   "en": "Backup downloaded",
+   "ur": "بیک اپ ڈاؤن لوڈ ہو گیا",
+   "placeholders": []
+  },
+  {
+   "key": "set.del.backupFailed",
+   "area": "17 Settings and sync",
+   "en": "Could not make the backup. Try again before deleting.",
+   "ur": "بیک اپ نہیں بن سکا۔ ڈیلیٹ کرنے سے پہلے دوبارہ کوشش کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "set.projectDeleted",
+   "area": "17 Settings and sync",
+   "en": "Project deleted",
+   "ur": "پراجیکٹ حذف ہو گیا",
+   "placeholders": []
+  },
+  {
+   "key": "set.version",
+   "area": "17 Settings and sync",
+   "en": "Version",
+   "ur": "ورژن",
+   "placeholders": []
+  },
+  {
+   "key": "notif.title",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Alerts",
+   "ur": "الرٹس",
+   "placeholders": []
+  },
+  {
+   "key": "notif.none",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "No alerts",
+   "ur": "کوئی الرٹ نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "notif.noneBody",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Budget limits, payments due and entries waiting for approval show here.",
+   "ur": "بجٹ کی حدیں، واجب الادا ادائیگیاں اور منظوری کے منتظر اندراجات یہاں نظر آئیں گے۔",
+   "placeholders": []
+  },
+  {
+   "key": "notif.budget80",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "{name} has used {pct}% of its budget",
+   "ur": "{name} کا {pct}% بجٹ استعمال ہو چکا ہے",
+   "placeholders": [
+    "{name}",
+    "{pct}"
+   ]
+  },
+  {
+   "key": "notif.budget100",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "{name} is over budget",
+   "ur": "{name} بجٹ سے زیادہ ہو گیا ہے",
+   "placeholders": [
+    "{name}"
+   ]
+  },
+  {
+   "key": "notif.overdue",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Overdue: {what}",
+   "ur": "تاخیر: {what}",
+   "placeholders": [
+    "{what}"
+   ]
+  },
+  {
+   "key": "notif.dueSoon",
+   "area": "20 Reminders and alerts (notifications)",
+   "en": "Due soon: {what}",
+   "ur": "جلد واجب: {what}",
+   "placeholders": [
+    "{what}"
+   ]
+  },
+  {
+   "key": "pwa.update",
+   "area": "17 Settings and sync",
+   "en": "A new version is ready",
+   "ur": "نیا ورژن تیار ہے",
+   "placeholders": []
+  },
+  {
+   "key": "pwa.reload",
+   "area": "17 Settings and sync",
+   "en": "Reload",
+   "ur": "دوبارہ لوڈ کریں",
+   "placeholders": []
+  },
+  {
+   "key": "pwa.offlineReady",
+   "area": "17 Settings and sync",
+   "en": "Ready to work offline",
+   "ur": "آف لائن کام کے لیے تیار",
+   "placeholders": []
+  },
+  {
+   "key": "pwa.offline",
+   "area": "17 Settings and sync",
+   "en": "Offline",
+   "ur": "آف لائن",
+   "placeholders": []
+  },
+  {
+   "key": "pwa.online",
+   "area": "17 Settings and sync",
+   "en": "Back online",
+   "ur": "دوبارہ آن لائن",
+   "placeholders": []
+  },
+  {
+   "key": "sync.title",
+   "area": "17 Settings and sync",
+   "en": "Sync",
+   "ur": "ہم آہنگی (سنک)",
+   "placeholders": []
+  },
+  {
+   "key": "sync.notConfigured",
+   "area": "17 Settings and sync",
+   "en": "Not connected to a server yet",
+   "ur": "ابھی سرور سے جڑا نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "sync.notConfiguredBody",
+   "area": "17 Settings and sync",
+   "en": "Your data is stored on this device only. To share it with your brother, connect a Supabase project (see docs/SUPABASE_SETUP.md).",
+   "ur": "آپ کا ڈیٹا صرف اس ڈیوائس پر ہے۔ اپنے بھائی کے ساتھ شیئر کرنے کے لیے Supabase پراجیکٹ جوڑیں (docs/SUPABASE_SETUP.md دیکھیں)۔",
+   "placeholders": []
+  },
+  {
+   "key": "sync.signedInAs",
+   "area": "17 Settings and sync",
+   "en": "Signed in as {email}",
+   "ur": "{email} کے طور پر داخل",
+   "placeholders": [
+    "{email}"
+   ]
+  },
+  {
+   "key": "sync.signOut",
+   "area": "17 Settings and sync",
+   "en": "Sign out",
+   "ur": "سائن آؤٹ",
+   "placeholders": []
+  },
+  {
+   "key": "sync.syncNow",
+   "area": "17 Settings and sync",
+   "en": "Sync now",
+   "ur": "ابھی سنک کریں",
+   "placeholders": []
+  },
+  {
+   "key": "sync.state.idle",
+   "area": "17 Settings and sync",
+   "en": "Everything is saved to the server",
+   "ur": "سب کچھ سرور پر محفوظ ہے",
+   "placeholders": []
+  },
+  {
+   "key": "sync.state.syncing",
+   "area": "17 Settings and sync",
+   "en": "Syncing…",
+   "ur": "سنک ہو رہا ہے…",
+   "placeholders": []
+  },
+  {
+   "key": "sync.state.offline",
+   "area": "17 Settings and sync",
+   "en": "Offline: changes are saved on this phone and will be sent when you are back online",
+   "ur": "آف لائن: تبدیلیاں اس فون پر محفوظ ہیں اور آن لائن ہوتے ہی بھیج دی جائیں گی",
+   "placeholders": []
+  },
+  {
+   "key": "sync.state.error",
+   "area": "17 Settings and sync",
+   "en": "Sync problem",
+   "ur": "سنک میں مسئلہ",
+   "placeholders": []
+  },
+  {
+   "key": "sync.pending",
+   "area": "17 Settings and sync",
+   "en": "{count} changes waiting to be sent",
+   "ur": "{count} تبدیلیاں بھیجنا باقی ہیں",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "sync.lastSync",
+   "area": "17 Settings and sync",
+   "en": "Last synced {time}",
+   "ur": "آخری سنک {time}",
+   "placeholders": [
+    "{time}"
+   ]
+  },
+  {
+   "key": "sync.chip.synced",
+   "area": "17 Settings and sync",
+   "en": "Synced",
+   "ur": "سنک شدہ",
+   "placeholders": []
+  },
+  {
+   "key": "sync.chip.syncing",
+   "area": "17 Settings and sync",
+   "en": "Syncing",
+   "ur": "سنک ہو رہا ہے",
+   "placeholders": []
+  },
+  {
+   "key": "sync.chip.waiting",
+   "area": "17 Settings and sync",
+   "en": "{count} waiting",
+   "ur": "{count} انتظار میں",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "sync.chip.offlineWaiting",
+   "area": "17 Settings and sync",
+   "en": "Offline, {count} waiting",
+   "ur": "آف لائن، {count} انتظار میں",
+   "placeholders": [
+    "{count}"
+   ]
+  },
+  {
+   "key": "sync.chip.problem",
+   "area": "17 Settings and sync",
+   "en": "Sync problem",
+   "ur": "سنک میں مسئلہ",
+   "placeholders": []
+  },
+  {
+   "key": "auth.title",
+   "area": "2 First screen and sign in",
+   "en": "Sign in",
+   "ur": "سائن ان",
+   "placeholders": []
+  },
+  {
+   "key": "auth.body",
+   "area": "2 First screen and sign in",
+   "en": "Sign in so you and your brother see the same project on every phone.",
+   "ur": "سائن ان کریں تاکہ آپ اور آپ کے بھائی ہر فون پر ایک ہی پراجیکٹ دیکھیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "auth.email",
+   "area": "2 First screen and sign in",
+   "en": "Email address",
+   "ur": "ای میل ایڈریس",
+   "placeholders": []
+  },
+  {
+   "key": "auth.sendCode",
+   "area": "2 First screen and sign in",
+   "en": "Email me a sign-in code",
+   "ur": "مجھے سائن ان کوڈ ای میل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "auth.codeSent",
+   "area": "2 First screen and sign in",
+   "en": "We sent a code to {email}. Enter it below.",
+   "ur": "ہم نے {email} پر کوڈ بھیجا ہے۔ نیچے درج کریں۔",
+   "placeholders": [
+    "{email}"
+   ]
+  },
+  {
+   "key": "auth.code",
+   "area": "2 First screen and sign in",
+   "en": "Code from the email",
+   "ur": "ای میل میں آیا ہوا کوڈ",
+   "placeholders": []
+  },
+  {
+   "key": "auth.verify",
+   "area": "2 First screen and sign in",
+   "en": "Sign in",
+   "ur": "سائن ان",
+   "placeholders": []
+  },
+  {
+   "key": "auth.resend",
+   "area": "2 First screen and sign in",
+   "en": "Send a new code",
+   "ur": "نیا کوڈ بھیجیں",
+   "placeholders": []
+  },
+  {
+   "key": "auth.usePassword",
+   "area": "2 First screen and sign in",
+   "en": "Use a password instead",
+   "ur": "اس کے بجائے پاس ورڈ استعمال کریں",
+   "placeholders": []
+  },
+  {
+   "key": "auth.useCode",
+   "area": "2 First screen and sign in",
+   "en": "Use an emailed code instead",
+   "ur": "اس کے بجائے ای میل کوڈ استعمال کریں",
+   "placeholders": []
+  },
+  {
+   "key": "auth.password",
+   "area": "2 First screen and sign in",
+   "en": "Password (at least 6 characters)",
+   "ur": "پاس ورڈ (کم از کم 6 حروف)",
+   "placeholders": []
+  },
+  {
+   "key": "auth.signIn",
+   "area": "2 First screen and sign in",
+   "en": "Sign in",
+   "ur": "سائن ان",
+   "placeholders": []
+  },
+  {
+   "key": "auth.createAccount",
+   "area": "2 First screen and sign in",
+   "en": "Create account",
+   "ur": "اکاؤنٹ بنائیں",
+   "placeholders": []
+  },
+  {
+   "key": "auth.invalidEmail",
+   "area": "2 First screen and sign in",
+   "en": "Enter a valid email address",
+   "ur": "درست ای میل ایڈریس لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "auth.confirmEmail",
+   "area": "2 First screen and sign in",
+   "en": "Account created. Check your email to confirm it, then sign in.",
+   "ur": "اکاؤنٹ بن گیا۔ اپنی ای میل چیک کر کے تصدیق کریں، پھر سائن ان کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "auth.firstTime",
+   "area": "2 First screen and sign in",
+   "en": "First time? Choose Create account. After that, use Sign in with the same email and password.",
+   "ur": "پہلی بار؟ \"اکاؤنٹ بنائیں\" دبائیں۔ اس کے بعد اسی ای میل اور پاس ورڈ سے \"سائن ان\" کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "people.title",
+   "area": "17 Settings and sync",
+   "en": "People on this project",
+   "ur": "اس پراجیکٹ کے افراد",
+   "placeholders": []
+  },
+  {
+   "key": "people.you",
+   "area": "17 Settings and sync",
+   "en": "you",
+   "ur": "آپ",
+   "placeholders": []
+  },
+  {
+   "key": "people.pending",
+   "area": "17 Settings and sync",
+   "en": "Invited, not joined yet",
+   "ur": "مدعو کیا، ابھی شامل نہیں ہوا",
+   "placeholders": []
+  },
+  {
+   "key": "people.inviteEmail",
+   "area": "17 Settings and sync",
+   "en": "Email to invite",
+   "ur": "مدعو کرنے کے لیے ای میل",
+   "placeholders": []
+  },
+  {
+   "key": "people.role",
+   "area": "17 Settings and sync",
+   "en": "Role",
+   "ur": "کردار",
+   "placeholders": []
+  },
+  {
+   "key": "people.send",
+   "area": "17 Settings and sync",
+   "en": "Invite",
+   "ur": "مدعو کریں",
+   "placeholders": []
+  },
+  {
+   "key": "people.sent",
+   "area": "17 Settings and sync",
+   "en": "Invitation saved. They join when they sign in with that email.",
+   "ur": "دعوت محفوظ ہو گئی۔ اسی ای میل سے سائن ان کرنے پر وہ شامل ہو جائیں گے۔",
+   "placeholders": []
+  },
+  {
+   "key": "people.remove",
+   "area": "17 Settings and sync",
+   "en": "Remove invitation",
+   "ur": "دعوت ہٹائیں",
+   "placeholders": []
+  },
+  {
+   "key": "people.syncFirst",
+   "area": "17 Settings and sync",
+   "en": "Sync this project first, then invite.",
+   "ur": "پہلے اس پراجیکٹ کو سنک کریں، پھر مدعو کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "welcome.syncNote",
+   "area": "2 First screen and sign in",
+   "en": "If someone invited you to a project, it appears here after the first sync.",
+   "ur": "اگر کسی نے آپ کو پراجیکٹ میں مدعو کیا ہے تو پہلے سنک کے بعد وہ یہاں نظر آئے گا۔",
+   "placeholders": []
+  },
+  {
+   "key": "nav.settlement",
+   "area": "1 Menu, buttons and general words",
+   "en": "Settlement",
+   "ur": "حساب کتاب",
+   "placeholders": []
+  },
+  {
+   "key": "nav.plans",
+   "area": "1 Menu, buttons and general words",
+   "en": "Weekly payments",
+   "ur": "ہفتہ وار ادائیگیاں",
+   "placeholders": []
+  },
+  {
+   "key": "status.skipped",
+   "area": "8 Adding or editing a payment",
+   "en": "Skipped",
+   "ur": "چھوڑ دی",
+   "placeholders": []
+  },
+  {
+   "key": "plans.title",
+   "area": "10 Weekly payments and due list",
+   "en": "Weekly payments",
+   "ur": "ہفتہ وار ادائیگیاں",
+   "placeholders": []
+  },
+  {
+   "key": "plans.add",
+   "area": "10 Weekly payments and due list",
+   "en": "Add weekly payment",
+   "ur": "ہفتہ وار ادائیگی شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "plans.edit",
+   "area": "10 Weekly payments and due list",
+   "en": "Edit weekly payment",
+   "ur": "ہفتہ وار ادائیگی میں ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "plans.purpose",
+   "area": "10 Weekly payments and due list",
+   "en": "What is it for?",
+   "ur": "یہ کس لیے ہے؟",
+   "placeholders": []
+  },
+  {
+   "key": "plans.amount",
+   "area": "10 Weekly payments and due list",
+   "en": "Usual amount ({cur})",
+   "ur": "معمول کی رقم ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "plans.weekday",
+   "area": "10 Weekly payments and due list",
+   "en": "Day of the week",
+   "ur": "ہفتے کا دن",
+   "placeholders": []
+  },
+  {
+   "key": "plans.start",
+   "area": "10 Weekly payments and due list",
+   "en": "Starts on",
+   "ur": "آغاز کی تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "plans.phase",
+   "area": "10 Weekly payments and due list",
+   "en": "Phase (optional)",
+   "ur": "مرحلہ (اختیاری)",
+   "placeholders": []
+  },
+  {
+   "key": "plans.vendor",
+   "area": "10 Weekly payments and due list",
+   "en": "Pay to (optional)",
+   "ur": "کسے ادا کرنی ہے (اختیاری)",
+   "placeholders": []
+  },
+  {
+   "key": "plans.active",
+   "area": "10 Weekly payments and due list",
+   "en": "Active",
+   "ur": "فعال",
+   "placeholders": []
+  },
+  {
+   "key": "plans.pause",
+   "area": "10 Weekly payments and due list",
+   "en": "Pause",
+   "ur": "روکیں",
+   "placeholders": []
+  },
+  {
+   "key": "plans.resume",
+   "area": "10 Weekly payments and due list",
+   "en": "Resume",
+   "ur": "دوبارہ شروع کریں",
+   "placeholders": []
+  },
+  {
+   "key": "plans.paused",
+   "area": "10 Weekly payments and due list",
+   "en": "Paused",
+   "ur": "رکی ہوئی",
+   "placeholders": []
+  },
+  {
+   "key": "plans.empty",
+   "area": "10 Weekly payments and due list",
+   "en": "Add your first weekly payment",
+   "ur": "اپنی پہلی ہفتہ وار ادائیگی شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "plans.emptyBody",
+   "area": "10 Weekly payments and due list",
+   "en": "Add one for the labour foreman, for example every Thursday. Turn it off when that phase is finished.",
+   "ur": "مثلاً ہر جمعرات مزدوروں کے فورمین کے لیے شامل کریں۔ وہ مرحلہ ختم ہو تو اسے بند کر دیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "plans.every",
+   "area": "10 Weekly payments and due list",
+   "en": "Every {day}",
+   "ur": "ہر {day}",
+   "placeholders": [
+    "{day}"
+   ]
+  },
+  {
+   "key": "plans.delete",
+   "area": "10 Weekly payments and due list",
+   "en": "Delete weekly payment",
+   "ur": "ہفتہ وار ادائیگی حذف کریں",
+   "placeholders": []
+  },
+  {
+   "key": "plans.saved",
+   "area": "10 Weekly payments and due list",
+   "en": "Weekly payment saved",
+   "ur": "ہفتہ وار ادائیگی محفوظ ہو گئی",
+   "placeholders": []
+  },
+  {
+   "key": "plans.deleted",
+   "area": "10 Weekly payments and due list",
+   "en": "Weekly payment deleted",
+   "ur": "ہفتہ وار ادائیگی حذف ہو گئی",
+   "placeholders": []
+  },
+  {
+   "key": "plans.purposeRequired",
+   "area": "10 Weekly payments and due list",
+   "en": "Say what it is for",
+   "ur": "لکھیں کہ یہ کس لیے ہے",
+   "placeholders": []
+  },
+  {
+   "key": "plans.amountRequired",
+   "area": "10 Weekly payments and due list",
+   "en": "Enter an amount above zero",
+   "ur": "صفر سے زیادہ رقم لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "plans.note",
+   "area": "10 Weekly payments and due list",
+   "en": "Payments already created stay as they are when you pause or delete a weekly payment.",
+   "ur": "روکنے یا حذف کرنے پر پہلے سے بنی ہوئی ادائیگیاں جوں کی توں رہتی ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "due.move",
+   "area": "10 Weekly payments and due list",
+   "en": "Move",
+   "ur": "منتقل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "due.skip",
+   "area": "10 Weekly payments and due list",
+   "en": "Skip",
+   "ur": "چھوڑیں",
+   "placeholders": []
+  },
+  {
+   "key": "due.moveTitle",
+   "area": "10 Weekly payments and due list",
+   "en": "Move to another day",
+   "ur": "دوسرے دن منتقل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "due.moveDate",
+   "area": "10 Weekly payments and due list",
+   "en": "New date",
+   "ur": "نئی تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "due.skipTitle",
+   "area": "10 Weekly payments and due list",
+   "en": "Skip this payment",
+   "ur": "یہ ادائیگی چھوڑیں",
+   "placeholders": []
+  },
+  {
+   "key": "due.skipReason",
+   "area": "10 Weekly payments and due list",
+   "en": "Reason (optional)",
+   "ur": "وجہ (اختیاری)",
+   "placeholders": []
+  },
+  {
+   "key": "due.skipHint",
+   "area": "10 Weekly payments and due list",
+   "en": "For example: work not finished, or no funds yet. It stays in the ledger and does not count as spent.",
+   "ur": "مثلاً: کام مکمل نہیں ہوا، یا ابھی رقم نہیں ہے۔ یہ کھاتے میں رہے گی اور خرچ میں شمار نہیں ہوگی۔",
+   "placeholders": []
+  },
+  {
+   "key": "due.skipped",
+   "area": "10 Weekly payments and due list",
+   "en": "Payment skipped",
+   "ur": "ادائیگی چھوڑ دی گئی",
+   "placeholders": []
+  },
+  {
+   "key": "due.moved",
+   "area": "10 Weekly payments and due list",
+   "en": "Payment moved",
+   "ur": "ادائیگی منتقل ہو گئی",
+   "placeholders": []
+  },
+  {
+   "key": "due.manage",
+   "area": "10 Weekly payments and due list",
+   "en": "Manage weekly payments",
+   "ur": "ہفتہ وار ادائیگیاں سنبھالیں",
+   "placeholders": []
+  },
+  {
+   "key": "stl.title",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Settlement",
+   "ur": "حساب کتاب",
+   "placeholders": []
+  },
+  {
+   "key": "stl.cost",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Construction cost",
+   "ur": "تعمیراتی لاگت",
+   "placeholders": []
+  },
+  {
+   "key": "stl.paidByInvestor",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Paid by the investor",
+   "ur": "سرمایہ کار نے ادا کی",
+   "placeholders": []
+  },
+  {
+   "key": "stl.paidByBuilder",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Paid by the builder",
+   "ur": "بلڈر نے ادا کی",
+   "placeholders": []
+  },
+  {
+   "key": "stl.advances",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Advances and top-ups given",
+   "ur": "دیے گئے ایڈوانس اور مزید رقم",
+   "placeholders": []
+  },
+  {
+   "key": "stl.reimbursed",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Reimbursed to the builder",
+   "ur": "بلڈر کو واپس ادا کیا",
+   "placeholders": []
+  },
+  {
+   "key": "stl.returned",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Returned by the builder",
+   "ur": "بلڈر نے واپس کیا",
+   "placeholders": []
+  },
+  {
+   "key": "stl.balance",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Construction balance",
+   "ur": "تعمیراتی اخراجات کا حساب",
+   "placeholders": []
+  },
+  {
+   "key": "stl.balancePos",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "The investor owes the builder {amount} for costs he paid.",
+   "ur": "سرمایہ کار پر بلڈر کے ادا کردہ اخراجات کے {amount} واجب ہیں۔",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "stl.balanceNeg",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "The builder still holds {amount} of the investor’s money.",
+   "ur": "بلڈر کے پاس سرمایہ کار کے {amount} ابھی موجود ہیں۔",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "stl.balanceZero",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Settled: nobody owes anything for the costs.",
+   "ur": "حساب برابر: اخراجات کے لحاظ سے کسی کے ذمے کچھ نہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.fee",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "The builder’s fee",
+   "ur": "بلڈر کی فیس",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeEarned",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fee earned",
+   "ur": "بنی ہوئی فیس",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feePaid",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fee paid",
+   "ur": "ادا کی گئی فیس",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeOutstanding",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fee still owed",
+   "ur": "باقی فیس",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeTbd",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "To be decided at the end",
+   "ur": "آخر میں طے ہوگی",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeEdit",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Set the fee",
+   "ur": "فیس مقرر کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeBasis",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "How is the fee worked out?",
+   "ur": "فیس کیسے طے ہوگی؟",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeTbdOption",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Decide at the end",
+   "ur": "آخر میں طے کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeFixed",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fixed amount",
+   "ur": "مقررہ رقم",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feePercent",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Percentage of construction cost",
+   "ur": "تعمیراتی لاگت کا فیصد",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeAmount",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fee amount ({cur})",
+   "ur": "فیس کی رقم ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "stl.feePercentValue",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Percentage (%)",
+   "ur": "فیصد (%)",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeSaved",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fee saved",
+   "ur": "فیس محفوظ ہو گئی",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeBasisFixed",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fixed amount",
+   "ur": "مقررہ رقم",
+   "placeholders": []
+  },
+  {
+   "key": "stl.feeBasisPercent",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "{pct}% of the construction cost",
+   "ur": "تعمیراتی لاگت کا {pct}%",
+   "placeholders": [
+    "{pct}"
+   ]
+  },
+  {
+   "key": "stl.totalDue",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Total due",
+   "ur": "کل واجب",
+   "placeholders": []
+  },
+  {
+   "key": "stl.totalPos",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "The investor owes the builder {amount} in total.",
+   "ur": "سرمایہ کار پر بلڈر کے کل {amount} واجب ہیں۔",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "stl.totalNeg",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "The builder owes the investor {amount} in total.",
+   "ur": "بلڈر پر سرمایہ کار کے کل {amount} واجب ہیں۔",
+   "placeholders": [
+    "{amount}"
+   ]
+  },
+  {
+   "key": "stl.totalZero",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "All settled.",
+   "ur": "سارا حساب برابر ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.totalUndecided",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "The fee is not decided yet, so this is the construction balance only.",
+   "ur": "فیس ابھی طے نہیں ہوئی، اس لیے یہ صرف تعمیراتی اخراجات کا حساب ہے۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.transfers",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Money between you",
+   "ur": "آپ دونوں کے درمیان رقم",
+   "placeholders": []
+  },
+  {
+   "key": "stl.addTransfer",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Add transfer",
+   "ur": "رقم کی منتقلی شامل کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stl.editTransfer",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Edit transfer",
+   "ur": "منتقلی میں ترمیم",
+   "placeholders": []
+  },
+  {
+   "key": "stl.transferEmpty",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "No transfers yet",
+   "ur": "ابھی کوئی منتقلی نہیں",
+   "placeholders": []
+  },
+  {
+   "key": "stl.transferEmptyBody",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Record advances you give your brother, reimbursements, returned money and fee payments here.",
+   "ur": "بھائی کو دیے گئے ایڈوانس، واپس ادائیگیاں، لوٹائی گئی رقم اور فیس کی ادائیگیاں یہاں درج کریں۔",
+   "placeholders": []
+  },
+  {
+   "key": "stl.print",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Print or save as PDF",
+   "ur": "پرنٹ کریں یا PDF محفوظ کریں",
+   "placeholders": []
+  },
+  {
+   "key": "stl.date",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Date",
+   "ur": "تاریخ",
+   "placeholders": []
+  },
+  {
+   "key": "stl.amount",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Amount ({cur})",
+   "ur": "رقم ({cur})",
+   "placeholders": [
+    "{cur}"
+   ]
+  },
+  {
+   "key": "stl.kind",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Type",
+   "ur": "قسم",
+   "placeholders": []
+  },
+  {
+   "key": "stl.note",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Note",
+   "ur": "نوٹ",
+   "placeholders": []
+  },
+  {
+   "key": "stl.deleted",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Transfer deleted",
+   "ur": "منتقلی حذف ہو گئی",
+   "placeholders": []
+  },
+  {
+   "key": "stl.saved",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Transfer saved",
+   "ur": "منتقلی محفوظ ہو گئی",
+   "placeholders": []
+  },
+  {
+   "key": "stl.investorToBuilder",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Investor to builder",
+   "ur": "سرمایہ کار سے بلڈر کو",
+   "placeholders": []
+  },
+  {
+   "key": "stl.builderToInvestor",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Builder to investor",
+   "ur": "بلڈر سے سرمایہ کار کو",
+   "placeholders": []
+  },
+  {
+   "key": "stl.statement",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Final statement",
+   "ur": "حتمی اسٹیٹمنٹ",
+   "placeholders": []
+  },
+  {
+   "key": "stl.preparedOn",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Prepared on {date}",
+   "ur": "تیار کردہ: {date}",
+   "placeholders": [
+    "{date}"
+   ]
+  },
+  {
+   "key": "stl.errAmount",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Enter an amount above zero",
+   "ur": "صفر سے زیادہ رقم لکھیں",
+   "placeholders": []
+  },
+  {
+   "key": "xfer.advance",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Advance to the builder",
+   "ur": "بلڈر کو ایڈوانس",
+   "placeholders": []
+  },
+  {
+   "key": "xfer.topup",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Top-up to the builder",
+   "ur": "بلڈر کو مزید رقم",
+   "placeholders": []
+  },
+  {
+   "key": "xfer.reimbursement",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Reimbursement to the builder",
+   "ur": "بلڈر کو واپس ادائیگی",
+   "placeholders": []
+  },
+  {
+   "key": "xfer.return",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Unspent money returned",
+   "ur": "بچی ہوئی رقم واپس",
+   "placeholders": []
+  },
+  {
+   "key": "xfer.fee",
+   "area": "11 Settlement, advances and the builder fee",
+   "en": "Fee payment to the builder",
+   "ur": "بلڈر کو فیس کی ادائیگی",
+   "placeholders": []
+  },
+  {
+   "key": "sync.schemaOld",
+   "area": "17 Settings and sync",
+   "en": "The server needs the updated supabase/schema.sql for: {what}. Everything else keeps syncing; changes that use it wait until it is run.",
+   "ur": "سرور کو {what} کے لیے تازہ supabase/schema.sql چاہیے۔ باقی سب کچھ سنک ہوتا رہتا ہے؛ جو تبدیلیاں اسے استعمال کرتی ہیں وہ اسے چلانے تک انتظار کریں گی۔",
+   "placeholders": [
+    "{what}"
+   ]
+  },
+  {
+   "key": "more.title",
+   "area": "1 Menu, buttons and general words",
+   "en": "More",
+   "ur": "مزید",
+   "placeholders": []
+  },
+  {
+   "key": "err.generic",
+   "area": "17 Settings and sync",
+   "en": "Something went wrong. Your entries are kept.",
+   "ur": "کچھ غلط ہو گیا۔ آپ کی اندراجات محفوظ ہیں۔",
+   "placeholders": []
+  },
+  {
+   "key": "err.notFound",
+   "area": "17 Settings and sync",
+   "en": "That page was not found.",
+   "ur": "یہ صفحہ نہیں ملا۔",
+   "placeholders": []
+  }
+ ]
+}

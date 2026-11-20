@@ -1,0 +1,126 @@
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from './db'
+import type { Attachment, Contract, MaterialLine, ProjectFile, Payment, PaymentPlan, Phase, Transfer, Vendor } from './types'
+
+export function usePhases(projectId: string | undefined): Phase[] {
+  return (
+    useLiveQuery(
+      async () =>
+        projectId ? (await db.phases.where('projectId').equals(projectId).sortBy('order')).filter((p) => !p.deletedAt) : [],
+      [projectId],
+    ) ?? []
+  )
+}
+
+export function useVendors(projectId: string | undefined): Vendor[] {
+  return (
+    useLiveQuery(
+      async () =>
+        projectId
+          ? (await db.vendors.where('projectId').equals(projectId).toArray())
+              .filter((v) => !v.deletedAt)
+              .sort((a, b) => a.name.localeCompare(b.name))
+          : [],
+      [projectId],
+    ) ?? []
+  )
+}
+
+/** All payments of a project, newest first. Includes the bin; callers filter with `!deletedAt`. */
+export function usePayments(projectId: string | undefined): Payment[] {
+  return (
+    useLiveQuery(
+      async () =>
+        projectId
+          ? (await db.payments.where('projectId').equals(projectId).toArray()).sort(
+              (a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt,
+            )
+          : [],
+      [projectId],
+    ) ?? []
+  )
+}
+
+export function useAttachments(paymentId: string | undefined): Attachment[] {
+  return (
+    useLiveQuery(
+      async () =>
+        paymentId ? (await db.attachments.where('paymentId').equals(paymentId).toArray()).filter((a) => !a.deletedAt) : [],
+      [paymentId],
+    ) ?? []
+  )
+}
+
+export function usePlans(projectId: string | undefined): PaymentPlan[] {
+  return (
+    useLiveQuery(
+      async () =>
+        projectId
+          ? (await db.plans.where('projectId').equals(projectId).toArray())
+              .filter((p) => !p.deletedAt)
+              .sort((a, b) => a.weekday - b.weekday || a.purpose.localeCompare(b.purpose))
+          : [],
+      [projectId],
+    ) ?? []
+  )
+}
+
+/** Transfers of a project, newest first. Includes the bin; callers filter with `!deletedAt`. */
+export function useTransfers(projectId: string | undefined): Transfer[] {
+  return (
+    useLiveQuery(
+      async () =>
+        projectId
+          ? (await db.transfers.where('projectId').equals(projectId).toArray()).sort(
+              (a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt,
+            )
+          : [],
+      [projectId],
+    ) ?? []
+  )
+}
+
+/** Material purchases of a project, newest first (the bin is not used: deleted lines are filtered out). */
+export function useMaterials(projectId: string | undefined): MaterialLine[] {
+  return (
+    useLiveQuery(
+      async () =>
+        projectId
+          ? (await db.materials.where('projectId').equals(projectId).toArray())
+              .filter((m) => !m.deletedAt)
+              .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+          : [],
+      [projectId],
+    ) ?? []
+  )
+}
+
+/** Documents and photos of a project, newest first. */
+export function useFiles(projectId: string | undefined): ProjectFile[] {
+  return (
+    useLiveQuery(
+      async () =>
+        projectId
+          ? (await db.files.where('projectId').equals(projectId).toArray())
+              .filter((f) => !f.deletedAt)
+              .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+          : [],
+      [projectId],
+    ) ?? []
+  )
+}
+
+/** Contracts of a project, newest first. */
+export function useContracts(projectId: string | undefined): Contract[] {
+  return (
+    useLiveQuery(
+      async () =>
+        projectId
+          ? (await db.contracts.where('projectId').equals(projectId).toArray())
+              .filter((c) => !c.deletedAt)
+              .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+          : [],
+      [projectId],
+    ) ?? []
+  )
+}
