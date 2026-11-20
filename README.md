@@ -169,6 +169,20 @@ worked out from the payments, weekly plans, contracts and transfers (`forecast` 
 - **Not on Home.** Home already holds a lot, so the forecast is only reached from the menu (Cash forecast, also under More on a phone).
 - Check: `npx vite-node scripts/forecast-test.ts`.
 
+## Sign in and Create account (`src/pages/SignIn.tsx`)
+
+Two modes on one page, chosen with the two buttons at the top, so the main button always says what it will do. Before, both buttons were
+greyed out until the password reached 6 characters, with nothing saying why; now nothing is greyed out (only while it is working) and a
+message under the field says what is missing.
+
+- **Sign in**: email and password. A wrong email or password says so in plain words and points to Create account.
+- **Create account** also asks for **your name** (shown next to the payments you add and on statements) and **your role** (investor pays
+  and approves; builder adds entries for the investor to approve), the two things the app already kept per device in Settings.
+  Phone number, address and the like are not asked: nothing in the app uses them.
+- The password field has a show/hide button. An email that already has an account is told to sign in instead.
+- The name and role are kept on this device at once and stored in the account (`user_metadata`); a second phone that has none of its own
+  takes them from the account when it signs in (`SyncProvider`). Role is still only a setting on the device: it is not enforced by the server.
+
 ## New project and Edit project (`/projects/new`, `/projects/:id/edit`)
 
 One form for both, in the same look as the other screens: a **Back** link, a title with one line under it, and the fields in cards —
