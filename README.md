@@ -169,6 +169,21 @@ worked out from the payments, weekly plans, contracts and transfers (`forecast` 
 - **Not on Home.** Home already holds a lot, so the forecast is only reached from the menu (Cash forecast, also under More on a phone).
 - Check: `npx vite-node scripts/forecast-test.ts`.
 
+## New project and Edit project (`/projects/new`, `/projects/:id/edit`)
+
+One form for both, in the same look as the other screens: a **Back** link, a title with one line under it, and the fields in cards —
+**Basics** (photo, name, location), **Size of the house** (plot, covered area, floors), **Budget and dates**, and, for a new project only,
+**Phases**. The page stays outside the main menu on purpose, so it also works before any project exists.
+
+- Only the name is needed. Without it the page says so, moves to the name field and does not save.
+- While you type, it works out **the budget for each sq ft** (budget ÷ covered area) and **how long the build is** (start to finish), and
+  warns when the finish date is before the start. These are small pure functions in `src/lib/project-plan.ts`,
+  checked by `npx vite-node scripts/project-plan-test.ts`.
+- The Phases card lists the 12 standard phases before you choose, so "Standard house build" is not a surprise; "Blank list" says you add
+  your own later.
+- **Create project** / **Save** is disabled while saving, so a double tap cannot make two projects. On a phone the Cancel and Save buttons
+  stay at the bottom of the screen.
+
 ## Deleting a project (Projects screen)
 
 Every project card on the **Projects** screen has a **Delete** button (it was only in Settings, Project, and only for the open project). It opens
