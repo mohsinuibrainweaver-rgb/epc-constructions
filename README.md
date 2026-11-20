@@ -250,6 +250,13 @@ One form for both, in the same look as the other screens: a **Back** link, a tit
 - **Create project** / **Save** is disabled while saving, so a double tap cannot make two projects. On a phone the Cancel and Save buttons
   stay at the bottom of the screen.
 
+## The Projects screen (`/projects`)
+
+One card per project, all the same height with their buttons on one line: the picture (nothing drawn over it), then the marks **Current** and
+your role in that project (Investor or Builder), the name and place, **Spent so far** in large type and, when the project has a budget,
+the share used (amber from 80 percent, red from 100), a bar, and "of {budget}". **Open** is the main button; **Edit** and **Delete** are
+small icon buttons (and are left out for a builder, who may not use them). On the same screen: **Join with a code** and **New project**.
+
 ## Deleting a project (Projects screen)
 
 Every project card on the **Projects** screen has a **Delete** button (it was only in Settings, Project, and only for the open project). It opens

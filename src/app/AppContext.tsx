@@ -17,6 +17,8 @@ interface AppCtx {
   roleFromProject: boolean
   /** Whether the person may do this in the open project. Only an investor may do the things in lib/permissions.ts. */
   can: (action: Action, projectId?: string) => boolean
+  /** What the person is in the given project (the Projects list shows several). */
+  roleOf: (projectId: string) => Role
   lang: Lang
   t: (key: Key, vars?: Record<string, string | number>) => string
   project?: Project
@@ -114,8 +116,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo<AppCtx>(
-    () => ({ settings, roleFromProject: fromProject, can, lang, t, project, projects: list, phaseName }),
-    [settings, fromProject, can, lang, t, project, list, phaseName],
+    () => ({ settings, roleFromProject: fromProject, can, roleOf: roleIn, lang, t, project, projects: list, phaseName }),
+    [settings, fromProject, can, roleIn, lang, t, project, list, phaseName],
   )
 
   // Wait for the first read from the local database so the app never flashes empty.

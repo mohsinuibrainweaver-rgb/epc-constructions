@@ -104,6 +104,7 @@ export const en = {
   'projects.current': 'Current',
   'projects.open': 'Open',
   'projects.spent': 'Spent so far',
+  'projects.ofBudget': 'of {amount} budget',
 
   'pf.new': 'New project',
   'pf.edit': 'Edit project',
