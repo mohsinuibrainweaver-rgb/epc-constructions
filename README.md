@@ -27,7 +27,7 @@ npm install
 npm run dev          # http://localhost:5173, hot reload (service worker off)
 npm run build        # type-check and production build with the service worker
 npm run preview      # http://localhost:4173, test install and offline here
-node scripts/make-icons.mjs   # regenerate PWA icons from src/assets/brand/endpoint-mark.svg
+node scripts/make-brand-assets.cjs   # mark-only logo files and PWA icons, made from the two logo files in src/assets/brand
 ```
 
 Install and push need `https` (or `localhost`). To try it on a phone, deploy the `dist` folder to any static host.

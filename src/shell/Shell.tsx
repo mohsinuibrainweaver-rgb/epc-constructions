@@ -3,7 +3,7 @@ import { EmptyState } from '@/components/common'
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Banknote, Bell, BellOff, CalendarClock, ChartColumn, Ellipsis, FileSignature, FileText, FolderOpen, GitCompareArrows, House, Layers3, Package, Plus, ReceiptText, RefreshCw, Scale, Search, Settings as SettingsIcon, TriangleAlert, Users, WifiOff } from 'lucide-react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
-import { BrandMark } from '@/components/Brand'
+import { BrandLogo, BrandMark } from '@/components/Brand'
 import { useApp } from '@/app/AppContext'
 import { ConflictsDialog } from '@/components/ConflictsDialog'
 import { SyncChip } from '@/components/SyncChip'
@@ -249,12 +249,8 @@ export function Shell() {
       >
         <div className="flex flex-col items-center gap-2 lg:flex-row lg:gap-2 lg:[&>[data-slot=badge]]:ms-auto">
           <Link to="/" aria-label={t('app.name')} className="flex min-h-9 items-center justify-center gap-2.5 rounded-control px-1 lg:shrink-0 lg:justify-start">
-            <BrandMark onDark className="h-7 w-auto shrink-0" />
-            <span aria-hidden="true" className="hidden text-sm leading-tight font-semibold lg:block">
-              {t('app.name.1')}
-              <br />
-              {t('app.name.2')}
-            </span>
+            <BrandMark onDark className="h-7 w-auto shrink-0 lg:hidden" />
+            <BrandLogo onDark alt="" className="hidden h-8 w-auto shrink-0 lg:block" />
           </Link>
           {sideChip}
         </div>
