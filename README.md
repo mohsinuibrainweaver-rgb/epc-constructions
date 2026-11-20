@@ -144,6 +144,25 @@ from the chip. Check: `npx vite-node scripts/recent-test.ts`.
 - Rules in `budgetPlan` (`src/lib/stats.ts`); removed phases are ignored and a budget of 0 counts as none. Check:
   `npx vite-node scripts/budget-plan-test.ts`. Nothing is stored; it is worked out from the phases and payments.
 
+## Cash forecast (`/forecast`)
+
+What the coming weeks will cost, from what is already written down. Open it from the menu ("Cash forecast"). Nothing is stored; it is
+worked out from the payments, weekly plans, contracts and transfers (`forecast` and `cashAdvice` in `src/lib/forecast.ts`).
+
+- **Needed in the next 30 days** as the headline figure, with what is overdue included, and below it: overdue, next 7 days, planned later
+  than the 12 weeks shown, and the money on active contracts that has no day yet.
+- **What counts:** planned payments (overdue ones are due now); the weekly plans' coming payments. The app creates a plan's payment only a
+  week ahead, so the later Thursdays (or whichever day) are projected as **expected** unless a payment for that plan and day already
+  exists (paid, skipped, planned or removed); the unplanned balance of each active contract (agreed total minus paid, waiting for
+  approval and already planned). Paid and approved money is spent, so it is not in the forecast.
+- **Who pays:** what you pay directly and what the builder pays in the next 30 days, what cash the builder holds (from Settlement: a
+  negative builder balance), and either "Send about Rs x more so he can pay it" or "His cash is enough".
+- **Week by week:** columns for 12 weeks starting today (planned solid, expected with a dashed outline, overdue first in amber). Tap a
+  column or use the arrow keys, and what is due in that week is listed under the chart; a planned payment opens for editing. The
+  chart is plain SVG, always left to right, with the colours of the Compare page.
+- **Contracts with money not yet planned** lists the contracts that still need a planned payment, each opening the contract.
+- Check: `npx vite-node scripts/forecast-test.ts`.
+
 ## Compare projects (`/compare`)
 
 A page that puts two projects side by side: where the money went in an earlier project and where it is going in this one. Open it

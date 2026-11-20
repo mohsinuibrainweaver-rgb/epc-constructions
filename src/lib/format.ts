@@ -48,6 +48,10 @@ export const formatMonth = (key: string, lang: Lang): string =>
     new Date(`${key}-01T00:00:00`),
   )
 
+/** A day in few characters, for chart axes: 21 Nov. */
+export const formatDayShort = (iso: string, lang: Lang): string =>
+  new Intl.DateTimeFormat(locale(lang), { day: 'numeric', month: 'short' }).format(new Date(`${iso}T00:00:00`))
+
 /** A month in few characters, for chart axes: Nov 26. */
 export const formatMonthShort = (key: string, lang: Lang): string =>
   new Intl.DateTimeFormat(locale(lang), { month: 'short', year: '2-digit' }).format(new Date(`${key}-01T00:00:00`))
