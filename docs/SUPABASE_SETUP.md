@@ -71,11 +71,18 @@ there with a **Copy the update SQL** button. Press it, open **SQL Editor → New
 (The bank details of a transfer added four columns: `payments.bank_name`, `payments.bank_account`, `payments.bank_ref`
 and `vendors.bank_name`.)
 
-## 5. Invite your brother
+## 5. Invite your brother (or the builder)
 
-1. In the app open **Settings → People on this project**, enter his email, choose his role, and press **Invite**.
-2. He opens the app, signs in with that same email, and the project appears after the first sync.
+After running the updated `supabase/schema.sql` (step 4b), invitations are one-time codes:
 
+1. Open the project, then **Settings → Project → People on this project**. Choose his role (Builder or Investor) and press
+   **Create invite code**.
+2. Press **Send on WhatsApp** (or **Copy code**) and send it to him. A code works once and ends after 7 days. No email is sent.
+3. He opens the app, creates his account (or signs in), chooses **Join with a code** and enters it (or opens the link in your message).
+   The project appears after the first sync, and he has the role you chose.
+
+A builder sees everything in the project but cannot change the budget, contracts, advances or the project itself, and his paid
+entries wait for your approval. See "Roles in a project, and invitations" in the README.
 ## 6. The app online (done)
 
 The app is live at <https://epc-construction.vercel.app> (Vercel account `isometric.mohsin@gmail.com`).
@@ -94,9 +101,8 @@ Sign in to Vercel as `isometric.mohsin@gmail.com` first (`npx vercel@latest logi
 
 ## Optional hardening
 
-After you and your brother have both signed in once, turn off **Allow new users to sign up** (Authentication →
-Sign In / Providers) so nobody else can create an account on your project. Invited people must sign in once
-before you do this.
+A new account sees nothing without an invite code, so closing sign-ups is optional. If you want to, turn off **Allow new users to
+sign up** (Authentication → Sign In / Providers) after everyone who needs an account has one.
 
 ## How sync behaves
 

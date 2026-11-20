@@ -3,14 +3,20 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2 } from 'lucide-react'
 import { db } from '../db/db'
 import { DEFAULT_SETTINGS, ensurePlanPayments, purgeBin } from '../db/actions'
-import type { Lang, Phase, Project, Settings } from '../db/types'
+import type { Lang, Phase, Project, Role, Settings } from '../db/types'
 import { en, type Key } from '../i18n/en'
 import { ur } from '../i18n/ur'
 import { interpolate } from '../lib/format'
+import { can as canDo, type Action } from '../lib/permissions'
 import { currencyLabel, regionFrom, setRegion } from '../lib/region'
 
 interface AppCtx {
+  /** The settings of this device, with `role` already worked out for the open project (see `roleFromProject`). */
   settings: Settings
+  /** True when the role comes from the project (the server says what this person is there); false when it is this device's own setting. */
+  roleFromProject: boolean
+  /** Whether the person may do this in the open project. Only an investor may do the things in lib/permissions.ts. */
+  can: (action: Action, projectId?: string) => boolean
   lang: Lang
   t: (key: Key, vars?: Record<string, string | number>) => string
   project?: Project
@@ -27,7 +33,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  const settings = useMemo<Settings>(() => {
+  const deviceSettings = useMemo<Settings>(() => {
     const s: Settings = { ...DEFAULT_SETTINGS }
     for (const r of rows ?? []) (s as unknown as Record<string, unknown>)[r.key] = r.value
     return s
@@ -35,10 +41,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // The region choices (date, number and money writing) are read by plain functions such as money(), so they are
   // handed over here, before anything below renders. Everything that shows them re-renders when `settings` changes.
-  setRegion(settings.region)
-  const currency = regionFrom(settings.region).currency
+  setRegion(deviceSettings.region)
+  const currency = regionFrom(deviceSettings.region).currency
 
-  const lang = settings.language
+  const lang = deviceSettings.language
   useEffect(() => {
     document.documentElement.lang = lang
     document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr'
@@ -53,17 +59,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Weekly plans: create this week's (and next week's) due payments, now and whenever the app is opened again.
   const planKey = useLiveQuery(
     async () => {
-      const id = (await db.projects.toArray()).find((p) => !p.deletedAt && p.id === settings.currentProjectId)?.id
+      const id = (await db.projects.toArray()).find((p) => !p.deletedAt && p.id === deviceSettings.currentProjectId)?.id
       if (!id) return ''
       return (await db.plans.where('projectId').equals(id).toArray())
         .filter((p) => p.active && !p.deletedAt)
         .map((p) => `${p.id}:${p.weekday}:${p.startDate}:${p.generatedThrough ?? ''}`)
         .join('|')
     },
-    [settings.currentProjectId],
+    [deviceSettings.currentProjectId],
   )
   useEffect(() => {
-    const id = settings.currentProjectId
+    const id = deviceSettings.currentProjectId
     if (!id || !planKey) return
     const run = () => void ensurePlanPayments(id)
     run()
@@ -74,7 +80,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('visibilitychange', onVisible)
       clearInterval(timer)
     }
-  }, [settings.currentProjectId, planKey])
+  }, [deviceSettings.currentProjectId, planKey])
 
   // {cur} in a text is the currency word of the field labels: "Amount ({cur})".
   const t = useCallback(
@@ -84,7 +90,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const list = projects ?? []
-  const project = list.find((p) => p.id === settings.currentProjectId) ?? list[0]
+  const project = list.find((p) => p.id === deviceSettings.currentProjectId) ?? list[0]
+
+  // The role belongs to the project: the server says what this person is in it (kept as `member.role.<id>` by the sync).
+  // Without that (a project that has not reached the server, or no account) the device's own setting is used.
+  const memberRole = project ? rows?.find((r) => r.key === `member.role.${project.id}`)?.value : undefined
+  const fromProject = memberRole === 'investor' || memberRole === 'builder'
+  const role: Role = fromProject ? memberRole : deviceSettings.role
+  const settings = useMemo<Settings>(() => ({ ...deviceSettings, role }), [deviceSettings, role])
+  // The same for any project (the Projects list shows several, and the person may be an investor in one and a builder in another).
+  const roleIn = useCallback(
+    (id: string): Role => {
+      const v = rows?.find((r) => r.key === `member.role.${id}`)?.value
+      return v === 'investor' || v === 'builder' ? v : deviceSettings.role
+    },
+    [rows, deviceSettings.role],
+  )
+  const can = useCallback((action: Action, projectId?: string) => canDo(projectId ? roleIn(projectId) : role, action), [role, roleIn])
 
   const phaseName = useCallback(
     (p: Phase) => p.name || (p.key ? t(`phase.${p.key}` as Key) : ''),
@@ -92,8 +114,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo<AppCtx>(
-    () => ({ settings, lang, t, project, projects: list, phaseName }),
-    [settings, lang, t, project, list, phaseName],
+    () => ({ settings, roleFromProject: fromProject, can, lang, t, project, projects: list, phaseName }),
+    [settings, fromProject, can, lang, t, project, list, phaseName],
   )
 
   // Wait for the first read from the local database so the app never flashes empty.

@@ -129,7 +129,7 @@ const phaseIcon = (ph: Phase): LucideIcon => (ph.key && PHASE_ICONS[ph.key]) || 
 
 /** How the project budget is split across phases, what is left to give out, and money that sits outside every phase. */
 function BudgetPlanCard({ phases, payments }: { phases: Phase[]; payments: Payment[] }) {
-  const { t, project } = useApp()
+  const { t, project, can } = useApp()
   const plan = budgetPlan(phases, payments, project?.budget)
   const pb = plan.projectBudget
   const noBudget = plan.total - plan.withBudget
@@ -165,7 +165,7 @@ function BudgetPlanCard({ phases, payments }: { phases: Phase[]; payments: Payme
       ) : (
         <>
           <p>{t('phases.planGivenOnly', { given: money(plan.allocated) })}</p>
-          {project && (
+          {project && can('editProject') && (
             <p className="text-sm text-muted-foreground">
               {t('phases.planNoProject')}{' '}
               <Link className="font-semibold text-primary underline-offset-2 hover:underline" to={`/projects/${project.id}/edit`}>
@@ -187,7 +187,8 @@ function BudgetPlanCard({ phases, payments }: { phases: Phase[]; payments: Payme
 }
 
 export function Phases() {
-  const { t, project, phaseName } = useApp()
+  const { t, project, phaseName, can } = useApp()
+  const editable = can('editPhases')
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
   const [adding, setAdding] = useState(false)
@@ -198,10 +199,12 @@ export function Phases() {
       <PageHeader
         title={t('phases.title')}
         actions={
-          <Button variant="secondary" onClick={() => setAdding(true)}>
-            <Plus aria-hidden="true" />
-            {t('phases.add')}
-          </Button>
+          editable && (
+            <Button variant="secondary" onClick={() => setAdding(true)}>
+              <Plus aria-hidden="true" />
+              {t('phases.add')}
+            </Button>
+          )
         }
       />
 
@@ -253,7 +256,7 @@ export function Phases() {
                       )}
                     </span>
                   </Link>
-                  <div className="flex shrink-0 justify-end gap-2">
+                  {editable && <div className="flex shrink-0 justify-end gap-2">
                     <Button
                       size="icon-sm"
                       variant="outline"
@@ -277,7 +280,7 @@ export function Phases() {
                     <Button size="icon-sm" variant="outline" aria-label={`${t('common.edit')}: ${name}`} title={t('common.edit')} onClick={() => setEditing(ph)}>
                       <Pencil aria-hidden="true" />
                     </Button>
-                  </div>
+                  </div>}
                 </Card>
               </li>
             )
@@ -294,7 +297,8 @@ export function Phases() {
 
 export function PhaseDetail() {
   const { id } = useParams()
-  const { t, project, phaseName } = useApp()
+  const { t, project, phaseName, can } = useApp()
+  const editable = can('editPhases')
   const nav = useNavigate()
   const phases = usePhases(project?.id)
   const vendors = useVendors(project?.id)
@@ -332,14 +336,18 @@ export function PhaseDetail() {
                   {t('stmt.open')}
                 </Link>
               </Button>
-              <Button variant="outline" onClick={() => setEditing(true)}>
-                <Pencil aria-hidden="true" />
-                {t('common.edit')}
-              </Button>
-              <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
-                <Trash2 aria-hidden="true" />
-                {t('common.delete')}
-              </Button>
+              {editable && (
+                <>
+                  <Button variant="outline" onClick={() => setEditing(true)}>
+                    <Pencil aria-hidden="true" />
+                    {t('common.edit')}
+                  </Button>
+                  <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
+                    <Trash2 aria-hidden="true" />
+                    {t('common.delete')}
+                  </Button>
+                </>
+              )}
             </>
           }
         />

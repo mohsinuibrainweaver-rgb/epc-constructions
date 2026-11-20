@@ -26,7 +26,7 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
 }
 
 export function Settlement() {
-  const { t, lang, project, phaseName } = useApp()
+  const { t, lang, project, phaseName, can } = useApp()
   const toast = useToast()
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
@@ -66,10 +66,12 @@ export function Settlement() {
         title={t('stl.title')}
         actions={
           <div className="flex flex-wrap gap-2 print:hidden">
-            <Button variant="secondary" onClick={() => setAdding(true)}>
-              <Plus aria-hidden="true" />
-              {t('stl.addTransfer')}
-            </Button>
+            {can('editTransfers') && (
+              <Button variant="secondary" onClick={() => setAdding(true)}>
+                <Plus aria-hidden="true" />
+                {t('stl.addTransfer')}
+              </Button>
+            )}
             <Button variant="outline" onClick={() => window.print()}>
               <Printer aria-hidden="true" />
               {t('stl.print')}
@@ -106,10 +108,12 @@ export function Settlement() {
         <Card>
           <CardHeader className="flex-row items-center justify-between gap-3">
             <CardTitle className="text-lg">{t('stl.fee')}</CardTitle>
-            <Button size="sm" variant="outline" className="print:hidden" onClick={() => setFeeOpen(true)}>
-              <Pencil aria-hidden="true" />
-              {t('stl.feeEdit')}
-            </Button>
+            {can('editFee') && (
+              <Button size="sm" variant="outline" className="print:hidden" onClick={() => setFeeOpen(true)}>
+                <Pencil aria-hidden="true" />
+                {t('stl.feeEdit')}
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <p className="mb-2 font-semibold">{feeBasisText}</p>
@@ -190,7 +194,7 @@ export function Settlement() {
                   </p>
                 </div>
                 <strong className="tabular whitespace-nowrap">{money(x.amount)}</strong>
-                <div className="flex gap-1 print:hidden">
+                {can('editTransfers') && <div className="flex gap-1 print:hidden">
                   <Button size="icon" variant="ghost" aria-label={`${t('common.edit')}: ${t(`xfer.${x.kind}` as Key)}`} onClick={() => setEditing(x)}>
                     <Pencil aria-hidden="true" />
                   </Button>
@@ -211,7 +215,7 @@ export function Settlement() {
                   >
                     <Trash2 aria-hidden="true" />
                   </Button>
-                </div>
+                </div>}
               </li>
             ))}
           </ul>

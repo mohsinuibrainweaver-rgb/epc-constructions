@@ -176,14 +176,49 @@ greyed out until the password reached 6 characters, with nothing saying why; now
 message under the field says what is missing.
 
 - **Sign in**: email and password. A wrong email or password says so in plain words and points to Create account.
-- **Create account** also asks for **your name** (shown next to the payments you add and on statements) and **your role** (investor pays
-  and approves; builder adds entries for the investor to approve), the two things the app already kept per device in Settings.
+- **Create account** also asks for **your name** (shown next to the payments you add and on statements). It does not ask for a role:
+  the role comes from the project (see "Roles in a project" below).
   Phone number, address and the like are not asked: nothing in the app uses them.
 - The password field has a show/hide button. An email that already has an account is told to sign in instead.
-- The name and role belong to the **account** (its `user_metadata`), not to the phone. When a phone signs in as an account it takes them
+- The name belongs to the **account** (its `user_metadata`), not to the phone. When a phone signs in as an account it takes them
   from the account (`SyncProvider`, `src/lib/profile.ts`), so values left on the phone by another account (a test account, say) never show
   up. Changing them in Settings, Account saves them to the account as well. An older account that has no name or role yet keeps whatever
-  the phone has until they are set once in Settings. Role is still only a setting in the app: the server does not enforce it.
+  the phone has until it is set once in Settings.
+
+## Roles in a project, and invitations (`supabase/schema.sql`, `src/lib/permissions.ts`)
+
+A person is an **investor** or a **builder** *in each project* (`project_members`), not on the phone. The person who creates a project is its
+investor. The server decides what each may do; the app leaves out the buttons a builder could not use. **Anyone in a project sees all of it**
+(payments, budgets, contracts, vendors, settlement, reports): the two of you work from the same numbers. What differs is who may write.
+
+| | Investor | Builder |
+|---|---|---|
+| Add payments, vendors, materials, files, weekly payments; mark a phase done | yes | yes |
+| A paid or advance entry | counts at once | waits for the investor (always pending, however it is sent) |
+| Approve or reject entries | yes | no |
+| Change or delete an entry | any | a planned one, or his own that is pending or turned down; not an approved one, and not a paid one the investor entered |
+| Project details, phases and their budgets, contracts, advances/transfers, the builder's fee | yes | read only |
+| Invite, remove people, change roles, delete the project | yes | no (a builder may leave) |
+
+- **Server rules** (`role_guard`, `member_guard`, policies): a write a builder may not make is *ignored*, never an error, so one refused row does
+  not fail the batch the app sends. Nobody changes their own role; only an investor changes another person's. Only an investor reads, makes or
+  withdraws invitations. Dashboard and service-key writes are not limited.
+- **In the app** `settings.role` is the role in the open project (`member.role.<project id>`, refreshed from the server on every sync and
+  kept for offline use); a project that has not reached the server, or no account, falls back to the setting on the device. Settings, Account
+  shows the role read only when the project decides it. `can(action, projectId?)` in `useApp()` hides the investor-only buttons; an Edit project
+  address opened by a builder says only the investor can do it; an approved entry opened by a builder shows a notice and cannot be saved.
+- **If the server refuses anyway** (`sync/engine.ts`): a refused *new* row is taken off the phone and a notice says so; a refused *edit* is
+  replaced by the server's version (and kept in the "changed by someone else" notice).
+- **Invitations are one-time codes.** Settings, Project, People (investor only): choose Builder or Investor, **Create invite code**, then **Send on
+  WhatsApp** or **Copy code**. A code is 12 letters and numbers (ABCD-EFGH-IJKL), works once and ends after 7 days; no email is sent. The other
+  person creates an account, then chooses **Join with a code** (on the start screen or Projects) and enters it, or opens the link in the message
+  (`/join?code=...`). They get the role the code names. A code can be withdrawn before it is used.
+- Invitations to an **email address** still work, but only for an address the person has confirmed, so nobody can claim one by registering
+  someone else's address (`claim_invites`).
+- **Setup:** run `supabase/schema.sql` once more in Supabase, SQL Editor (it is safe to run again). Until then the app still works as before; Join
+  with a code says the server is not updated yet.
+- Checks: `npx vite-node scripts/roles-test.ts` (the server rules, in an in-process Postgres), `scripts/permissions-test.ts`,
+  `scripts/schema-test.ts`, and `VITE_SUPABASE_URL=http://localhost:54397 VITE_SUPABASE_ANON_KEY=test-key-not-a-secret npx vite-node scripts/sync-refused-test.ts`.
 
 ## Whose data is on this phone (`src/sync/device.ts`, `src/lib/device-owner.ts`)
 

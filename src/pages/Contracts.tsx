@@ -31,7 +31,8 @@ function Figure({ label, value, tone }: { label: string; value: string; tone?: '
 }
 
 export function Contracts() {
-  const { t, lang, project } = useApp()
+  const { t, lang, project, can } = useApp()
+  const editable = can('editContracts')
   const contracts = useContracts(project?.id)
   const payments = usePayments(project?.id)
   const vendors = useVendors(project?.id)
@@ -58,10 +59,12 @@ export function Contracts() {
       <PageHeader
         title={t('nav.contracts')}
         actions={
-          <Button variant="secondary" onClick={() => setAdding(true)}>
-            <Plus aria-hidden="true" />
-            {t('contract.add')}
-          </Button>
+          editable && (
+            <Button variant="secondary" onClick={() => setAdding(true)}>
+              <Plus aria-hidden="true" />
+              {t('contract.add')}
+            </Button>
+          )
         }
       />
 
@@ -159,7 +162,8 @@ export function Contracts() {
 
 export function ContractDetail() {
   const { id } = useParams()
-  const { t, lang, project, phaseName } = useApp()
+  const { t, lang, project, phaseName, can } = useApp()
+  const editable = can('editContracts')
   const toast = useToast()
   const nav = useNavigate()
   const contract = useContracts(project?.id).find((c) => c.id === id)
@@ -211,10 +215,12 @@ export function ContractDetail() {
                 {t('stmt.open')}
               </Link>
             </Button>
-            <Button variant="outline" onClick={() => setEditing(true)}>
-              <Pencil aria-hidden="true" />
-              {t('common.edit')}
-            </Button>
+            {editable && (
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                <Pencil aria-hidden="true" />
+                {t('common.edit')}
+              </Button>
+            )}
           </>
         }
       />
@@ -246,7 +252,7 @@ export function ContractDetail() {
             {s.awaiting > 0 && <p className="rounded-xl bg-warning-soft p-3 text-sm font-semibold text-warning">{t('contract.awaitingNote', { amount: money(s.awaiting) })}</p>}
             {s.state === 'overpaid' && <p role="status" className="rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger">{t('contract.overNote', { amount: money(s.over) })}</p>}
             {contract.note && <p className="whitespace-pre-wrap text-muted-foreground">{contract.note}</p>}
-            <div className="flex flex-wrap gap-2">
+            {editable && <div className="flex flex-wrap gap-2">
               {contract.status === 'active' ? (
                 <>
                   <Button variant="outline" onClick={() => void setStatus('completed')}>
@@ -268,7 +274,7 @@ export function ContractDetail() {
                 <Trash2 aria-hidden="true" />
                 {t('common.delete')}
               </Button>
-            </div>
+            </div>}
           </CardContent>
         </Card>
 
@@ -277,10 +283,12 @@ export function ContractDetail() {
             <h2 id="var-title" className="text-lg font-semibold">
               {t('contract.variations')}
             </h2>
-            <Button size="sm" variant="outline" onClick={() => setVariation({ open: true })}>
-              <Plus aria-hidden="true" />
-              {t('contract.addVariation')}
-            </Button>
+            {editable && (
+              <Button size="sm" variant="outline" onClick={() => setVariation({ open: true })}>
+                <Plus aria-hidden="true" />
+                {t('contract.addVariation')}
+              </Button>
+            )}
           </div>
           {contract.variations.length === 0 ? (
             <p className="px-4 pb-4 text-sm text-muted-foreground">{t('contract.noVariations')}</p>
@@ -296,12 +304,16 @@ export function ContractDetail() {
                     {v.amount > 0 ? '+' : '−'}
                     {money(Math.abs(v.amount))}
                   </span>
-                  <Button variant="ghost" size="icon" aria-label={`${t('common.edit')}: ${v.title}`} onClick={() => setVariation({ open: true, v })}>
-                    <Pencil aria-hidden="true" />
-                  </Button>
-                  <Button variant="ghost" size="icon" aria-label={`${t('common.delete')}: ${v.title}`} onClick={() => void removeVariation(contract.id, v.id)}>
-                    <Trash2 aria-hidden="true" />
-                  </Button>
+                  {editable && (
+                    <>
+                      <Button variant="ghost" size="icon" aria-label={`${t('common.edit')}: ${v.title}`} onClick={() => setVariation({ open: true, v })}>
+                        <Pencil aria-hidden="true" />
+                      </Button>
+                      <Button variant="ghost" size="icon" aria-label={`${t('common.delete')}: ${v.title}`} onClick={() => void removeVariation(contract.id, v.id)}>
+                        <Trash2 aria-hidden="true" />
+                      </Button>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

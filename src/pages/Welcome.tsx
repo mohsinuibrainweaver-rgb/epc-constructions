@@ -27,6 +27,9 @@ export function Welcome() {
           <Button asChild size="lg">
             <Link to="/projects/new">{t('welcome.cta')}</Link>
           </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link to="/join">{t('welcome.join')}</Link>
+          </Button>
           <Button variant="outline" size="lg" onClick={() => void setSetting('language', lang === 'en' ? 'ur' : 'en')} lang={lang === 'en' ? 'ur' : 'en'}>
             {lang === 'en' ? 'اردو' : 'English'}
           </Button>

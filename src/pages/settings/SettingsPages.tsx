@@ -135,7 +135,7 @@ export function SettingsSectionPage() {
 /* ---------------------------------------------------------------- Account */
 
 function AccountSection() {
-  const { t, settings } = useApp()
+  const { t, settings, roleFromProject } = useApp()
   const sync = useSync()
   const [pw, setPw] = useState(false)
   const [everywhere, setEverywhere] = useState(false)
@@ -167,8 +167,11 @@ function AccountSection() {
         />
         <SettingRow
           label={t('set.role')}
-          help={t('set.roleHelp')}
-          control={(a) => (
+          help={roleFromProject ? t('set.roleFromProject') : t('set.roleHelp')}
+          control={(a) =>
+            roleFromProject ? (
+              <span className="font-semibold">{t(settings.role === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')}</span>
+            ) : (
             <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={settings.role} onValueChange={(v) => {
                 void setSetting('role', v as Role)
                 void saveProfile({ role: v as Role })
@@ -261,7 +264,7 @@ function PreferencesSection() {
 /* ---------------------------------------------------------------- Project */
 
 function ProjectSection() {
-  const { t, project } = useApp()
+  const { t, project, can } = useApp()
   const sync = useSync()
   const [deleting, setDeleting] = useState(false)
   if (!project) return <p className="text-muted-foreground">{t('set.noProject')}</p>
@@ -272,9 +275,13 @@ function ProjectSection() {
           label={project.name}
           help={t('set.projectDetailsHelp')}
           control={
-            <Button asChild variant="outline">
-              <Link to={`/projects/${project.id}/edit`}>{t('pf.edit')}</Link>
-            </Button>
+            can('editProject') ? (
+              <Button asChild variant="outline">
+                <Link to={`/projects/${project.id}/edit`}>{t('pf.edit')}</Link>
+              </Button>
+            ) : (
+              <span className="text-sm text-muted-foreground">{t('perm.investorOnly')}</span>
+            )
           }
         />
         <SettingRow
@@ -290,17 +297,19 @@ function ProjectSection() {
 
       {sync.configured && sync.session && <People />}
 
-      <SettingsSection title={t('set.danger')} tone="danger">
-        <SettingRow
-          label={t('set.deleteProject')}
-          help={t('set.deleteHelp')}
-          control={
-            <Button variant="destructive" onClick={() => setDeleting(true)}>
-              {t('set.deleteProject')}
-            </Button>
-          }
-        />
-      </SettingsSection>
+      {can('deleteProject') && (
+        <SettingsSection title={t('set.danger')} tone="danger">
+          <SettingRow
+            label={t('set.deleteProject')}
+            help={t('set.deleteHelp')}
+            control={
+              <Button variant="destructive" onClick={() => setDeleting(true)}>
+                {t('set.deleteProject')}
+              </Button>
+            }
+          />
+        </SettingsSection>
+      )}
       <DeleteProjectDialog open={deleting} project={project} onClose={() => setDeleting(false)} />
     </>
   )

@@ -22,6 +22,7 @@ import { contractAlerts } from '@/lib/contracts'
 import { buildAlerts } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 import { syncPushLanguage } from '@/push/push'
+import { onRefused } from '@/sync/engine'
 import { useSync } from '@/sync/SyncProvider'
 
 const NAV: { to: string; key: Key; icon: typeof House; end?: boolean }[] = [
@@ -137,6 +138,9 @@ export function Shell() {
   const online = useOnline()
   const sync = useSync()
   const [q, setQ] = useState('')
+
+  // The server did not accept some changes (only the investor may make them): they were taken off this phone, so say so.
+  useEffect(() => onRefused(() => toast.show({ kind: 'warning', message: t('sync.refused') })), [toast, t])
 
   // Edits that a newer edit from another phone replaced: a message when one appears, and a place to review them.
   const conflictCount = useConflictCount()

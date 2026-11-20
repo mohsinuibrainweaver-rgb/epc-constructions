@@ -9,6 +9,7 @@ import { isChunkError, recoverOnce, reloadFresh } from './pwa/recover'
 
 // Screens other than Home load on demand, which keeps the first load small on a phone.
 const ProjectForm = lazy(() => import('./pages/ProjectForm').then((m) => ({ default: m.ProjectForm })))
+const JoinProject = lazy(() => import('./pages/JoinProject').then((m) => ({ default: m.JoinProject })))
 const Projects = lazy(() => import('./pages/Projects').then((m) => ({ default: m.Projects })))
 const Phases = lazy(() => import('./pages/Phases').then((m) => ({ default: m.Phases })))
 const PhaseDetail = lazy(() => import('./pages/Phases').then((m) => ({ default: m.PhaseDetail })))
@@ -78,6 +79,7 @@ export default function App() {
       <Routes>
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/projects/new" element={<ProjectForm />} />
+        <Route path="/join" element={<JoinProject />} />
         <Route path="/projects/:id/edit" element={<ProjectForm />} />
         <Route element={<Shell />}>
           <Route index element={<Home />} />

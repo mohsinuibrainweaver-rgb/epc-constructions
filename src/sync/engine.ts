@@ -39,6 +39,17 @@ let pushTimer: ReturnType<typeof setTimeout> | undefined
 let pullTimer: ReturnType<typeof setTimeout> | undefined
 let stops: (() => void)[] = []
 
+/** Rows taken off this device during the current sync because the server refused them (see reconcileRejected). */
+let refusedNow = 0
+const refusedListeners = new Set<(n: number) => void>()
+/** Called with how many changes the server did not accept, so the person is told instead of finding out later. */
+export const onRefused = (f: (n: number) => void): (() => void) => {
+  refusedListeners.add(f)
+  return () => {
+    refusedListeners.delete(f)
+  }
+}
+
 const EPOCH = '1970-01-01T00:00:00+00:00'
 const PAGE = 1000
 
@@ -209,6 +220,15 @@ async function reconcileRejected(def: TableDef, rows: any[]): Promise<void> {
   if (error) throw named(def.name, error)
   const theirs = (data ?? []) as any[]
   await applyRows(def, theirs)
+  // A row the server has no version of at all is a new row it refused (a builder adding something only an investor may add).
+  // It would otherwise stay on this phone as if it were saved, so take it off and say so.
+  const there = new Set(theirs.map((r) => r.id as string))
+  const gone = rows.filter((r) => !there.has(r.id)).map((r) => r.id as string)
+  if (gone.length) {
+    await remoteTx([def.table], () => def.table.bulkDelete(gone))
+    refusedNow += gone.length
+  }
+  rows = rows.filter((r) => there.has(r.id))
   if (def.name === 'attachments') return // a receipt photo is never edited by hand, so there is nothing to put back
   await recordConflicts(def.name, rows, new Map(theirs.map((r) => [r.id as string, def.fromRemote(r)])))
 }
@@ -241,6 +261,21 @@ async function pull(): Promise<void> {
       if (data.length < PAGE || !progressed) break
     }
   }
+}
+
+/**
+ * This person's role in each project, from the server (project_members), kept as `member.role.<project id>` so the app can use it
+ * offline. The role belongs to the project, not to the phone.
+ */
+export async function refreshMembership(): Promise<void> {
+  if (!supabase || !userId) return
+  const { data, error } = await supabase.from('project_members').select('project_id, role').eq('user_id', userId)
+  if (error) return
+  const rows = (data ?? []) as { project_id: string; role: string }[]
+  const keep = new Set(rows.map((r) => `member.role.${r.project_id}`))
+  const old = ((await db.settings.toCollection().primaryKeys()) as string[]).filter((k) => k.startsWith('member.role.') && !keep.has(k))
+  await db.settings.bulkDelete(old)
+  await db.settings.bulkPut(rows.map((r) => ({ key: `member.role.${r.project_id}`, value: r.role })))
 }
 
 async function resetCursors(): Promise<void> {
@@ -296,8 +331,11 @@ export async function syncNow(): Promise<void> {
     const { data: claimed, error } = await supabase.rpc('claim_invites')
     if (error) throw named('claim_invites', error)
     if (typeof claimed === 'number' && claimed > 0) await resetCursors() // new projects became visible
+    refusedNow = 0
     await push()
     await pull()
+    await refreshMembership()
+    if (refusedNow > 0) refusedListeners.forEach((f) => f(refusedNow))
     set({ state: 'idle', pending: await countPending(), lastSync: Date.now(), error: undefined, warning: warnings.size ? [...warnings].join(', ') : undefined })
     void backfillBlobs().catch(() => undefined)
   } catch (e) {
@@ -309,6 +347,29 @@ export async function syncNow(): Promise<void> {
       void syncNow()
     }
   }
+}
+
+export type JoinResult = { ok: true; projectId: string } | { ok: false; reason: 'invalid' | 'offline' | 'notReady' | 'error'; message?: string }
+
+/** Joins a project with the one-time code the investor sent, then brings the project down to this phone. */
+export async function joinProject(code: string): Promise<JoinResult> {
+  if (!supabase || !userId) return { ok: false, reason: 'error' }
+  if (!navigator.onLine) return { ok: false, reason: 'offline' }
+  const { data, error } = await supabase.rpc('join_project', { p_code: code })
+  if (error) {
+    if (/invalid_code/.test(error.message)) return { ok: false, reason: 'invalid' }
+    // The server has not got join_project yet (the updated schema.sql was not run).
+    if (codeOf(error) === 'PGRST202' || codeOf(error) === '42883') return { ok: false, reason: 'notReady' }
+    return { ok: false, reason: 'error', message: error.message }
+  }
+  await resetCursors() // the project's rows are older than the cursors this phone already holds
+  await refreshMembership()
+  try {
+    await pull()
+  } catch {
+    // the next sync brings the rest
+  }
+  return { ok: true, projectId: String(data) }
 }
 
 const schedule = (ms: number) => {

@@ -36,7 +36,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 export function ProjectForm() {
   const { id } = useParams()
   const edit = Boolean(id)
-  const { t, projects } = useApp()
+  const { t, projects, can } = useApp()
   const nav = useNavigate()
   const toast = useToast()
   const existing = useLiveQuery(() => (id ? db.projects.get(id) : undefined), [id])
@@ -118,6 +118,16 @@ export function ProjectForm() {
     } finally {
       setBusy(false)
     }
+  }
+
+  // Only an investor changes a project's details (the server holds the same rule). A builder who opens this address is told so.
+  if (edit && id && !can('editProject', id)) {
+    return (
+      <main className="mx-auto grid w-full max-w-2xl gap-4 px-1 py-4 sm:py-8">
+        <BackLink to="/projects" label={t('common.back')} />
+        <PageHeader title={t('pf.edit')} subtitle={t('perm.investorOnly')} />
+      </main>
+    )
   }
 
   return (

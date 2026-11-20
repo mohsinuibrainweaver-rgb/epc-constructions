@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ApprovalNotice } from '@/components/ApprovalActions'
 import { db } from '@/db/db'
 import { binPayment, restorePayment, savePayment } from '@/db/actions'
+import { canChangePayment } from '@/lib/permissions'
 import { useAttachments, useContracts, usePayments, usePhases, useVendors } from '@/db/hooks'
 import {
   CATEGORIES,
@@ -84,6 +85,8 @@ export function AddPayment() {
   const payments = usePayments(project?.id)
   const contracts = useContracts(project?.id)
   const existing = useLiveQuery(() => (id ? db.payments.get(id) : undefined), [id])
+  // An approved entry, or a paid one the investor made himself, is closed to a builder (the server holds the same rule).
+  const locked = Boolean(existing && !canChangePayment(settings.role, existing))
   const existingFiles = useAttachments(id)
 
   const [misc, setMisc] = useState(sp.get('misc') === '1')
@@ -300,7 +303,7 @@ export function AddPayment() {
   }
 
   const submit = async (confirmed = false, addAnother = false) => {
-    if (!project || busy) return
+    if (!project || busy || locked) return
     addAnotherRef.current = addAnother
     const bankValue = (typed: string, saved: string | null | undefined): string | null | undefined =>
       mode === 'bank' && typed.trim() ? typed.trim() : saved ? null : undefined
@@ -379,7 +382,7 @@ export function AddPayment() {
   }
 
   const remove = async () => {
-    if (!id) return
+    if (!id || locked) return
     await binPayment(id)
     toast.show({
       kind: 'info',
@@ -405,7 +408,7 @@ export function AddPayment() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{edit ? t('pay.edit') : t('pay.add')}</h1>
         {edit && (
-          <Button type="button" variant="destructive" size="sm" onClick={() => void remove()}>
+          <Button type="button" variant="destructive" size="sm" disabled={locked} onClick={() => void remove()}>
             <Trash2 aria-hidden="true" />
             {t('pay.delete')}
           </Button>
@@ -413,6 +416,11 @@ export function AddPayment() {
       </div>
 
       {existing && <ApprovalNotice payment={existing} />}
+      {locked && (
+        <p role="status" className="rounded-xl bg-warning-soft p-3 text-sm font-semibold text-warning">
+          {t('pay.locked')}
+        </p>
+      )}
 
       {showTemplates && (
         <div role="group" aria-labelledby="recent-title" className="grid gap-2">
@@ -760,7 +768,7 @@ export function AddPayment() {
             {t('pay.saveAdd')}
           </Button>
         )}
-        <Button type="submit" disabled={busy} className="max-sm:flex-1">
+        <Button type="submit" disabled={busy || locked} className="max-sm:flex-1">
           {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
           {t('pay.save')}
         </Button>

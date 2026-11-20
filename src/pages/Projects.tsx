@@ -17,7 +17,8 @@ import { isSpent, sum } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 
 function ProjectCard({ project, spent, current, onDelete }: { project: Project; spent: number; current: boolean; onDelete: () => void }) {
-  const { t } = useApp()
+  const { t, can } = useApp()
+  const mine = can('editProject', project.id)
   const url = useObjectUrl(project.thumbnail)
   return (
     <Card className={cn('overflow-hidden transition-colors hover:border-foreground/30', current && 'ring-2 ring-primary')} aria-current={current || undefined}>
@@ -39,16 +40,20 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
           <Button variant="secondary" asChild size="sm" onClick={() => void setSetting('currentProjectId', project.id)}>
             <Link to="/">{t('projects.open')}</Link>
           </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link to={`/projects/${project.id}/edit`}>
-              <Pencil aria-hidden="true" />
-              {t('common.edit')}
-            </Link>
-          </Button>
-          <Button size="sm" variant="outline" className="text-danger hover:text-danger" onClick={onDelete} aria-label={`${t('common.delete')}: ${project.name}`}>
-            <Trash2 aria-hidden="true" />
-            {t('common.delete')}
-          </Button>
+          {mine && (
+            <>
+              <Button asChild size="sm" variant="outline">
+                <Link to={`/projects/${project.id}/edit`}>
+                  <Pencil aria-hidden="true" />
+                  {t('common.edit')}
+                </Link>
+              </Button>
+              <Button size="sm" variant="outline" className="text-danger hover:text-danger" onClick={onDelete} aria-label={`${t('common.delete')}: ${project.name}`}>
+                <Trash2 aria-hidden="true" />
+                {t('common.delete')}
+              </Button>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -65,12 +70,17 @@ export function Projects() {
       <PageHeader
         title={t('projects.title')}
         actions={
-          <Button variant="secondary" asChild>
-            <Link to="/projects/new">
-              <Plus aria-hidden="true" />
-              {t('projects.new')}
-            </Link>
-          </Button>
+          <>
+            <Button variant="outline" asChild>
+              <Link to="/join">{t('projects.join')}</Link>
+            </Button>
+            <Button variant="secondary" asChild>
+              <Link to="/projects/new">
+                <Plus aria-hidden="true" />
+                {t('projects.new')}
+              </Link>
+            </Button>
+          </>
         }
       />
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-4">

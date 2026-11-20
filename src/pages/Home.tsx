@@ -61,7 +61,7 @@ function Kpi({ label, value, icon: Icon, tone, to, children, className }: { labe
 }
 
 export function Home() {
-  const { t, lang, project, phaseName, settings } = useApp()
+  const { t, lang, project, phaseName, settings, can } = useApp()
   // Due and upcoming starts with the three that are first in line; the rest open on request (up to eight).
   const [dueAll, setDueAll] = useState(false)
   const payments = usePayments(project?.id)
@@ -163,7 +163,7 @@ export function Home() {
         <Kpi label={t('home.spent')} value={money(spent)} icon={HandCoins} tone="orange" to="/ledger">
           {awaiting > 0 && <span className="text-sm text-muted-foreground">{t('home.awaiting', { amount: money(awaiting) })}</span>}
         </Kpi>
-        <Kpi label={t('home.budget')} value={budget ? money(budget) : '—'} icon={Target} tone="violet" to={budget ? '/phases' : `/projects/${project.id}/edit`}>
+        <Kpi label={t('home.budget')} value={budget ? money(budget) : '—'} icon={Target} tone="violet" to={budget || !can('editProject') ? '/phases' : `/projects/${project.id}/edit`}>
           {!budget && <span className="text-sm text-primary underline underline-offset-4">{t('home.noBudget')}</span>}
         </Kpi>
         <Kpi label={t('home.left')} value={left === undefined ? '—' : money(left)} icon={Wallet} tone="emerald" to="/phases" className={showPlanned ? undefined : 'max-sm:col-span-2'}>
