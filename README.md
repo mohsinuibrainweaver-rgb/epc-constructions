@@ -160,6 +160,8 @@ worked out from the payments, weekly plans, contracts and transfers (`forecast` 
   negative builder balance), and either "Send him about Rs x" or what is left with him. The last figure is **Cash you need to arrange
   for the next 30 days**: what you pay yourself plus what you still have to send him (`cashToArrange` in `src/lib/forecast.ts`); the
   cash he already holds is not counted again. The same table and boxes are on Home (`src/components/ForecastTable.tsx`).
+  Under them, Home names the contracts that still have money with no day (up to three, with the amount); that line opens the forecast at
+  "Contracts with money not yet planned".
 - **Week by week:** columns for 12 weeks starting today (planned solid, expected with a dashed outline, overdue first in amber), the
   amount written above each column (on a phone, above the chosen one), and a sentence under the chart saying that later weeks look small
   only because nothing but the weekly payment is planned there. Tap a

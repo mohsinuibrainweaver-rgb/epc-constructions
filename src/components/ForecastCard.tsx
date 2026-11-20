@@ -31,7 +31,7 @@ export function ForecastCard() {
   if (f.next30 === 0 && f.later === 0 && f.unscheduledTotal === 0) return null
 
   return (
-    <Card className="gap-0 py-0 transition-colors hover:border-foreground/30">
+    <Card className="gap-0 overflow-hidden py-0 transition-colors hover:border-foreground/30">
       <Link to="/forecast" aria-label={t('nav.forecast')} className="grid gap-4 rounded-xl p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
         <span className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-2 text-lg font-semibold">
@@ -56,10 +56,25 @@ export function ForecastCard() {
         <BuilderCash advice={advice} />
         <ArrangeBox f={f} advice={advice} />
 
-        {f.unscheduledTotal > 0 && (
-          <p className="text-sm text-muted-foreground">{t('forecast.unscheduledNote', { amount: money(f.unscheduledTotal) })}</p>
-        )}
       </Link>
+
+      {f.unscheduled.length > 0 && (
+        <Link to="/forecast#unplanned" className="grid gap-1.5 border-t p-4 text-sm hover:bg-accent/50 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring">
+          <span className="flex items-center justify-between gap-3 font-semibold">
+            {t('forecast.unscheduledHead')}
+            <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+          </span>
+          <ul className="grid gap-1">
+            {f.unscheduled.slice(0, 3).map(({ contract, amount }) => (
+              <li key={contract.id} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 text-muted-foreground [overflow-wrap:anywhere]">{contract.title}</span>
+                <span className="tabular font-semibold whitespace-nowrap">{money(amount)}</span>
+              </li>
+            ))}
+          </ul>
+          {f.unscheduled.length > 3 && <span className="text-muted-foreground">{t('forecast.unscheduledMore', { count: f.unscheduled.length - 3 })}</span>}
+        </Link>
+      )}
     </Card>
   )
 }

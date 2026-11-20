@@ -971,6 +971,8 @@ export const ur: Record<Key, string> = {
   'forecast.arrangeBoth': '{you} آپ خود ادا کرتے ہیں، اور {send} بلڈر کو بھیجنے ہیں۔',
   'forecast.arrangeEnough': '{you} آپ خود ادا کرتے ہیں۔ بلڈر کی نقدی اس کے حصے کے لیے کافی ہے، اسے مزید کچھ بھیجنے کی ضرورت نہیں۔',
   'forecast.arrangeYou': 'یہ سب آپ خود براہ راست ادا کرتے ہیں۔',
+  'forecast.unscheduledHead': 'معاہدوں میں طے ہے مگر ابھی کوئی دن مقرر نہیں',
+  'forecast.unscheduledMore': '+{count} مزید',
   'forecast.later': '12 ہفتوں کے بعد',
   'forecast.unscheduled': 'ابھی منصوبے میں نہیں',
   'forecast.cash': 'بلڈر کی نقدی',

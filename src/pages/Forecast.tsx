@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { CalendarClock, ChevronRight, CircleAlert } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { EmptyState, PageHeader } from '@/components/common'
@@ -25,6 +25,7 @@ export function Forecast() {
   const vendors = useVendors(project?.id)
   const today = todayISO()
   const [picked, setPicked] = useState<number | null>(null)
+  const { hash } = useLocation()
 
   const f = useMemo(() => forecast({ payments, plans, contracts, today }), [payments, plans, contracts, today])
   const settlement = useMemo(() => (project ? computeSettlement(project, payments, transfers, phases, today) : undefined), [project, payments, transfers, phases, today])
@@ -49,6 +50,14 @@ export function Forecast() {
   const shown: ForecastItem[] = isOverdueCol ? f.items.filter((i) => i.overdue) : week ? f.items.filter((i) => !i.overdue && i.date >= week.start && i.date <= week.end) : []
   const shownTotal = shown.reduce((s, i) => s + i.amount, 0)
   const shownExpected = shown.filter((i) => i.kind === 'expected').reduce((s, i) => s + i.amount, 0)
+
+  // Arriving from Home's "no day set yet" line: scroll to the contracts that still need a planned payment.
+  const unplannedCount = f.unscheduled.length
+  useEffect(() => {
+    if (hash !== '#unplanned' || unplannedCount === 0) return
+    const id = window.setTimeout(() => document.getElementById('unplanned')?.scrollIntoView({ block: 'start' }), 80)
+    return () => window.clearTimeout(id)
+  }, [hash, unplannedCount])
 
   if (!project) return null
 
@@ -191,7 +200,7 @@ export function Forecast() {
       </Card>
 
       {f.unscheduled.length > 0 && (
-        <Card className="gap-3 p-4">
+        <Card id="unplanned" className="scroll-mt-20 gap-3 p-4">
           <div className="grid gap-1">
             <h2 className="text-lg font-semibold">{t('forecast.contractsTitle')}</h2>
             <p className="text-sm text-muted-foreground">{t('forecast.contractsNote')}</p>

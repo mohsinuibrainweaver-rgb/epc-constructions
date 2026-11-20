@@ -969,6 +969,8 @@ export const en = {
   'forecast.arrangeBoth': '{you} you pay yourself, plus {send} to send the builder.',
   'forecast.arrangeEnough': '{you} you pay yourself. The builder\'s cash already covers his part, so there is nothing more to send him.',
   'forecast.arrangeYou': 'All of it is paid by you directly.',
+  'forecast.unscheduledHead': 'Agreed on contracts, but no day set yet',
+  'forecast.unscheduledMore': '+{count} more',
   'forecast.later': 'Later than 12 weeks',
   'forecast.unscheduled': 'Not yet planned',
   'forecast.cash': 'The builder\'s cash',
