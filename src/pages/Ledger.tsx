@@ -68,7 +68,8 @@ export function Ledger() {
 
   const exportCsv = () => {
     const phaseMap = new Map(phases.map((p) => [p.id, phaseName(p)]))
-    const head = ['date', 'purpose', 'vendor', 'phase', 'category', 'type', 'status', 'mode', 'paid_by', 'approval', 'amount', 'note']
+    // The bank columns come last, so the columns people already use keep their places.
+    const head = ['date', 'purpose', 'vendor', 'phase', 'category', 'type', 'status', 'mode', 'paid_by', 'approval', 'amount', 'note', 'bank_name', 'bank_account', 'bank_ref']
     const lines = rows.map((p) =>
       [
         p.date,
@@ -83,6 +84,9 @@ export function Ledger() {
         p.approval ?? '',
         p.amount,
         p.note ?? '',
+        p.mode === 'bank' ? (p.bankName ?? '') : '',
+        p.mode === 'bank' ? (p.bankAccount ?? '') : '',
+        p.mode === 'bank' ? (p.bankRef ?? '') : '',
       ]
         .map(csvEscape)
         .join(','),

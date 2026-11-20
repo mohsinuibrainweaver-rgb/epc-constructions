@@ -319,6 +319,17 @@ function DataSection() {
     }
   }
 
+  /** Copies the current database schema (safe to run again), so updating Supabase is one paste in its SQL Editor. */
+  const copySchema = async () => {
+    try {
+      const { default: sql } = await import('../../../supabase/schema.sql?raw')
+      await navigator.clipboard.writeText(sql)
+      toast.show({ kind: 'success', message: t('sync.sqlCopied'), duration: 12000 })
+    } catch {
+      toast.show({ kind: 'error', message: t('err.generic') })
+    }
+  }
+
   const syncMessage =
     sync.status.state === 'error'
       ? `${t('sync.state.error')}: ${sync.status.error ?? ''}`
@@ -354,9 +365,14 @@ function DataSection() {
               }
               below={
                 sync.status.warning ? (
-                  <p role="status" className="rounded-xl bg-warning-soft p-3 text-sm font-semibold text-warning">
-                    {t('sync.schemaOld', { what: sync.status.warning })}
-                  </p>
+                  <div className="grid gap-2">
+                    <p role="status" className="rounded-xl bg-warning-soft p-3 text-sm font-semibold text-warning">
+                      {t('sync.schemaOld', { what: sync.status.warning })}
+                    </p>
+                    <Button variant="outline" className="w-fit" onClick={() => void copySchema()}>
+                      {t('sync.copySql')}
+                    </Button>
+                  </div>
                 ) : undefined
               }
             />

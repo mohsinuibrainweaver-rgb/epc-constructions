@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { saveVendor } from '@/db/actions'
 import { VENDOR_ROLES, type Vendor, type VendorRole } from '@/db/types'
 import type { Key } from '@/i18n/en'
+import { BankSelect } from '@/components/BankSelect'
 
 export function VendorDialog({
   open,
@@ -27,6 +28,7 @@ export function VendorDialog({
   const [role, setRole] = useState<VendorRole>('other')
   const [phone, setPhone] = useState('')
   const [bank, setBank] = useState('')
+  const [bankName, setBankName] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
 
@@ -36,6 +38,7 @@ export function VendorDialog({
     setRole(vendor?.role ?? 'other')
     setPhone(vendor?.phone ?? '')
     setBank(vendor?.bankAccount ?? '')
+    setBankName(vendor?.bankName ?? '')
     setNotes(vendor?.notes ?? '')
     setError('')
   }, [open, vendor])
@@ -53,6 +56,8 @@ export function VendorDialog({
       role,
       phone: phone.trim() || undefined,
       bankAccount: bank.trim() || undefined,
+      // null removes a bank name that was saved before; undefined means there never was one.
+      bankName: bankName.trim() || (vendor?.bankName ? null : undefined),
       notes: notes.trim() || undefined,
     })
     toast.show({ kind: 'success', message: t('vendors.saved') })
@@ -99,8 +104,9 @@ export function VendorDialog({
         <Field label={t('vendors.phone')}>
           <Input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
         </Field>
-        <Field label={t('vendors.account')}>
-          <Input value={bank} onChange={(e) => setBank(e.target.value)} />
+        <BankSelect id="vendor-bank-name" label={t('vendors.bankName')} value={bankName} onChange={setBankName} />
+        <Field label={t('vendors.account')} hint={t('vendors.accountHint')}>
+          <Input value={bank} onChange={(e) => setBank(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
         </Field>
         <Field label={t('vendors.notes')}>
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />

@@ -34,7 +34,8 @@ await db.exec(`
   drop table public.payment_plans, public.transfers, public.materials, public.project_files, public.push_subscriptions, public.push_log, public.contracts;
   alter table public.projects drop column fee_basis, drop column fee_amount, drop column fee_percent, drop column retainer_amount, drop column retainer_start, drop column retainer_end;
   alter table public.phases drop column fee_kind, drop column fee_value, drop column done;
-  alter table public.payments drop column plan_id, drop column approval, drop column approved_by, drop column approved_at, drop column reject_reason, drop column contract_id;
+  alter table public.payments drop column plan_id, drop column approval, drop column approved_by, drop column approved_at, drop column reject_reason, drop column contract_id, drop column bank_name, drop column bank_account, drop column bank_ref;
+  alter table public.vendors drop column bank_name;
 `)
 await db.exec(schema)
 console.log('upgrade from the old schema ok')
@@ -121,5 +122,43 @@ await db.exec(`update push_subscriptions set reminder_hour = 22 where endpoint =
 await as(A, 'a@x.com')
 assert.equal((await mine())[0].reminder_hour, 0, 'B cannot change A\'s device')
 console.log('push preferences: ok')
+
+// Bank details of a transfer: stored on the payment and the vendor, empty by default, and only members see them.
+await as(A, 'a@x.com')
+await db.exec(`update payments set bank_name = 'HBL', bank_account = 'PK36HABB0000001123456702', bank_ref = 'TXN-1' where id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'`)
+await db.exec(`insert into vendors (id, project_id, name, bank_account, bank_name, created_at, updated_at) values ('30303030-3030-3030-3030-303030303030','${P}','Ihtisham','0123456789','Meezan Bank',1,1)`)
+const bank = (await db.query<{ bank_name: string; bank_account: string; bank_ref: string }>(`select bank_name, bank_account, bank_ref from payments where id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'`)).rows[0]
+assert.deepEqual([bank.bank_name, bank.bank_account, bank.bank_ref], ['HBL', 'PK36HABB0000001123456702', 'TXN-1'])
+assert.equal((await db.query<{ bank_name: string | null }>(`select bank_name from payments where id = '44444444-4444-4444-4444-444444444444'`)).rows[0].bank_name, null, 'a payment without bank details has none')
+await as(C, 'c@x.com')
+assert.equal((await db.query(`select 1 from vendors where bank_name is not null`)).rows.length, 0, 'a stranger sees no vendor bank details')
+await as(A, 'a@x.com')
+console.log('bank details columns: ok')
+
+// Last edit wins, and the server says which rows it really wrote. The sync engine relies on this to notice an edit
+// that a newer one replaced (a row missing from the answer was refused), so it must keep holding.
+await as(A, 'a@x.com')
+const R = '10101010-1010-1010-1010-101010101010'
+const upsert = async (amount: number, at: number) =>
+  (await db.query<{ id: string }>(
+    `insert into payments (id, project_id, date, amount, category, purpose, status, mode, paid_by, created_at, updated_at)
+     values ('${R}','${P}','2026-11-19',${amount},'labour','Ceiling','paid','bank','investor',1,${at})
+     on conflict (id) do update set amount = excluded.amount, updated_at = excluded.updated_at returning id`,
+  )).rows
+assert.equal((await upsert(100, 10)).length, 1, 'a new row is reported as written')
+assert.equal((await upsert(200, 20)).length, 1, 'a newer edit is reported as written')
+assert.equal((await upsert(300, 5)).length, 0, 'an older edit is refused and is missing from the answer')
+assert.equal(Number((await db.query<{ amount: string }>(`select amount from payments where id = '${R}'`)).rows[0].amount), 200, 'the newer edit is kept')
+assert.equal((await upsert(400, 20)).length, 1, 'the same version again (a retry) is accepted')
+const newProject = '20202020-2020-2020-2020-202020202020'
+const insertProject = async (name: string, at: number) =>
+  (await db.query<{ id: string }>(
+    `insert into projects (id, owner_id, name, created_at, updated_at) values ('${newProject}','${A}','${name}',1,${at})
+     on conflict (id) do update set name = excluded.name, updated_at = excluded.updated_at returning id`,
+  )).rows
+assert.equal((await insertProject('New house', 1)).length, 1, 'the creator gets the new project back in the answer')
+assert.equal((await insertProject('Renamed', 2)).length, 1)
+assert.equal((await insertProject('Stale', 0)).length, 0)
+console.log('refused edits are reported: ok')
 console.log('money tables: access rules ok')
 process.exit(0)

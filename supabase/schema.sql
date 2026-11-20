@@ -230,6 +230,13 @@ create index if not exists contracts_project on public.contracts (project_id, se
 
 alter table public.payments add column if not exists contract_id uuid;
 
+-- Bank details of a transfer (added after the first release): the bank, the account number or IBAN, and the reference.
+-- Safe to run on a project that already has the older tables; nothing is removed or changed.
+alter table public.payments add column if not exists bank_name text;
+alter table public.payments add column if not exists bank_account text;
+alter table public.payments add column if not exists bank_ref text;
+alter table public.vendors add column if not exists bank_name text;
+
 create index if not exists payment_plans_project on public.payment_plans (project_id, server_updated_at);
 create index if not exists transfers_project on public.transfers (project_id, server_updated_at);
 

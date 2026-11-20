@@ -5,6 +5,7 @@ import { Bell, BellOff, CalendarClock, ChartColumn, Ellipsis, FileSignature, Fil
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { BrandMark } from '@/components/Brand'
 import { useApp } from '@/app/AppContext'
+import { ConflictsDialog } from '@/components/ConflictsDialog'
 import { SyncChip } from '@/components/SyncChip'
 import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dropdown } from '@/components/ui/dropdown'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { useContracts, usePayments, usePhases } from '@/db/hooks'
+import { useConflictCount, useContracts, usePayments, usePhases } from '@/db/hooks'
 import { setSetting } from '@/db/actions'
 import type { Key } from '@/i18n/en'
 import { initials, todayISO } from '@/lib/format'
@@ -52,7 +53,7 @@ function useOnline(): boolean {
   return online
 }
 
-function AlertsBell() {
+function AlertsBell({ conflicts, onReviewConflicts }: { conflicts: number; onReviewConflicts: () => void }) {
   const { t, project, phaseName, settings } = useApp()
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id)
@@ -63,28 +64,47 @@ function AlertsBell() {
     () => [...buildAlerts(project, phases, payments, phaseName, todayISO(), settings.role), ...contractAlerts(contracts, payments)],
     [project, phases, payments, phaseName, settings.role, contracts],
   )
+  const total = alerts.length + (conflicts > 0 ? 1 : 0)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" aria-label={`${t('notif.title')}${alerts.length ? `: ${alerts.length}` : ''}`}>
+        <Button variant="ghost" size="icon" className="relative" aria-label={`${t('notif.title')}${total ? `: ${total}` : ''}`}>
           <Bell className="size-5" aria-hidden="true" />
-          {alerts.length > 0 && (
+          {total > 0 && (
             <span
               aria-hidden="true"
               className="absolute inset-e-1 top-1 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[0.65rem] leading-4 font-extrabold text-destructive-foreground"
             >
-              {alerts.length}
+              {total}
             </span>
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[min(22rem,calc(100vw-2rem))] p-0">
         <h2 className="border-b p-4 text-base font-semibold">{t('notif.title')}</h2>
-        {alerts.length === 0 ? (
+        {total === 0 ? (
           <EmptyState compact icon={BellOff} title={t('notif.none')} body={t('notif.noneBody')} />
         ) : (
           <ul className="max-h-[60dvh] divide-y overflow-y-auto">
+            {conflicts > 0 && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false)
+                    onReviewConflicts()
+                  }}
+                  className="flex min-h-11 w-full items-center gap-3 p-4 text-start transition-colors hover:bg-accent"
+                >
+                  <Badge variant="warning">
+                    <TriangleAlert aria-hidden="true" />
+                  </Badge>
+                  <span className="flex-1 text-sm font-medium">{t('conflict.bell', { count: conflicts })}</span>
+                  <span className="text-sm font-semibold text-primary">{t('conflict.review')}</span>
+                </button>
+              </li>
+            )}
             {alerts.map((a) => (
               <li key={a.id}>
                 <Link
@@ -114,6 +134,18 @@ export function Shell() {
   const online = useOnline()
   const sync = useSync()
   const [q, setQ] = useState('')
+
+  // Edits that a newer edit from another phone replaced: a message when one appears, and a place to review them.
+  const conflictCount = useConflictCount()
+  const [conflictsOpen, setConflictsOpen] = useState(false)
+  const seenConflicts = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    if (conflictCount === undefined) return
+    if (seenConflicts.current !== undefined && conflictCount > seenConflicts.current) {
+      toast.show({ kind: 'warning', message: t('conflict.toast'), actionLabel: t('conflict.review'), onAction: () => setConflictsOpen(true) })
+    }
+    seenConflicts.current = conflictCount
+  }, [conflictCount, toast, t])
 
   const {
     needRefresh: [needRefresh],
@@ -286,7 +318,7 @@ export function Shell() {
             <Link to="/projects" className="flex min-h-11 min-w-0 flex-1 items-center font-extrabold"><span className="truncate">{project.name}</span>
             </Link>
             {statusChip(false)}
-            <AlertsBell />
+            <AlertsBell conflicts={conflictCount ?? 0} onReviewConflicts={() => setConflictsOpen(true)} />
           </div>
         </header>
 
@@ -315,7 +347,7 @@ export function Shell() {
                 </Link>
               </Button>
             )}
-            <AlertsBell />
+            <AlertsBell conflicts={conflictCount ?? 0} onReviewConflicts={() => setConflictsOpen(true)} />
           </div>
         </header>
 
@@ -364,6 +396,7 @@ export function Shell() {
           <TabLink to="/more" label={t('nav.more')} icon={<Ellipsis className="size-[1.375rem]" aria-hidden="true" />} />
         </div>
       </nav>
+      <ConflictsDialog open={conflictsOpen} onClose={() => setConflictsOpen(false)} />
     </div>
   )
 }

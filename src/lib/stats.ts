@@ -30,6 +30,39 @@ export function budgetLevel(spent: number, budget: number | undefined): BudgetLe
 export const percent = (spent: number, budget: number | undefined): number =>
   budget && budget > 0 ? Math.round((spent / budget) * 100) : 0
 
+export interface PhaseBudgetPreview {
+  /** Spent on the phase before this payment (the payment itself is left out, so editing it does not count it twice). */
+  spent: number
+  budget: number
+  /** Percent of the budget spent before this payment. */
+  pct: number
+  /** Whether this payment counts as spent once saved: paid or advance, and not waiting for the investor. */
+  counts: boolean
+  /** Percent of the budget after this payment. */
+  afterPct: number
+  /** How far over the budget the phase is after this payment, or 0. */
+  over: number
+  /** Where the phase stands after this payment (before it, when this payment does not count). */
+  level: BudgetLevel
+}
+
+/**
+ * What saving a payment would do to its phase's budget, shown while the person fills in the form.
+ * Undefined when the phase has no budget, so there is nothing to compare with.
+ */
+export function previewPhaseBudget(
+  phase: Pick<Phase, 'id' | 'budget'>,
+  payments: Payment[],
+  draft: { id?: string; amount: number; status: Payment['status']; waitsForApproval: boolean },
+): PhaseBudgetPreview | undefined {
+  const budget = phase.budget
+  if (!budget || budget <= 0) return undefined
+  const spent = sum(payments.filter((p) => p.phaseId === phase.id && p.id !== draft.id && isSpent(p)))
+  const counts = (draft.status === 'paid' || draft.status === 'advance') && !draft.waitsForApproval
+  const total = spent + (counts ? Math.max(0, draft.amount) : 0)
+  return { spent, budget, pct: percent(spent, budget), counts, afterPct: percent(total, budget), over: Math.max(0, total - budget), level: budgetLevel(total, budget) }
+}
+
 export interface Alert {
   id: string
   kind: 'warning' | 'error'

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Dexie, { type Table } from 'dexie'
-import type { Attachment, Contract, MaterialLine, ProjectFile, Payment, PaymentPlan, Phase, Project, SettingRow, Transfer, Vendor } from './types'
+import type { Attachment, Conflict, Contract, MaterialLine, ProjectFile, Payment, PaymentPlan, Phase, Project, SettingRow, Transfer, Vendor } from './types'
 
 class AppDB extends Dexie {
   projects!: Table<Project, string>
@@ -13,6 +13,8 @@ class AppDB extends Dexie {
   materials!: Table<MaterialLine, string>
   files!: Table<ProjectFile, string>
   contracts!: Table<Contract, string>
+  /** Edits this device lost to a newer edit (local only, not synced). */
+  conflicts!: Table<Conflict, string>
   settings!: Table<SettingRow, string>
 
   constructor() {
@@ -103,6 +105,21 @@ class AppDB extends Dexie {
       materials: 'id, projectId, date, item, dirty',
       files: 'id, projectId, kind, date, phaseId, dirty',
       contracts: 'id, projectId, vendorId, status, dirty',
+      settings: 'key',
+    })
+    // v7: a local list of edits that a newer edit from another phone replaced. Nothing else changes.
+    this.version(7).stores({
+      projects: 'id, type, updatedAt, dirty',
+      phases: 'id, projectId, order, dirty',
+      vendors: 'id, projectId, name, dirty',
+      payments: 'id, projectId, date, vendorId, phaseId, status, deletedAt, dirty',
+      attachments: 'id, paymentId, projectId, dirty',
+      transfers: 'id, projectId, date, dirty',
+      plans: 'id, projectId, dirty',
+      materials: 'id, projectId, date, item, dirty',
+      files: 'id, projectId, kind, date, phaseId, dirty',
+      contracts: 'id, projectId, vendorId, status, dirty',
+      conflicts: 'id, at',
       settings: 'key',
     })
   }

@@ -122,6 +122,8 @@ export interface Vendor extends Stamped {
   role: VendorRole
   phone?: string
   bankAccount?: string
+  /** The vendor's bank. null clears a name that was synced before. */
+  bankName?: string | null
   notes?: string
 }
 
@@ -154,6 +156,10 @@ export interface Payment extends Stamped {
   rejectReason?: string
   /** The contract this payment counts against. null clears a link that was synced before. */
   contractId?: string | null
+  /** For a bank transfer: the bank, the account number or IBAN, and the transfer's reference. null clears a value that was synced before. */
+  bankName?: string | null
+  bankAccount?: string | null
+  bankRef?: string | null
 }
 
 /** Money moving between the two people. All but 'return' go from the investor to the builder. */
@@ -267,6 +273,25 @@ export interface Contract extends Stamped {
   status: ContractStatus
   note?: string
   variations: ContractVariation[]
+}
+
+/** Synced tables whose edits can be replaced by a newer edit made on another phone. */
+export type ConflictTable = 'projects' | 'phases' | 'vendors' | 'contracts' | 'plans' | 'payments' | 'transfers' | 'materials' | 'files'
+
+/**
+ * An edit of this device that the server refused because a newer edit of the same row was already there.
+ * Kept only on this device (never synced) so the person can see it and put it back.
+ */
+export interface Conflict {
+  /** `${table}:${rowId}`, so one row has at most one open notice. */
+  id: string
+  table: ConflictTable
+  rowId: string
+  projectId?: string
+  /** This device's version of the row, without photos or files. */
+  mine: Record<string, unknown>
+  /** When the replacement was noticed. */
+  at: number
 }
 
 export interface SettingRow {

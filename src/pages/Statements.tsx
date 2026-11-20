@@ -71,9 +71,24 @@ export function Statements() {
   if (!project) return null
 
   const exportCsv = () => {
-    const head = ['date', 'purpose', 'vendor_or_payee', 'phase', 'mode', 'paid_by', 'status', 'amount']
+    // The bank columns come last, so the columns people already use keep their places.
+    const head = ['date', 'purpose', 'vendor_or_payee', 'phase', 'mode', 'paid_by', 'status', 'amount', 'bank_name', 'bank_account', 'bank_ref']
     const lines = result.rows.map((p) =>
-      [p.date, p.purpose, who(p), (p.phaseId && phaseLabel.get(p.phaseId)) || '', p.mode, p.paidBy, isAwaitingApproval(p) ? 'awaiting approval' : p.status, p.amount].map(csvEscape).join(','),
+      [
+        p.date,
+        p.purpose,
+        who(p),
+        (p.phaseId && phaseLabel.get(p.phaseId)) || '',
+        p.mode,
+        p.paidBy,
+        isAwaitingApproval(p) ? 'awaiting approval' : p.status,
+        p.amount,
+        p.mode === 'bank' ? (p.bankName ?? '') : '',
+        p.mode === 'bank' ? (p.bankAccount ?? '') : '',
+        p.mode === 'bank' ? (p.bankRef ?? '') : '',
+      ]
+        .map(csvEscape)
+        .join(','),
     )
     download(`${project.name} - ${what ?? 'statement'}.csv`, '﻿' + [head.join(','), ...lines, ['', '', '', '', '', '', 'total', result.total].map(csvEscape).join(',')].join('\n'), 'text/csv;charset=utf-8')
   }

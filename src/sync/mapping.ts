@@ -122,6 +122,8 @@ export const TABLES: TableDef[] = [
       role: v.role,
       phone: nul(v.phone),
       bank_account: nul(v.bankAccount),
+      // undefined: never set (column not sent, so a server without it keeps syncing); null: the name was removed.
+      ...(v.bankName !== undefined ? { bank_name: v.bankName } : {}),
       notes: nul(v.notes),
       ...stamps(v),
     }),
@@ -132,6 +134,7 @@ export const TABLES: TableDef[] = [
       role: r.role,
       phone: und(r.phone),
       bankAccount: und(r.bank_account),
+      bankName: und(r.bank_name),
       notes: und(r.notes),
       ...fromStamps(r),
     }),
@@ -227,6 +230,10 @@ export const TABLES: TableDef[] = [
       ...(p.planId ? { plan_id: p.planId } : {}),
       // undefined: never linked (column not sent); null: the link was removed.
       ...(p.contractId !== undefined ? { contract_id: p.contractId } : {}),
+      // Bank details of a transfer: sent only once any was set (null: it was removed), so an older server keeps syncing.
+      ...(p.bankName !== undefined || p.bankAccount !== undefined || p.bankRef !== undefined
+        ? { bank_name: nul(p.bankName), bank_account: nul(p.bankAccount), bank_ref: nul(p.bankRef) }
+        : {}),
       // Sent only once an entry has been through approval, so a server without these columns keeps syncing.
       ...(p.approval
         ? { approval: p.approval, approved_by: nul(p.approvedBy), approved_at: nul(p.approvedAt), reject_reason: nul(p.rejectReason) }
@@ -251,6 +258,9 @@ export const TABLES: TableDef[] = [
       addedBy: r.added_by ?? '',
       planId: und(r.plan_id),
       contractId: und(r.contract_id),
+      bankName: und(r.bank_name),
+      bankAccount: und(r.bank_account),
+      bankRef: und(r.bank_ref),
       approval: und(r.approval),
       approvedBy: und(r.approved_by),
       approvedAt: r.approved_at === null || r.approved_at === undefined ? undefined : Number(r.approved_at),

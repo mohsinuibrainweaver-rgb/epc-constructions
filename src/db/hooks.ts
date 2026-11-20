@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db'
+import { loadConflicts, type ConflictItem } from '../sync/conflicts'
 import type { Attachment, Contract, MaterialLine, ProjectFile, Payment, PaymentPlan, Phase, Transfer, Vendor } from './types'
 
 export function usePhases(projectId: string | undefined): Phase[] {
@@ -108,6 +109,16 @@ export function useFiles(projectId: string | undefined): ProjectFile[] {
       [projectId],
     ) ?? []
   )
+}
+
+/** Edits of this device that a newer edit from another phone replaced, each with the row as it is now. */
+export function useConflicts(): ConflictItem[] {
+  return useLiveQuery(loadConflicts, []) ?? []
+}
+
+/** How many such edits are waiting for a decision; undefined until the first read. */
+export function useConflictCount(): number | undefined {
+  return useLiveQuery(() => db.conflicts.count(), [])
 }
 
 /** Contracts of a project, newest first. */

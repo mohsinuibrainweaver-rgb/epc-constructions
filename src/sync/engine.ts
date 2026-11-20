@@ -3,6 +3,7 @@ import { db, onLocalWrite, remoteTx } from '../db/db'
 import type { Attachment, Project, ProjectFile } from '../db/types'
 import { BUCKET, supabase } from './supabase'
 import { TABLES, type TableDef } from './mapping'
+import { recordConflicts, staleIds } from './conflicts'
 
 export type SyncState = 'off' | 'signedOut' | 'idle' | 'syncing' | 'offline' | 'error'
 
@@ -118,10 +119,13 @@ async function push(): Promise<void> {
       let payload = original
       const dropped: string[] = []
       let sent = false
+      // Which rows the server really wrote. A row it ignored (a newer edit was already there) is missing from this list.
+      let written: { id: string }[] | null = null
       for (let attempt = 0; attempt < 12 && !sent; attempt++) {
-        const { error } = await supabase!.from(remoteName(def)).upsert(payload, { onConflict: 'id' })
+        const { data, error } = await supabase!.from(remoteName(def)).upsert(payload, { onConflict: 'id' }).select('id')
         if (!error) {
           sent = true
+          written = data as { id: string }[] | null
           break
         }
         const col = missingColumn(error)
@@ -141,6 +145,10 @@ async function push(): Promise<void> {
       }
       if (skipped) break
       if (!sent) throw named(def.name, new Error('could not send'))
+      // The server kept a newer version of some rows: bring that version down and keep ours in a notice, so the
+      // edit is never lost without the person knowing.
+      const stale = staleIds(chunk, written)
+      if (stale.length) await reconcileRejected(def, chunk.filter((r) => stale.includes(r.id)))
       // Mark clean only if the row was not edited again while it was being sent.
       await remoteTx([def.table], async () => {
         for (const [idx, r] of chunk.entries()) {
@@ -187,6 +195,20 @@ async function applyRows(def: TableDef, rows: any[]): Promise<void> {
       await def.table.put(merged)
     }
   })
+}
+
+/**
+ * Rows the server refused because a newer edit was already there. Fetch the newer version so this device matches the
+ * server, and remember our own version (see conflicts.ts) so the person can put it back.
+ * If the newer version cannot be fetched this throws, the rows stay waiting, and the next sync tries again.
+ */
+async function reconcileRejected(def: TableDef, rows: any[]): Promise<void> {
+  const { data, error } = await supabase!.from(remoteName(def)).select('*').in('id', rows.map((r) => r.id))
+  if (error) throw named(def.name, error)
+  const theirs = (data ?? []) as any[]
+  await applyRows(def, theirs)
+  if (def.name === 'attachments') return // a receipt photo is never edited by hand, so there is nothing to put back
+  await recordConflicts(def.name, rows, new Map(theirs.map((r) => [r.id as string, def.fromRemote(r)])))
 }
 
 async function pull(): Promise<void> {

@@ -182,6 +182,11 @@ export function VendorDetail() {
         <Badge variant="secondary" className="w-fit">
           {t(`role.${vendor.role}` as Key)}
         </Badge>
+        {(vendor.bankName || vendor.bankAccount) && (
+          <p className="text-sm text-muted-foreground">
+            <bdi>{[vendor.bankName, vendor.bankAccount].filter(Boolean).join(' · ')}</bdi>
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:max-w-xl md:gap-6">

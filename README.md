@@ -64,6 +64,15 @@ Install and push need `https` (or `localhost`). To try it on a phone, deploy the
 - Tested against a real Postgres + PostgREST with the real schema: two people sharing a project, edits and
   deletes reaching the other device, and a stranger seeing nothing. See `docs/BACKEND_TESTING.md`.
 - Not yet tested against a live Supabase project: email sign-in, photo upload and live updates.
+- **An edit is never lost silently.** If two phones edit the same row, the server keeps the newer edit and ignores the older
+  one without an error. The sync engine now asks the server which rows it really wrote (`.upsert(...).select('id')`); a row
+  that is missing from the answer was refused. This device then fetches the newer version, keeps its own version in a local
+  `conflicts` table (Dexie v7, never synced) and shows it in the Alerts bell and in a message, where the person chooses
+  **Keep current** or **Use mine** (`src/sync/conflicts.ts`, `src/components/ConflictsDialog.tsx`). "Use mine" saves the
+  version again with a time later than the one it replaced, so a phone with a slow clock still wins when asked to.
+  No server change is needed. Checks: `npx vite-node scripts/conflict-test.ts`, `scripts/schema-test.ts`, and
+  `VITE_SUPABASE_URL=http://localhost:54398 VITE_SUPABASE_ANON_KEY=test-key-not-a-secret npx vite-node scripts/sync-conflict-test.ts`
+  (two phones against a local fake server; always set the URL, or the app's real project is used).
 
 ## Money features (investor and builder)
 
@@ -76,6 +85,71 @@ Install and push need `https` (or `localhost`). To try it on a phone, deploy the
 - After updating, run `supabase/schema.sql` once in Supabase (see `docs/SUPABASE_SETUP.md`, step 4b).
 - Checks: `npx vite-node scripts/money-test.ts` (settlement and plan logic), `npx vite-node scripts/schema-test.ts`
   (the SQL and its access rules, in-process Postgres), `scripts/sync-fallback-test.ts` (old versus updated server).
+
+## Repeat a recent payment (Add payment)
+
+On a new payment, under the title, up to four chips show the latest payment of each distinct payee, purpose, category and phase
+(`recentTemplates` in `src/lib/recent.ts`). One tap fills vendor, phase, category, contract, mode, paid by, purpose and amount
+(status Paid, date today) and puts the cursor on the amount with the old figure selected. Not shown when editing, when the page was
+opened from a contract or phase (`?contract=`, `?phase=`), or once something is typed. Planned, skipped, removed and rejected
+payments and payments created by a weekly plan are not offered. A vendor, phase or contract that is gone or closed is dropped
+from the chip. Check: `npx vite-node scripts/recent-test.ts`.
+
+## Bank details of a transfer (Add payment, Vendors, Ledger)
+
+- **Add payment:** when the mode is **Bank transfer**, a "Bank details (optional)" box appears with **Bank** (suggestions of common
+  banks and wallets, any name can be typed), **Account number or IBAN** and **Reference or transaction ID**. Choosing a vendor, or
+  switching to Bank transfer with a vendor chosen, fills the bank and account from the vendor's saved details (only where the form has
+  none yet). Switching to Cash removes them from the payment. The Repeat-a-recent-payment chips carry the bank and account, not the reference.
+- **Vendors:** the vendor form has a new **Bank** field next to the existing **Bank account** (which is the account number or IBAN);
+  the vendor page shows both.
+- **Ledger and vendor pages:** a bank payment shows "Bank transfer · Meezan Bank · …6702" (only the end of the account; the full number is
+  on the payment). The Ledger and Statement CSV files get `bank_name`, `bank_account`, `bank_ref` as **last** columns, so the columns
+  people already use keep their places.
+- **Database:** new columns `payments.bank_name`, `payments.bank_account`, `payments.bank_ref`, `vendors.bank_name` in `supabase/schema.sql`
+  (additive, safe to run again). Run it once in Supabase (SQL Editor). Until then everything else syncs as before; payments that carry
+  bank details wait on the phone and are sent after the update. **Settings → Data and backup** shows a "Copy the update SQL" button
+  next to the schema note, so the update is one paste into the SQL Editor.
+- Code: `src/lib/bank.ts`. Check: `npx vite-node scripts/bank-test.ts`, `scripts/schema-test.ts`.
+
+## Save and add another, and the builder's approval hint (Add payment)
+
+- **Save and add another** (new payments only): saves, shows "Saved. Add the next payment.", and empties the form for the next one
+  while keeping what usually stays the same in a run of entries: date, phase, category, status, mode and paid by (and the contract
+  and vendor when the page was opened from a contract). The cursor goes to Amount. On phones it is a full-width outline button
+  above the sticky Save bar (which is unchanged); on wider screens it sits in the bar between Cancel and Save. The duplicate warning's
+  "Save anyway" keeps the "add another" choice. After it, the Repeat a recent payment chips offer the payment just saved.
+- **Approval hint:** when the device's role is Builder and the status is Paid or Advance (the entries that wait for the investor),
+  an info line under Status says so before saving, using the same rule as the saving code (`needsApproval`).
+
+## Phase budget hint (Add payment)
+
+When a phase with a budget is chosen, one line under the phase says how much of it is spent ("Grey structure: Rs 95,000 of Rs 125,000
+used (76%)") and, once an amount is typed, what this payment does: "After this payment: 88% used", or "This payment takes Grey
+structure Rs 10,000 over its budget". From 80% the line turns amber and from 100% red, always with an icon and the words (never colour
+alone); it never blocks saving. It uses the same rules as the budget alerts (`isSpent`, `budgetLevel`): only paid and advance
+payments count, not planned, skipped, removed, waiting-for-approval or rejected ones, and a planned payment or a builder's entry
+waiting for approval does not change the figure. The payment being edited is left out of "spent" so it is not counted twice. A phase
+without a budget shows nothing. Code: `previewPhaseBudget` in `src/lib/stats.ts`. Check: `npx vite-node scripts/budget-test.ts`.
+
+## Vendor nudge (Add payment)
+
+When no vendor is chosen and the purpose (or the payee name) contains a vendor's name, a small blue line under the purpose says
+"Ihtisham is in your vendors" with a **Choose Ihtisham** button. It is meant for the habit of writing the name into the purpose, which
+leaves the vendor's total and statement short. It shows when editing too, so old entries can be fixed. Choosing works exactly like the
+vendor drop-down (including picking the vendor's only open contract). Matching is by whole words and the whole name, at least three
+letters ("Ali" is not found in "Salim"; "Amjad" alone does not match "Amjad Sethi"; the longest name wins); different spellings of a
+name are not matched. Code: `src/lib/vendorMatch.ts`. Check: `npx vite-node scripts/vendor-match-test.ts`.
+
+## Contract strip (Add payment)
+
+Choosing a contract on Add payment shows a small card under it: the contract name, **which instalment this would be** (the
+payments already paid or waiting for approval, plus one; new payments only), a bar, **Agreed / Paid / Remaining**, and a
+line for what this payment does: "After this payment: Rs X left", "completes the contract", or a warning with an icon that
+it takes the contract Rs Y **over** the agreed total (it never blocks saving). A planned payment, or a builder's entry that waits
+for approval, says it does not count yet. While the purpose is empty, one button fills "Name - instalment N". The numbers come
+from `summarizeContract`, so they match the contract page; `previewPayment` in `src/lib/contracts.ts` adds the "after" part
+and leaves the payment being edited out of "before". Check: `npx vite-node scripts/contracts-test.ts`.
 
 ## Materials (`/materials`)
 

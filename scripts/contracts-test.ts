@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import { money } from '../src/lib/format'
 import { TABLES } from '../src/sync/mapping'
-import { contractAlerts, contractPayments, contractTotal, openContracts, summarizeContract } from '../src/lib/contracts'
+import { contractAlerts, contractPayments, contractTotal, openContracts, previewPayment, summarizeContract } from '../src/lib/contracts'
 
 const contract = (o: Record<string, unknown> = {}) =>
   ({ id: 'c1', projectId: 'p', title: 'Grey structure labour', amount: 2_500_000, date: '2026-11-01', status: 'active', variations: [], createdAt: 0, updatedAt: 0, ...o }) as never
@@ -62,5 +62,40 @@ assert.equal('contract_id' in row({ contractId: undefined }), false, 'old server
 assert.equal(row({ contractId: 'c1' }).contract_id, 'c1')
 assert.equal(row({ contractId: null }).contract_id, null, 'an unlink reaches the server')
 assert.equal(payments.fromRemote({ ...row({ contractId: 'c1' }), contract_id: null, created_at: 1, updated_at: 1 } as never).contractId, undefined)
+
+// Preview while adding a payment: instalment number, what is left, and going over.
+{
+  const c = contract({ amount: 155_000 })
+  const done = [pay({ id: 'a', amount: 40_000 }), pay({ id: 'b', amount: 15_000, status: 'advance' }), pay({ id: 'w', amount: 5_000, paidBy: 'builder', approval: 'pending' })]
+  const noise = [pay({ amount: 1, status: 'planned' }), pay({ amount: 2, status: 'skipped' }), pay({ amount: 3, deletedAt: 5 }), pay({ amount: 4, contractId: 'c2' }), pay({ amount: 5, approval: 'rejected', paidBy: 'builder' })]
+  const draft = { amount: 40_000, status: 'paid' as const, waitsForApproval: false }
+  let p = previewPayment(c, [...done, ...noise], draft)
+  assert.equal(p.before.paid, 55_000, 'paid so far: paid and advance, approved only')
+  assert.equal(p.instalment, 4, 'three already paid or waiting, so this is the fourth (planned, skipped, removed, rejected and other contracts do not count)')
+  assert.deepEqual([p.counts, p.after, p.over], [true, 60_000, 0], '155,000 - 55,000 - 40,000')
+  // Going over the agreed total.
+  p = previewPayment(c, done, { ...draft, amount: 120_000 })
+  assert.deepEqual([p.after, p.over], [-20_000, 20_000])
+  // Exactly the rest: nothing left, not over.
+  p = previewPayment(c, done, { ...draft, amount: 100_000 })
+  assert.deepEqual([p.after, p.over], [0, 0])
+  // A planned payment, or a builder's entry waiting for approval, does not change what is left.
+  p = previewPayment(c, done, { ...draft, status: 'planned' })
+  assert.deepEqual([p.counts, p.after, p.over], [false, 100_000, 0])
+  p = previewPayment(c, done, { ...draft, waitsForApproval: true })
+  assert.deepEqual([p.counts, p.after], [false, 100_000])
+  // Editing a payment leaves it out of "before", so it is not counted twice. (The screen shows the instalment number
+  // only for a new payment; for an edit the number would not be its real place.)
+  p = previewPayment(c, done, { ...draft, id: 'a', amount: 50_000 })
+  assert.equal(p.before.paid, 15_000 /* only advance 'b'; 'w' waits */)
+  assert.equal(p.after, 155_000 - 15_000 - 50_000)
+  assert.equal(p.instalment, 3, 'the other two (paid advance, waiting) plus one')
+  // Already overpaid before this payment: the overpayment is still reported.
+  p = previewPayment(contract({ amount: 100 }), [pay({ amount: 150 })], { ...draft, status: 'planned' })
+  assert.deepEqual([p.counts, p.over], [false, 50])
+  // No payments yet: first instalment; an empty amount changes nothing.
+  p = previewPayment(c, [], { ...draft, amount: 0 })
+  assert.deepEqual([p.instalment, p.after, p.over], [1, 155_000, 0])
+}
 
 console.log('contracts: all checks passed')

@@ -1,4 +1,4 @@
-import type { Contract, Payment } from '../db/types'
+import type { Contract, PayStatus, Payment } from '../db/types'
 import { money } from './format'
 import { isAwaitingApproval, isPlanned, isSpent, sum, type Alert } from './stats'
 
@@ -44,6 +44,39 @@ export function summarizeContract(c: Contract, payments: Payment[]): ContractSum
     pct: total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : paid > 0 ? 100 : 0,
     state,
     over: Math.max(0, paid - total),
+  }
+}
+
+export interface PaymentPreview {
+  /** The contract before this payment (the payment itself is left out, so editing it does not count it twice). */
+  before: ContractSummary
+  /** Which instalment this would be: the payments already paid or waiting for approval, plus one. */
+  instalment: number
+  /** Whether it counts as paid once saved: paid or advance, and not waiting for the investor. */
+  counts: boolean
+  /** What is left after this payment; negative when it goes over the agreed total. */
+  after: number
+  /** How far over the agreed total the contract is after this payment, or 0. */
+  over: number
+}
+
+/** What saving a payment against a contract would do, shown while the person fills in the form. */
+export function previewPayment(
+  c: Contract,
+  payments: Payment[],
+  draft: { id?: string; amount: number; status: PayStatus; waitsForApproval: boolean },
+): PaymentPreview {
+  const others = contractPayments(c, payments).filter((p) => p.id !== draft.id)
+  const before = summarizeContract(c, others)
+  const counts = (draft.status === 'paid' || draft.status === 'advance') && !draft.waitsForApproval
+  const amount = Math.max(0, draft.amount)
+  const after = before.remaining - (counts ? amount : 0)
+  return {
+    before,
+    instalment: others.filter((p) => isSpent(p) || isAwaitingApproval(p)).length + 1,
+    counts,
+    after,
+    over: counts ? Math.max(0, before.paid + amount - before.total) : before.over,
   }
 }
 

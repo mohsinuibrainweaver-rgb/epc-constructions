@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePhases, useVendors } from '@/db/hooks'
 import type { Payment } from '@/db/types'
 import type { Key } from '@/i18n/en'
+import { bankLine } from '@/lib/bank'
 import { formatDate, money } from '@/lib/format'
 
 /**
@@ -48,7 +49,10 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
                   {sub(p) && <div className="text-sm text-muted-foreground">{sub(p)}</div>}
                 </TableCell>
                 {showPhase && <TableCell>{(p.phaseId && phaseMap.get(p.phaseId)) || '—'}</TableCell>}
-                <TableCell>{t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')}</TableCell>
+                <TableCell>
+                  {t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')}
+                  {p.mode === 'bank' && bankLine(p) && <div className="text-sm text-muted-foreground">{bankLine(p)}</div>}
+                </TableCell>
                 <TableCell className="tabular text-end font-bold whitespace-nowrap">{money(p.amount)}</TableCell>
                 <TableCell>
                   <StatusPill payment={p} />
@@ -71,7 +75,7 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                 <span className="tabular">{formatDate(p.date, lang)}</span>
                 {showPhase && p.phaseId && phaseMap.get(p.phaseId) && <span>{phaseMap.get(p.phaseId)}</span>}
-                <span>{t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')}</span>
+                <span>{[t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank'), p.mode === 'bank' ? bankLine(p) : ''].filter(Boolean).join(' · ')}</span>
                 <StatusPill payment={p} />
               </div>
             </Link>
