@@ -180,8 +180,23 @@ message under the field says what is missing.
   and approves; builder adds entries for the investor to approve), the two things the app already kept per device in Settings.
   Phone number, address and the like are not asked: nothing in the app uses them.
 - The password field has a show/hide button. An email that already has an account is told to sign in instead.
-- The name and role are kept on this device at once and stored in the account (`user_metadata`); a second phone that has none of its own
-  takes them from the account when it signs in (`SyncProvider`). Role is still only a setting on the device: it is not enforced by the server.
+- The name and role are stored in the account (`user_metadata`). A phone that has none of its own takes them from the account when it
+  signs in (`SyncProvider`). Role is still only a setting on the device: it is not enforced by the server.
+
+## Whose data is on this phone (`src/sync/device.ts`, `src/lib/device-owner.ts`)
+
+Which projects an account sees is decided by the server (row level security: you are a member of the project, by invitation or because
+you created it). But the app keeps its data **in the browser**, so when a different account signed in on the same phone the old
+account's projects were still listed. Now the phone remembers which account its data belongs to (`device.userId`), and after sign-in,
+before anything is shown or synced:
+
+- Same account as before, or a phone with no owner yet whose projects the server shows to this account: normal. (A local-only install
+  that never synced belongs to the first account that signs in, as before.)
+- The data belongs to another account: a screen says so. **Sign out** goes back to that account; **Remove them from this phone** (asks
+  twice) clears only this phone and starts the new account clean. The other account's data is untouched on the server. If that account
+  had changes that never reached the server, the screen warns and offers a backup file first.
+- Removing keeps the language and region and clears everything else, including the name and role, which are then taken from the new account.
+- Check: `npx vite-node scripts/device-owner-test.ts`.
 
 ## New project and Edit project (`/projects/new`, `/projects/:id/edit`)
 

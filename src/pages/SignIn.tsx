@@ -55,9 +55,6 @@ export function SignIn() {
       // With "Confirm email" on, an email that already has an account comes back without an error and with no identities.
       else if (data.user && data.user.identities?.length === 0) setErrors({ email: t('auth.exists') })
       else {
-        // Kept on this device straight away, so it is there when the first session starts (even after the emailed link).
-        await setSetting('userName', name.trim())
-        await setSetting('role', role)
         // With "Confirm email" on, no session comes back until the emailed link is used.
         if (!data.session) setNotice(t('auth.confirmEmail'))
       }
