@@ -18,7 +18,8 @@ import { cn } from '@/lib/utils'
 
 /**
  * One project: the picture with the "Current" mark, the name and place, how much is spent (against the budget when there is one),
- * and the actions. Every card in a row is the same height and its buttons sit on the same line.
+ * and the actions. Every card in a row is the same height and its buttons sit on the same line; the text stays together with the
+ * buttons, so any spare room of a shorter card is left under the picture.
  */
 function ProjectCard({ project, spent, current, onDelete }: { project: Project; spent: number; current: boolean; onDelete: () => void }) {
   const { t, can, roleOf } = useApp()
@@ -35,7 +36,7 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
       <div className="grid aspect-video place-items-center bg-secondary text-primary">
         {url ? <img src={url} alt="" className="size-full object-cover" /> : <Building2 className="size-10" aria-hidden="true" />}
       </div>
-      <CardContent className="flex flex-1 flex-col gap-4 p-4">
+      <CardContent className="flex flex-1 flex-col justify-end gap-4 p-4">
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             {current && <Badge variant="secondary">{t('projects.current')}</Badge>}
@@ -59,7 +60,7 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
           ) : null}
         </div>
 
-        <div className="mt-auto flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-1">
           <Button variant="secondary" asChild className="flex-1" onClick={() => void setSetting('currentProjectId', project.id)}>
             <Link to="/">{t('projects.open')}</Link>
           </Button>
