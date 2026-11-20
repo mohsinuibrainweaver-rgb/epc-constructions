@@ -221,17 +221,17 @@ planned") and, when some of the contract has no day yet, "No day set yet for Rs 
 
 ## Contract payment schedule (`/contracts/:id`)
 
-A contract can be with any vendor of the project (or none). Its page now has a **Payment schedule** card:
+A contract can be with any vendor of the project (or none). Its page now has a **Planned payments** card:
 
 - The contract's **planned payments by day**, each with Mark paid / Move / Skip (the same as in Due and upcoming), and **Not planned
   yet** (what is left after what is paid, waiting for approval and already planned; `unplannedBalance` in `src/lib/contracts.ts`).
-- **Plan instalments** spreads that amount: how many (1 to 12), the first day, then every week, 2 weeks or month. The amount is split
+- **Plan payments** (the button reads **Plan the remaining Rs x** once some payments are already planned) spreads that amount: how many (1 to 12), the first day, then every week, 2 weeks or month. The amount is split
   in parts rounded to 100 with the last part taking the rest, so they add up exactly; months keep the day (31 Jan, 28 Feb, 31 Mar). Every
   date and amount can be changed before saving; a warning shows when the instalments are more than what is left. The category, mode and
   who pays start from the contract's earlier payments.
   The first day offered is one step after the contract's latest payment (a week from today when it has none), so new instalments come
   after the ones already there and the numbers follow the days; choosing an earlier day shows a warning (`firstInstalmentDay`).
-- Saving creates ordinary **planned payments linked to the contract** (with its vendor and phase), named "title: instalment n". Nothing
+- Saving creates ordinary **planned payments linked to the contract** (with its vendor and phase), named "title: instalment n" (a single payment is just "title: payment"). Nothing
   new is stored on the server, so they sync like any payment, and they appear in Due and upcoming and in the **Cash forecast**; the
   contract then leaves "Agreed on contracts, but no day set yet".
 - Rules: `src/lib/schedule.ts`, action `planInstalments` in `src/db/actions.ts`, dialog `src/components/InstalmentsDialog.tsx`. Check:

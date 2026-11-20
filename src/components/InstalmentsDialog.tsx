@@ -96,7 +96,8 @@ export function InstalmentsDialog({
       paidBy,
       addedBy: settings.userName || settings.role,
       firstNumber,
-      purpose: (i) => t('contract.instalmentPurpose', { title: contract.title, n: i }),
+      // One payment is just that; several are numbered.
+      purpose: (i) => (rows.filter((r) => r.amount > 0).length === 1 ? t('contract.singlePurpose', { title: contract.title }) : t('contract.instalmentPurpose', { title: contract.title, n: i })),
     })
     toast.show({ kind: 'success', message: t(n === 1 ? 'contract.instalmentsSavedOne' : 'contract.instalmentsSaved', { count: n }) })
     onClose()

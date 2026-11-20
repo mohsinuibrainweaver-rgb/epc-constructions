@@ -321,7 +321,7 @@ export function ContractDetail() {
             {canPlan && (
               <Button size="sm" variant="secondary" onClick={() => setPlanning(true)}>
                 <CalendarPlus aria-hidden="true" />
-                {t('contract.planButton')}
+                {scheduled.length > 0 ? t('contract.planRest', { amount: money(unplanned) }) : t('contract.planButton')}
               </Button>
             )}
           </div>
