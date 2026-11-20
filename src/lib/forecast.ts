@@ -156,3 +156,9 @@ export function cashAdvice(builderBalance: number, builderNext30: number): CashA
   const holds = Math.max(0, -builderBalance)
   return { holds, needs: builderNext30, topUp: Math.max(0, builderNext30 - holds), leftOver: Math.max(0, holds - builderNext30) }
 }
+
+/**
+ * The new money the investor has to put up over the next 30 days: what he pays directly, plus what he must still send the builder so
+ * that the builder can pay his part from his cash. (The cash the builder already holds was given earlier, so it is not counted again.)
+ */
+export const cashToArrange = (investorNext30: number, advice: CashAdvice): number => investorNext30 + advice.topUp

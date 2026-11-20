@@ -1,7 +1,7 @@
 // Checks the cash forecast: what the coming weeks will cost.
 // Run: npx vite-node scripts/forecast-test.ts
 import assert from 'node:assert/strict'
-import { cashAdvice, forecast } from '../src/lib/forecast'
+import { cashAdvice, cashToArrange, forecast } from '../src/lib/forecast'
 import type { Contract, Payment, PaymentPlan } from '../src/db/types'
 
 let n = 0
@@ -93,5 +93,10 @@ assert.deepEqual(cashAdvice(-938500, 1036000), { holds: 938500, needs: 1036000, 
 assert.deepEqual(cashAdvice(-500, 200), { holds: 500, needs: 200, topUp: 0, leftOver: 300 })
 assert.deepEqual(cashAdvice(300, 200), { holds: 0, needs: 200, topUp: 200, leftOver: 0 }, 'the investor owes the builder: he holds nothing')
 assert.deepEqual(cashAdvice(0, 0), { holds: 0, needs: 0, topUp: 0, leftOver: 0 })
+
+// ---- the money to arrange: what the investor pays directly plus what he must still send the builder
+assert.equal(cashToArrange(847000, cashAdvice(-899000, 1036000)), 984000, '847,000 + 137,000')
+assert.equal(cashToArrange(847000, cashAdvice(-2000000, 1036000)), 847000, 'the builder has enough: only what the investor pays himself')
+assert.equal(cashToArrange(0, cashAdvice(0, 0)), 0)
 
 console.log('forecast: all checks passed')

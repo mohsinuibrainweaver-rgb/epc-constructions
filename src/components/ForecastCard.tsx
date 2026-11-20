@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Banknote, ChevronRight, CircleAlert } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { BuilderCash } from '@/components/BuilderCash'
+import { ArrangeBox, ForecastTable } from '@/components/ForecastTable'
 import { Card } from '@/components/ui/card'
 import { useContracts, usePayments, usePhases, usePlans, useTransfers } from '@/db/hooks'
 import { cashAdvice, forecast } from '@/lib/forecast'
@@ -29,11 +30,6 @@ export function ForecastCard() {
   if (!project || !advice) return null
   if (f.next30 === 0 && f.later === 0 && f.unscheduledTotal === 0) return null
 
-  const rows = [
-    { label: t('forecast.next7'), total: f.next7, you: f.investorNext7, builder: f.builderNext7 },
-    { label: t('forecast.next30'), total: f.next30, you: f.investorNext30, builder: f.builderNext30 },
-  ]
-
   return (
     <Card className="gap-0 py-0 transition-colors hover:border-foreground/30">
       <Link to="/forecast" aria-label={t('nav.forecast')} className="grid gap-4 rounded-xl p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
@@ -48,19 +44,7 @@ export function ForecastCard() {
           </span>
         </span>
 
-        <ul className="grid gap-3">
-          {rows.map((r) => (
-            <li key={r.label} className="grid gap-0.5 sm:grid-cols-[9rem_1fr] sm:items-baseline sm:gap-4">
-              <span className="text-sm text-muted-foreground">{r.label}</span>
-              <span className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5">
-                <span className="tabular text-lg font-extrabold">{money(r.total)}</span>
-                <span className="text-sm text-muted-foreground">
-                  {r.builder > 0 ? t('forecast.split', { you: money(r.you), builder: money(r.builder) }) : t('forecast.splitYou')}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ul>
+        <ForecastTable f={f} />
 
         {f.overdue > 0 && (
           <p className="flex items-start gap-1.5 text-sm font-semibold">
@@ -70,6 +54,7 @@ export function ForecastCard() {
         )}
 
         <BuilderCash advice={advice} />
+        <ArrangeBox f={f} advice={advice} />
 
         {f.unscheduledTotal > 0 && (
           <p className="text-sm text-muted-foreground">{t('forecast.unscheduledNote', { amount: money(f.unscheduledTotal) })}</p>

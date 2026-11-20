@@ -155,10 +155,11 @@ worked out from the payments, weekly plans, contracts and transfers (`forecast` 
   week ahead, so the later Thursdays (or whichever day) are projected as **expected** unless a payment for that plan and day already
   exists (paid, skipped, planned or removed); the unplanned balance of each active contract (agreed total minus paid, waiting for
   approval and already planned). Paid and approved money is spent, so it is not in the forecast.
-- **Who pays:** the next 7 and 30 days are each split into what you pay yourself and what the builder pays. A box then answers one
-  question, "Can the builder pay his part?": what he must pay in the next 30 days, the cash of yours he holds (from Settlement: a
-  negative builder balance), and either "Send him about Rs x" or "Left with him after paying". It is about his payments only; the
-  payments you make yourself never need his cash (`cashAdvice` in `src/lib/forecast.ts`).
+- **Who pays:** a small table gives the next 7 and 30 days as total due, what you pay and what the builder pays (a row only when he has
+  payments). A box, "Can the builder pay his part?", says what he must pay in 30 days, the cash of yours he holds (from Settlement: a
+  negative builder balance), and either "Send him about Rs x" or what is left with him. The last figure is **Cash you need to arrange
+  for the next 30 days**: what you pay yourself plus what you still have to send him (`cashToArrange` in `src/lib/forecast.ts`); the
+  cash he already holds is not counted again. The same table and boxes are on Home (`src/components/ForecastTable.tsx`).
 - **Week by week:** columns for 12 weeks starting today (planned solid, expected with a dashed outline, overdue first in amber), the
   amount written above each column (on a phone, above the chosen one), and a sentence under the chart saying that later weeks look small
   only because nothing but the weekly payment is planned there. Tap a

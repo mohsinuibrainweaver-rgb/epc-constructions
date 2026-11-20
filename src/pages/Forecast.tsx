@@ -6,6 +6,7 @@ import { EmptyState, PageHeader } from '@/components/common'
 import { ForecastChart, type ForecastColumn } from '@/components/ForecastChart'
 import { Badge } from '@/components/ui/badge'
 import { BuilderCash } from '@/components/BuilderCash'
+import { ArrangeBox, ForecastTable } from '@/components/ForecastTable'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useContracts, usePayments, usePhases, usePlans, useTransfers, useVendors } from '@/db/hooks'
@@ -88,20 +89,9 @@ export function Forecast() {
             </p>
           )}
         </div>
-        <ul className="grid gap-3 border-t pt-4">
-          {[
-            { label: t('forecast.next7'), total: f.next7, you: f.investorNext7, builder: f.builderNext7 },
-            { label: t('forecast.next30'), total: f.next30, you: f.investorNext30, builder: f.builderNext30 },
-          ].map((r) => (
-            <li key={r.label} className="grid gap-0.5 sm:grid-cols-[10rem_1fr] sm:items-baseline sm:gap-4">
-              <span className="text-sm text-muted-foreground">{r.label}</span>
-              <span className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5">
-                <span className="tabular text-lg font-extrabold">{money(r.total)}</span>
-                <span className="text-sm text-muted-foreground">{r.builder > 0 ? t('forecast.split', { you: money(r.you), builder: money(r.builder) }) : t('forecast.splitYou')}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="border-t pt-4">
+          <ForecastTable f={f} />
+        </div>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-4 sm:grid-cols-3">
           {[
             [t('forecast.overdue'), f.overdue],
@@ -121,6 +111,7 @@ export function Forecast() {
           <h2 className="text-lg font-semibold">{t('forecast.cash')}</h2>
           <p className="text-sm text-muted-foreground">{t('forecast.cashSub')}</p>
           {advice.needs > 0 ? <BuilderCash advice={advice} /> : <p className="text-muted-foreground">{t('forecast.noBuilderPay')}</p>}
+          <ArrangeBox f={f} advice={advice} />
         </Card>
       )}
 
