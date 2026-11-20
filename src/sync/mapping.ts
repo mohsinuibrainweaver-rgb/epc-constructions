@@ -15,6 +15,8 @@ export interface TableDef {
   /** Added after the first release: a server without the newer schema must not break the rest of the sync. */
   optional?: boolean
   table: Table<any, string>
+  /** Newer columns that cannot be NULL on the server, with their default (see fillDefaults in payload.ts). */
+  defaults?: Row
   toRemote: (l: any, userId: string) => Row
   fromRemote: (r: Row) => any
 }
@@ -37,6 +39,7 @@ export const TABLES: TableDef[] = [
   {
     name: 'projects',
     table: db.projects,
+    defaults: { fee_basis: 'tbd' },
     toRemote: (p: Project, userId) => ({
       id: p.id,
       owner_id: p.ownerId ?? userId,
@@ -86,6 +89,7 @@ export const TABLES: TableDef[] = [
   {
     name: 'phases',
     table: db.phases,
+    defaults: { done: false },
     toRemote: (p: Phase) => ({
       id: p.id,
       project_id: p.projectId,

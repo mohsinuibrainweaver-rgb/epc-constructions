@@ -4,6 +4,7 @@ import type { Attachment, Project, ProjectFile } from '../db/types'
 import { BUCKET, supabase } from './supabase'
 import { TABLES, type TableDef } from './mapping'
 import { recordConflicts, staleIds } from './conflicts'
+import { fillDefaults } from './payload'
 
 export type SyncState = 'off' | 'signedOut' | 'idle' | 'syncing' | 'offline' | 'error'
 
@@ -116,7 +117,8 @@ async function push(): Promise<void> {
     for (let i = 0; i < rows.length && !skipped; i += 100) {
       const chunk = rows.slice(i, i + 100)
       const original = chunk.map((r) => def.toRemote(r, userId!))
-      let payload = original
+      // `original` is what the rows really say; `payload` is what is sent (same, plus defaults for columns that cannot be NULL).
+      let payload = fillDefaults(original, def.defaults)
       const dropped: string[] = []
       let sent = false
       // Which rows the server really wrote. A row it ignored (a newer edit was already there) is missing from this list.
