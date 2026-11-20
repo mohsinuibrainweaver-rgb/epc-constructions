@@ -7,7 +7,6 @@ import { BudgetBar, CardSkeleton, EmptyState, PageHeader, StatusPill } from '@/c
 import { ApprovalsCard } from '@/components/ApprovalsCard'
 import { AttentionCard } from '@/components/AttentionCard'
 import { DueActions } from '@/components/DueActions'
-import { ForecastCard } from '@/components/ForecastCard'
 import { PaymentsTable } from '@/components/PaymentsTable'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -190,10 +189,6 @@ export function Home() {
 
       <div className="order-4 empty:hidden md:order-none">
         <AttentionCard items={attention} />
-      </div>
-
-      <div className="order-5 empty:hidden md:order-none">
-        <ForecastCard />
       </div>
 
       {/* On a phone this wrapper steps aside, so its cards take their place in the order above. */}

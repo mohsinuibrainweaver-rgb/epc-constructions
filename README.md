@@ -159,18 +159,14 @@ worked out from the payments, weekly plans, contracts and transfers (`forecast` 
   payments). A box, "Can the builder pay his part?", says what he must pay in 30 days, the cash of yours he holds (from Settlement: a
   negative builder balance), and either "Send him about Rs x" or what is left with him. The last figure is **Cash you need to arrange
   for the next 30 days**: what you pay yourself plus what you still have to send him (`cashToArrange` in `src/lib/forecast.ts`); the
-  cash he already holds is not counted again. The same table and boxes are on Home (`src/components/ForecastTable.tsx`).
-  Under them, Home names the contracts that still have money with no day (up to three, with the amount); that line opens the forecast at
-  "Contracts with money not yet planned".
+  cash he already holds is not counted again. The table and boxes are in `src/components/ForecastTable.tsx`.
 - **Week by week:** columns for 12 weeks starting today (planned solid, expected with a dashed outline, overdue first in amber), the
   amount written above each column (on a phone, above the chosen one), and a sentence under the chart saying that later weeks look small
   only because nothing but the weekly payment is planned there. Tap a
   column or use the arrow keys, and what is due in that week is listed under the chart; a planned payment opens for editing. The
   chart is plain SVG, always left to right, with the colours of the Compare page.
 - **Contracts with money not yet planned** lists the contracts that still need a planned payment, each opening the contract.
-- **On Home** a short **Cash forecast** card (under "Needs your attention") shows the next 7 days, the next 30 days and what has no day
-  yet, with a warning when something is overdue or the builder's cash will not cover what he is to pay. The whole card opens the
-  forecast; it is hidden when nothing is planned at all (`src/components/ForecastCard.tsx`).
+- **Not on Home.** Home already holds a lot, so the forecast is only reached from the menu (Cash forecast, also under More on a phone).
 - Check: `npx vite-node scripts/forecast-test.ts`.
 
 ## Compare projects (`/compare`)
@@ -204,13 +200,11 @@ It is built to be read top to bottom, the answer first:
 
 ## Home order and a lighter Home
 
-- **On a phone the cards follow what needs doing:** four figures, approvals, Due and upcoming, Needs your attention, the Cash forecast, Recent
+- **On a phone the cards follow what needs doing:** four figures, approvals, Due and upcoming, Needs your attention, Recent
   payments, Phase progress. (On a wide screen the layout is as before: Recent on the left, Due and Phase progress on the right.) This is
   done with CSS `order` and a wrapper that steps aside on small screens, so nothing is rendered twice.
 - **Due and upcoming** starts with three payments ("Show n more" for the rest, up to eight) instead of five, so the cards below it are not
   pushed far down.
-- **Cash forecast on Home** is short: next 7 days, next 30 days, the **cash you need to arrange** and the contracts with no day set. The
-  table and the "Can the builder pay his part?" box are on the forecast page.
 - **Recent payments** no longer lists planned payments; they are in Due and upcoming.
 
 ## Contracts list: next payment
