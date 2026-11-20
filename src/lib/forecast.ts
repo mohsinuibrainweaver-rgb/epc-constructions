@@ -1,5 +1,5 @@
 import type { Contract, Payment, PaymentPlan, Role } from '../db/types'
-import { summarizeContract } from './contracts'
+import { summarizeContract, unplannedBalance } from './contracts'
 import { addDays } from './format'
 import { weekdayOf } from './plans'
 import { isPlanned } from './stats'
@@ -111,7 +111,7 @@ export function forecast({ payments, plans, contracts, today, weeks = FORECAST_W
     .filter((c) => !c.deletedAt && c.status === 'active')
     .map((contract) => {
       const s = summarizeContract(contract, payments)
-      return { contract, amount: Math.max(0, s.remaining - s.planned - s.awaiting) }
+      return { contract, amount: unplannedBalance(s) }
     })
     .filter((x) => x.amount > 0)
     .sort((a, b) => b.amount - a.amount)

@@ -202,6 +202,22 @@ It is built to be read top to bottom, the answer first:
 - Rules: `src/lib/compare.ts`; drawing: `src/components/CompareParts.tsx`; page: `src/pages/Compare.tsx`. Check:
   `npx vite-node scripts/compare-test.ts`. Nothing is stored.
 
+## Contract payment schedule (`/contracts/:id`)
+
+A contract can be with any vendor of the project (or none). Its page now has a **Payment schedule** card:
+
+- The contract's **planned payments by day**, each with Mark paid / Move / Skip (the same as in Due and upcoming), and **Not planned
+  yet** (what is left after what is paid, waiting for approval and already planned; `unplannedBalance` in `src/lib/contracts.ts`).
+- **Plan instalments** spreads that amount: how many (1 to 12), the first day, then every week, 2 weeks or month. The amount is split
+  in parts rounded to 100 with the last part taking the rest, so they add up exactly; months keep the day (31 Jan, 28 Feb, 31 Mar). Every
+  date and amount can be changed before saving; a warning shows when the instalments are more than what is left. The category, mode and
+  who pays start from the contract's earlier payments.
+- Saving creates ordinary **planned payments linked to the contract** (with its vendor and phase), named "title: instalment n". Nothing
+  new is stored on the server, so they sync like any payment, and they appear in Due and upcoming and in the **Cash forecast**; the
+  contract then leaves "Agreed on contracts, but no day set yet".
+- Rules: `src/lib/schedule.ts`, action `planInstalments` in `src/db/actions.ts`, dialog `src/components/InstalmentsDialog.tsx`. Check:
+  `npx vite-node scripts/schedule-test.ts`.
+
 ## Phase page (`/phases/:id`)
 
 - Under the spent-and-budget bar: **Budget left** (or **Over budget by**, in red, when spending passed the budget), **Planned**,

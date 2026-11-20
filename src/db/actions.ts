@@ -1,5 +1,5 @@
 import { db, now, uid } from './db'
-import type { Attachment, Contract, ContractVariation, FeeBasis, PhaseFeeKind, MaterialLine, MaterialUnit, PayMode, Payment, ProjectFile, PaymentPlan, Phase, Project, Role, Settings, Transfer, Vendor } from './types'
+import type { Attachment, Category, Contract, ContractVariation, FeeBasis, PhaseFeeKind, MaterialLine, MaterialUnit, PayMode, Payment, ProjectFile, PaymentPlan, Phase, Project, Role, Settings, Transfer, Vendor } from './types'
 import { addDays, todayISO } from '../lib/format'
 import { approvalFields } from '../lib/approval'
 import { lineAmount } from '../lib/materials'
@@ -599,4 +599,38 @@ export async function removeVariation(contractId: string, variationId: string): 
     const c = await db.contracts.get(contractId)
     if (c) await db.contracts.update(contractId, { variations: c.variations.filter((x) => x.id !== variationId), updatedAt: now() })
   })
+}
+
+/**
+ * Plans a contract's remaining money as dated payments: one planned payment for each row, linked to the contract (and its vendor and
+ * phase), so they show in Due and upcoming and in the Cash forecast, and can be paid, moved or skipped like any planned payment.
+ * `purpose` writes the text of each (instalment number counted from `firstNumber`).
+ */
+export async function planInstalments(
+  contract: Contract,
+  rows: { date: string; amount: number }[],
+  opts: { category: Category; mode: PayMode; paidBy: Role; addedBy: string; firstNumber: number; purpose: (n: number) => string },
+): Promise<number> {
+  const t = now()
+  const made: Payment[] = rows
+    .filter((r) => r.amount > 0 && r.date)
+    .map((r, i) => ({
+      id: uid(),
+      projectId: contract.projectId,
+      date: r.date,
+      amount: r.amount,
+      vendorId: contract.vendorId,
+      phaseId: contract.phaseId,
+      contractId: contract.id,
+      category: opts.category,
+      purpose: opts.purpose(opts.firstNumber + i),
+      status: 'planned' as const,
+      mode: opts.mode,
+      paidBy: opts.paidBy,
+      addedBy: opts.addedBy,
+      createdAt: t + i,
+      updatedAt: t + i,
+    }))
+  if (made.length) await db.payments.bulkAdd(made)
+  return made.length
 }

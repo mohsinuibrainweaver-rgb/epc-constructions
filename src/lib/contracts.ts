@@ -25,6 +25,9 @@ export interface ContractSummary {
   over: number
 }
 
+/** What is left of the agreed total after what is paid, waiting for approval and already planned: money with no day yet (never negative). */
+export const unplannedBalance = (s: Pick<ContractSummary, 'remaining' | 'planned' | 'awaiting'>): number => Math.max(0, s.remaining - s.planned - s.awaiting)
+
 /** The payments that belong to a contract (not in the bin). */
 export const contractPayments = (c: Pick<Contract, 'id'>, payments: Payment[]): Payment[] =>
   payments.filter((p) => !p.deletedAt && p.contractId === c.id)

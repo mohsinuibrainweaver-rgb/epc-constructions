@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Ban, CircleCheck, FileSignature, FileText, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2 } from 'lucide-react'
+import { Ban, CalendarPlus, CircleCheck, FileSignature, FileText, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
-import { BackLink, EmptyState, PageHeader } from '@/components/common'
+import { BackLink, EmptyState, PageHeader, StatusPill } from '@/components/common'
 import { ContractBar, ContractPill } from '@/components/ContractParts'
 import { ContractDialog, VariationDialog } from '@/components/ContractDialog'
+import { DueActions } from '@/components/DueActions'
+import { InstalmentsDialog } from '@/components/InstalmentsDialog'
 import { PaymentsTable } from '@/components/PaymentsTable'
 import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
@@ -15,8 +17,9 @@ import { deleteContract, removeVariation, restoreContract, saveContract } from '
 import { useContracts, usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Contract, ContractStatus, ContractVariation } from '@/db/types'
 import type { Key } from '@/i18n/en'
-import { contractPayments, summarizeContract } from '@/lib/contracts'
+import { contractPayments, summarizeContract, unplannedBalance } from '@/lib/contracts'
 import { formatDate, money } from '@/lib/format'
+import { isPlanned } from '@/lib/stats'
 
 function Figure({ label, value, tone }: { label: string; value: string; tone?: 'danger' | 'success' }) {
   return (
@@ -141,6 +144,7 @@ export function ContractDetail() {
   const phases = usePhases(project?.id)
   const [editing, setEditing] = useState(false)
   const [variation, setVariation] = useState<{ open: boolean; v?: ContractVariation }>({ open: false })
+  const [planning, setPlanning] = useState(false)
 
   if (!contract) return null
   const s = summarizeContract(contract, payments)
@@ -148,6 +152,10 @@ export function ContractDetail() {
   const vendor = vendors.find((v) => v.id === contract.vendorId)
   const phase = phases.find((p) => p.id === contract.phaseId)
   const varTotal = s.total - contract.amount
+  // The schedule: the planned payments of this contract by day, and what is left with no day yet.
+  const scheduled = mine.filter(isPlanned).sort((a, b) => a.date.localeCompare(b.date))
+  const unplanned = unplannedBalance(s)
+  const canPlan = contract.status === 'active' && unplanned > 0
 
   const setStatus = async (next: ContractStatus) => {
     await saveContract({ ...(contract as Contract), status: next })
@@ -277,6 +285,50 @@ export function ContractDetail() {
         </Card>
       </div>
 
+      {(scheduled.length > 0 || canPlan) && (
+        <Card className="gap-0 overflow-hidden py-0" aria-labelledby="sch-title">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div className="grid gap-0.5">
+              <h2 id="sch-title" className="text-lg font-semibold">
+                {t('contract.schedule')}
+              </h2>
+              <p className="text-sm text-muted-foreground">{t('contract.scheduleSub')}</p>
+            </div>
+            {canPlan && (
+              <Button size="sm" variant="secondary" onClick={() => setPlanning(true)}>
+                <CalendarPlus aria-hidden="true" />
+                {t('contract.planButton')}
+              </Button>
+            )}
+          </div>
+          {unplanned > 0 && (
+            <p className="mx-4 mb-4 flex flex-wrap items-baseline justify-between gap-x-4 rounded-xl bg-muted/60 p-3 text-sm">
+              <span className="text-muted-foreground">{t('contract.notPlanned')}</span>
+              <strong className="tabular">{money(unplanned)}</strong>
+            </p>
+          )}
+          {scheduled.length === 0 ? (
+            <p className="px-4 pb-4 text-sm text-muted-foreground">{t('contract.scheduleEmpty')}</p>
+          ) : (
+            <ul className="divide-y border-t">
+              {scheduled.map((p) => (
+                <li key={p.id} className="grid gap-3 p-4">
+                  <Link to={`/payments/${p.id}`} className="grid min-w-0 gap-1">
+                    <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <span className="font-semibold [overflow-wrap:anywhere]">{p.purpose}</span>
+                      <span className="tabular font-bold whitespace-nowrap">{money(p.amount)}</span>
+                    </span>
+                    <span className="text-sm text-muted-foreground">{formatDate(p.date, lang)}</span>
+                    <StatusPill payment={p} />
+                  </Link>
+                  <DueActions payment={p} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
+
       <Card className="gap-0 overflow-hidden py-0" aria-labelledby="cp-title">
         <h2 id="cp-title" className="p-4 text-lg font-semibold">
           {t('contract.payments')} ({mine.length})
@@ -285,6 +337,7 @@ export function ContractDetail() {
       </Card>
 
       <ContractDialog open={editing} contract={contract} onClose={() => setEditing(false)} />
+      <InstalmentsDialog open={planning} contract={contract} unplanned={unplanned} payments={mine} onClose={() => setPlanning(false)} />
       <VariationDialog open={variation.open} contractId={contract.id} variation={variation.v} onClose={() => setVariation({ open: false })} />
     </>
   )
