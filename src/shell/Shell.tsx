@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useConflictCount, useContracts, usePayments, usePhases } from '@/db/hooks'
 import { setSetting } from '@/db/actions'
 import type { Key } from '@/i18n/en'
+import { addPaymentPath } from '@/lib/addLink'
 import { initials, todayISO } from '@/lib/format'
 import { contractAlerts } from '@/lib/contracts'
 import { buildAlerts } from '@/lib/stats'
@@ -342,7 +343,7 @@ export function Shell() {
             <span className="flex-1" />
             {!fullscreen && (
               <Button asChild>
-                <Link to="/add">
+                <Link to={addPaymentPath(loc.pathname)}>
                   <Plus aria-hidden="true" />
                   {t('pay.add')}
                 </Link>
@@ -387,7 +388,7 @@ export function Shell() {
             <TabLink key={to} to={to} end={end} label={t(key)} icon={<Icon className="size-[1.375rem]" aria-hidden="true" />} />
           ))}
           <Link
-            to="/add"
+            to={addPaymentPath(loc.pathname)}
             aria-label={t('pay.add')}
             className="-mt-5 grid size-14 place-items-center justify-self-center rounded-control border-4 border-background bg-primary text-primary-foreground shadow-lg transition-transform duration-150 active:scale-95"
           >

@@ -10,7 +10,7 @@ import { deleteMaterial, restoreMaterial } from '@/db/actions'
 import { useMaterials, usePhases } from '@/db/hooks'
 import type { MaterialLine } from '@/db/types'
 import type { Key } from '@/i18n/en'
-import { formatDate, money } from '@/lib/format'
+import { formatDate, money, moneyRate } from '@/lib/format'
 import { num, priceRows } from '@/lib/materials'
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -87,7 +87,7 @@ export function Materials() {
                         </div>
                         <div className="text-end">
                           <p className="tabular text-xl font-extrabold whitespace-nowrap">
-                            {money(r.last)}
+                            {moneyRate(r.last)}
                             <span className="text-sm font-medium text-muted-foreground"> / {unitLabel(r.unit)}</span>
                           </p>
                           {r.change !== undefined && (
@@ -101,9 +101,9 @@ export function Materials() {
                         </div>
                       </div>
                       <dl className="grid grid-cols-2 gap-3 border-t pt-3 sm:grid-cols-4">
-                        <Stat label={t('mat.min')} value={money(r.min)} />
-                        <Stat label={t('mat.max')} value={money(r.max)} />
-                        <Stat label={t('mat.avg')} value={money(Math.round(r.average * 100) / 100)} />
+                        <Stat label={t('mat.min')} value={moneyRate(r.min)} />
+                        <Stat label={t('mat.max')} value={moneyRate(r.max)} />
+                        <Stat label={t('mat.avg')} value={moneyRate(r.average)} />
                         <Stat label={t('mat.bought')} value={`${num(r.quantity)} ${unitLabel(r.unit)}`} />
                       </dl>
                       <p className="text-sm text-muted-foreground">
@@ -127,7 +127,7 @@ export function Materials() {
                     <div className="grid min-w-0 flex-1 gap-0.5">
                       <span className="truncate font-semibold">{l.item}</span>
                       <span className="text-sm text-muted-foreground">
-                        {formatDate(l.date, lang)} · {t('mat.at', { qty: num(l.quantity), unit: unitLabel(l.unit), rate: money(l.rate) })}
+                        {formatDate(l.date, lang)} · {t('mat.at', { qty: num(l.quantity), unit: unitLabel(l.unit), rate: moneyRate(l.rate) })}
                       </span>
                       {(l.supplier || phaseOf(l.phaseId)) && (
                         <span className="truncate text-sm text-muted-foreground">
