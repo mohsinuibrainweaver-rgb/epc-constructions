@@ -22,6 +22,7 @@ import type { Lang, Role } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { download, formatDate, formatTime, money } from '@/lib/format'
 import { useInstall } from '@/pwa/install'
+import { supabase } from '@/sync/supabase'
 import { useSync } from '@/sync/SyncProvider'
 import { useTheme } from '@/theme'
 import { SECTIONS, type SectionId } from './sections'
@@ -139,6 +140,10 @@ function AccountSection() {
   const [pw, setPw] = useState(false)
   const [everywhere, setEverywhere] = useState(false)
   const email = sync.session?.user.email ?? ''
+  // The name and role are kept in the account too, so the next phone or sign-in has the same ones.
+  const saveProfile = (patch: { name?: string; role?: Role }) => {
+    if (sync.session) void supabase?.auth.updateUser({ data: patch })
+  }
   return (
     <>
       <SettingsSection title={t('set.you')}>
@@ -153,6 +158,7 @@ function AccountSection() {
               value={settings.userName}
               autoComplete="name"
               onChange={(e) => void setSetting('userName', e.target.value)}
+              onBlur={(e) => saveProfile({ name: e.target.value.trim() })}
             />
           )}
         />
@@ -160,7 +166,10 @@ function AccountSection() {
           label={t('set.role')}
           help={t('set.roleHelp')}
           control={(a) => (
-            <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={settings.role} onValueChange={(v) => void setSetting('role', v as Role)}>
+            <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={settings.role} onValueChange={(v) => {
+                void setSetting('role', v as Role)
+                saveProfile({ role: v as Role })
+              }}>
               {(['investor', 'builder'] as Role[]).map((r) => (
                 <PillRadioItem key={r} value={r}>
                   {t(r === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')}

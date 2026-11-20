@@ -4,6 +4,8 @@ import { getStatus, startSync, stopSync, subscribe, syncNow, type SyncStatus } f
 import { checkDevice, takeOverDevice, type DeviceCheck } from './device'
 import { db } from '../db/db'
 import { setSetting } from '../db/actions'
+import type { Role } from '../db/types'
+import { profileToApply, readProfile } from '../lib/profile'
 import { disablePush } from '../push/push'
 import { supabase, syncConfigured } from './supabase'
 
@@ -68,13 +70,18 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     return () => stopSync()
   }, [userId, deviceOk])
 
-  // The name and role given when the account was created: a second phone that has none of its own takes them from the account.
-  const meta = session?.user.user_metadata as { name?: unknown; role?: unknown } | undefined
+  // The name and role belong to the account (its metadata), not to the phone: when the phone is this account's it takes them from the
+  // account, so values left on the phone by another account never show up. Changes made in Settings are saved to the account too.
+  const meta = session?.user.user_metadata
   useEffect(() => {
     if (!userId || !deviceOk) return
     void (async () => {
-      if (typeof meta?.name === 'string' && meta.name.trim() && !(await db.settings.get('userName'))?.value) await setSetting('userName', meta.name.trim())
-      if ((meta?.role === 'investor' || meta?.role === 'builder') && !(await db.settings.get('role'))) await setSetting('role', meta.role)
+      const change = profileToApply(readProfile(meta), {
+        userName: (await db.settings.get('userName'))?.value as string | undefined,
+        role: (await db.settings.get('role'))?.value as Role | undefined,
+      })
+      if (change.userName !== undefined) await setSetting('userName', change.userName)
+      if (change.role !== undefined) await setSetting('role', change.role)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, deviceOk])

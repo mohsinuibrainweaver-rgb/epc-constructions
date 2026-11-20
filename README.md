@@ -180,8 +180,10 @@ message under the field says what is missing.
   and approves; builder adds entries for the investor to approve), the two things the app already kept per device in Settings.
   Phone number, address and the like are not asked: nothing in the app uses them.
 - The password field has a show/hide button. An email that already has an account is told to sign in instead.
-- The name and role are stored in the account (`user_metadata`). A phone that has none of its own takes them from the account when it
-  signs in (`SyncProvider`). Role is still only a setting on the device: it is not enforced by the server.
+- The name and role belong to the **account** (its `user_metadata`), not to the phone. When a phone signs in as an account it takes them
+  from the account (`SyncProvider`, `src/lib/profile.ts`), so values left on the phone by another account (a test account, say) never show
+  up. Changing them in Settings, Account saves them to the account as well. An older account that has no name or role yet keeps whatever
+  the phone has until they are set once in Settings. Role is still only a setting in the app: the server does not enforce it.
 
 ## Whose data is on this phone (`src/sync/device.ts`, `src/lib/device-owner.ts`)
 
