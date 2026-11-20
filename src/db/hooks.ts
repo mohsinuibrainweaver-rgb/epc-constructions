@@ -111,6 +111,17 @@ export function useFiles(projectId: string | undefined): ProjectFile[] {
   )
 }
 
+/** Ids of the payments that have a receipt photo. Undefined until the first read, so "no receipt" is never claimed too early. */
+export function useReceiptIds(projectId: string | undefined): Set<string> | undefined {
+  return useLiveQuery(
+    async () =>
+      projectId
+        ? new Set((await db.attachments.where('projectId').equals(projectId).toArray()).filter((a) => !a.deletedAt).map((a) => a.paymentId))
+        : new Set<string>(),
+    [projectId],
+  )
+}
+
 /** Edits of this device that a newer edit from another phone replaced, each with the row as it is now. */
 export function useConflicts(): ConflictItem[] {
   return useLiveQuery(loadConflicts, []) ?? []

@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Dropdown } from '@/components/ui/dropdown'
-import { usePayments, usePhases, useVendors } from '@/db/hooks'
+import { usePayments, usePhases, useReceiptIds, useVendors } from '@/db/hooks'
 import { CATEGORIES, type Approval, type Category, type PayMode, type PayStatus } from '@/db/types'
 import type { Key } from '@/i18n/en'
+import { isMissing, MISSING, type Missing } from '@/lib/attention'
 import { csvEscape, download, formatMonth, money, monthKey } from '@/lib/format'
 import { isSpent, sum } from '@/lib/stats'
 
@@ -20,8 +21,14 @@ export function Ledger() {
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
   const phases = usePhases(project?.id)
   const vendors = useVendors(project?.id)
+  const receiptIds = useReceiptIds(project?.id)
 
   const [q, setQ] = useState(sp.get('q') ?? '')
+  // Payments that lack something (Home lists them under "Needs your attention"): no receipt photo, no vendor or payee, no bank details.
+  const [missing, setMissing] = useState<'' | Missing>(((): '' | Missing => {
+    const m = sp.get('missing')
+    return (MISSING as string[]).includes(m ?? '') ? (m as Missing) : ''
+  })())
   const [phase, setPhase] = useState('')
   const [vendor, setVendor] = useState('')
   const [category, setCategory] = useState<'' | Category>('')
@@ -47,6 +54,7 @@ export function Ledger() {
     if (mode && p.mode !== mode) return false
     if (month && monthKey(p.date) !== month) return false
     if (approval && p.approval !== approval) return false
+    if (missing && !isMissing(missing, p, receiptIds ?? new Set())) return false
     const needle = q.trim().toLowerCase()
     if (needle) {
       const hay = `${p.purpose} ${p.note ?? ''} ${p.payeeName ?? ''} ${(p.vendorId && vendorName.get(p.vendorId)) || ''}`.toLowerCase()
@@ -64,6 +72,7 @@ export function Ledger() {
     setMode('')
     setMonth('')
     setApproval('')
+    setMissing('')
   }
 
   const exportCsv = () => {
@@ -159,6 +168,14 @@ export function Ledger() {
             {(['pending', 'approved', 'rejected'] as Approval[]).map((a) => (
               <option key={a} value={a}>
                 {t(`approval.${a}` as Key)}
+              </option>
+            ))}
+          </Dropdown>
+          <Dropdown aria-label={t('ledger.missing')} value={missing} onChange={(e) => setMissing(e.target.value as Missing | '')}>
+            <option value="">{`${t('ledger.missing')}: ${all}`}</option>
+            {MISSING.map((m) => (
+              <option key={m} value={m}>
+                {t(`ledger.missing.${m}` as Key)}
               </option>
             ))}
           </Dropdown>

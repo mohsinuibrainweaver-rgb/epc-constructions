@@ -95,6 +95,20 @@ opened from a contract or phase (`?contract=`, `?phase=`), or once something is 
 payments and payments created by a weekly plan are not offered. A vendor, phase or contract that is gone or closed is dropped
 from the chip. Check: `npx vite-node scripts/recent-test.ts`.
 
+## Home: "Needs your attention", and due payments first on a phone
+
+- **Needs your attention (n)** card under the four figures (hidden when there is nothing). Rows, most important first: budgets over their
+  limit and contracts paid beyond what was agreed (danger), budgets from 80% (warning), then tidy-up items: payments with no vendor or
+  payee, bank transfers with no bank details, and paid payments with no receipt photo. Each row is an icon plus words and opens the screen
+  where it is fixed; the first three rows show and the rest sit behind "Show n more". Due payments and approvals keep their own cards
+  (they have buttons). The rules are in `src/lib/attention.ts`; the receipts are read live (`useReceiptIds`) and "no receipt" is never
+  claimed before they are read.
+- **Ledger → Missing** is a new filter (No receipt photo / No vendor or payee / No bank details) that the card's tidy-up rows open
+  (`/ledger?missing=receipt|vendor|bank`), using the same rules.
+- **Due and upcoming** moves above Recent payments on a phone when a planned payment is overdue or due within three days; on a wide
+  screen the layout is unchanged (Recent on the left, Due and Phase progress on the right).
+- Check: `npx vite-node scripts/attention-test.ts`.
+
 ## Bank details of a transfer (Add payment, Vendors, Ledger)
 
 - **Add payment:** when the mode is **Bank transfer**, a "Bank details (optional)" box appears with **Bank** (suggestions of common
@@ -185,6 +199,11 @@ The four figures on Home (Spent, Budget, Budget left, Planned) are links, not st
 500 shade of that colour for the icon, 400 on a tinted dark background), and goes to the screen behind it: Spent to the Ledger, Budget and Budget left to
 Phases (Budget goes to the project form while no budget is set), Planned to the Ledger filtered to planned payments (`/ledger?status=planned`). The icon is
 decoration (`aria-hidden`); the label and figure carry the meaning, so the light 500-on-100 icon colours are not held to the 3 : 1 rule.
+
+**On a phone** (below the `sm` breakpoint) the tiles are compact: a small icon beside the label instead of the 48 px tile above it, and no corner arrow
+(the whole tile is the link), which makes each tile about a third shorter. The Planned tile is shown only when something is planned (with it hidden, the
+figures sit in three columns on a wide screen and Budget left takes the full width on a phone). Card headings keep their link on the same line
+("Manage" instead of "Manage weekly payments" on a phone; on a narrow column the link wraps under the title instead of squeezing it).
 
 ## Buttons
 
