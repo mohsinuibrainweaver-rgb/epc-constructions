@@ -6,6 +6,7 @@ import { BudgetBar, CardSkeleton, EmptyState, PageHeader, StatusPill } from '@/c
 import { ApprovalsCard } from '@/components/ApprovalsCard'
 import { AttentionCard } from '@/components/AttentionCard'
 import { DueActions } from '@/components/DueActions'
+import { ForecastCard } from '@/components/ForecastCard'
 import { PaymentsTable } from '@/components/PaymentsTable'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -171,6 +172,8 @@ export function Home() {
       <ApprovalsCard payments={live} />
 
       <AttentionCard items={attention} />
+
+      <ForecastCard />
 
       <div className="grid gap-6 md:grid-cols-12">
         {/* On a phone a payment that is due or overdue comes before the recent payments; on a wide screen the places below hold. */}

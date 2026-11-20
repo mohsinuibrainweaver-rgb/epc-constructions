@@ -161,6 +161,9 @@ worked out from the payments, weekly plans, contracts and transfers (`forecast` 
   column or use the arrow keys, and what is due in that week is listed under the chart; a planned payment opens for editing. The
   chart is plain SVG, always left to right, with the colours of the Compare page.
 - **Contracts with money not yet planned** lists the contracts that still need a planned payment, each opening the contract.
+- **On Home** a short **Cash forecast** card (under "Needs your attention") shows the next 7 days, the next 30 days and what has no day
+  yet, with a warning when something is overdue or the builder's cash will not cover what he is to pay. The whole card opens the
+  forecast; it is hidden when nothing is planned at all (`src/components/ForecastCard.tsx`).
 - Check: `npx vite-node scripts/forecast-test.ts`.
 
 ## Compare projects (`/compare`)

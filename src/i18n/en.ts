@@ -948,6 +948,7 @@ export const en = {
   'forecast.includesOverdue': 'Includes {amount} that is overdue',
   'forecast.overdue': 'Overdue',
   'forecast.next7': 'Next 7 days',
+  'forecast.next30': 'Next 30 days',
   'forecast.later': 'Later than 12 weeks',
   'forecast.unscheduled': 'Not yet planned',
   'forecast.cash': 'Who pays',

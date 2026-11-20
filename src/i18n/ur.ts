@@ -950,6 +950,7 @@ export const ur: Record<Key, string> = {
   'forecast.includesOverdue': 'اس میں {amount} زائد المیعاد شامل ہے',
   'forecast.overdue': 'زائد المیعاد',
   'forecast.next7': 'اگلے 7 دن',
+  'forecast.next30': 'اگلے 30 دن',
   'forecast.later': '12 ہفتوں کے بعد',
   'forecast.unscheduled': 'ابھی منصوبے میں نہیں',
   'forecast.cash': 'کون ادا کرے گا',
