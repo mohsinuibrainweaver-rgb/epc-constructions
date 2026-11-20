@@ -169,6 +169,14 @@ worked out from the payments, weekly plans, contracts and transfers (`forecast` 
 - **Not on Home.** Home already holds a lot, so the forecast is only reached from the menu (Cash forecast, also under More on a phone).
 - Check: `npx vite-node scripts/forecast-test.ts`.
 
+## Deleting a project (Projects screen)
+
+Every project card on the **Projects** screen has a **Delete** button (it was only in Settings, Project, and only for the open project). It opens
+the same safeguard as before: it says what is removed, offers a backup file, and asks for the project name to be typed before the red button
+works. It is a soft delete, so the other phones learn of it. Deleting a project that is **not** the open one no longer switches the open
+project (`deleteProject` in `src/db/actions.ts`, tested in `scripts/delete-project-test.ts`); deleting the open one opens the most recently
+changed one left. Afterwards you return to the list of projects, or to the start screen when none is left.
+
 ## Compare projects (`/compare`)
 
 A page that puts two projects side by side: where the money went in an earlier project and where it is going in this one. Open it

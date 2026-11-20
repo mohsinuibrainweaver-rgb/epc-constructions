@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Building2, Pencil, Plus } from 'lucide-react'
+import { Building2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { PageHeader } from '@/components/common'
+import { DeleteProjectDialog } from '@/components/DeleteProjectDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -14,7 +16,7 @@ import { useObjectUrl } from '@/lib/image'
 import { isSpent, sum } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 
-function ProjectCard({ project, spent, current }: { project: Project; spent: number; current: boolean }) {
+function ProjectCard({ project, spent, current, onDelete }: { project: Project; spent: number; current: boolean; onDelete: () => void }) {
   const { t } = useApp()
   const url = useObjectUrl(project.thumbnail)
   return (
@@ -43,6 +45,10 @@ function ProjectCard({ project, spent, current }: { project: Project; spent: num
               {t('common.edit')}
             </Link>
           </Button>
+          <Button size="sm" variant="outline" className="text-danger hover:text-danger" onClick={onDelete} aria-label={`${t('common.delete')}: ${project.name}`}>
+            <Trash2 aria-hidden="true" />
+            {t('common.delete')}
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -51,6 +57,7 @@ function ProjectCard({ project, spent, current }: { project: Project; spent: num
 
 export function Projects() {
   const { t, projects, project } = useApp()
+  const [deleting, setDeleting] = useState<Project>()
   const all = useLiveQuery(() => db.payments.toArray(), []) ?? []
   const spentBy = (id: string) => sum(all.filter((p) => p.projectId === id && isSpent(p)))
   return (
@@ -69,10 +76,11 @@ export function Projects() {
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-4">
         {projects.map((p) => (
           <li key={p.id}>
-            <ProjectCard project={p} spent={spentBy(p.id)} current={p.id === project?.id} />
+            <ProjectCard project={p} spent={spentBy(p.id)} current={p.id === project?.id} onDelete={() => setDeleting(p)} />
           </li>
         ))}
       </ul>
+      {deleting && <DeleteProjectDialog open project={deleting} onClose={() => setDeleting(undefined)} />}
     </>
   )
 }

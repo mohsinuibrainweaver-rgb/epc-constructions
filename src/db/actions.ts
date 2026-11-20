@@ -65,6 +65,8 @@ export async function updateProject(id: string, patch: Partial<Project>): Promis
 export async function deleteProject(id: string): Promise<void> {
   await db.transaction('rw', [db.projects, db.settings], async () => {
     await db.projects.update(id, { deletedAt: now() })
+    // Only when the open project is the one deleted does another one open; deleting any other leaves the open one alone.
+    if ((await db.settings.get('currentProjectId'))?.value !== id) return
     const rest = (await db.projects.orderBy('updatedAt').reverse().toArray()).filter((p) => !p.deletedAt && p.id !== id)
     await db.settings.put({ key: 'currentProjectId', value: rest[0]?.id })
   })

@@ -16,7 +16,7 @@ import { useSync } from '@/sync/SyncProvider'
  * The backup is an offer, not a rule: deleting stays possible without it.
  */
 export function DeleteProjectDialog({ open, project, onClose }: { open: boolean; project: Project; onClose: () => void }) {
-  const { t } = useApp()
+  const { t, projects } = useApp()
   const toast = useToast()
   const nav = useNavigate()
   const sync = useSync()
@@ -48,7 +48,8 @@ export function DeleteProjectDialog({ open, project, onClose }: { open: boolean;
     await deleteProject(project.id)
     toast.show({ kind: 'info', message: t('set.projectDeleted') })
     onClose()
-    nav('/welcome')
+    // Other projects left: back to the list of them; none left: the start screen.
+    nav(projects.some((p) => p.id !== project.id) ? '/projects' : '/welcome')
   }
 
   return (
