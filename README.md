@@ -73,6 +73,11 @@ Install and push need `https` (or `localhost`). To try it on a phone, deploy the
   No server change is needed. Checks: `npx vite-node scripts/conflict-test.ts`, `scripts/schema-test.ts`, and
   `VITE_SUPABASE_URL=http://localhost:54398 VITE_SUPABASE_ANON_KEY=test-key-not-a-secret npx vite-node scripts/sync-conflict-test.ts`
   (two phones against a local fake server; always set the URL, or the app's real project is used).
+- **Mixed batches no longer fail.** The server writes the rows of one request as a batch, and a column that one row leaves out is
+  stored as NULL when another row has it. A phase marked complete (or with a fee) next to phases that were never touched made the whole
+  batch fail ("null value in column done"), so a new project with some completed phases could not sync. Columns that cannot be NULL on
+  the server (`phases.done`, `projects.fee_basis`) now get their default for such rows (`fillDefaults` in `src/sync/payload.ts`; the
+  list is `defaults` in `src/sync/mapping.ts`). Check: `npx vite-node scripts/payload-test.ts`.
 
 ## Money features (investor and builder)
 
@@ -108,6 +113,87 @@ from the chip. Check: `npx vite-node scripts/recent-test.ts`.
 - **Due and upcoming** moves above Recent payments on a phone when a planned payment is overdue or due within three days; on a wide
   screen the layout is unchanged (Recent on the left, Due and Phase progress on the right).
 - Check: `npx vite-node scripts/attention-test.ts`.
+- **Phase progress** lists the phases that matter, not all twelve: those with spending or a budget, over-budget first, then nearest the
+  limit, then by spending, at most five (`phaseProgress` in `src/lib/stats.ts`). A row shows "spent of budget", the bar, and a badge with
+  an icon and words ("84% used", "Budget reached" when spending equals the budget, "Over budget" when it is more); a phase without a
+  budget shows "No budget set". Below the rows: "Phases not started: n" and, when fewer than half the phases have a budget, "Phases with
+  a budget: x of y" with a "Set budgets" link. Check: `npx vite-node scripts/phase-progress-test.ts`.
+- The wording "is over budget" in the alerts is now "has used its whole budget", because the alert starts at 100%, which is reaching the
+  budget as well as passing it. The Ledger count says "1 payment" for one.
+
+## Ledger sort and summary, and "Spending over time" (Reports)
+
+- **Ledger** shows, above the list and for the rows that match the filters: the count and the **paid** total (as before), plus
+  **Planned** and **Awaiting approval** totals when there are any (they are not counted as spent). A **Sort by** drop-down orders the
+  list: Newest first (as before, the default), Oldest first, Largest amount, Smallest amount; equal entries keep a stable order (later
+  date, then added later). The sort is only a view, it is not saved. Rules in `src/lib/ledger.ts`.
+- **Reports → Spending over time** is a line chart of the total paid and approved, month by month (months with nothing stay on the line).
+  Planned payments continue it as a dashed line ("If planned payments are made"); a planned payment dated this month or earlier shows as a
+  hollow dot at the end. The project budget appears as a dotted reference line only when it is at most 2.5 times the highest figure, so
+  a huge budget never flattens the line (the phase bars on Home show budgets). Plain SVG, no chart library, always left to right; a
+  hidden table gives screen readers the same figures. Rules in `src/lib/trend.ts`, drawing in `src/components/TrendChart.tsx`.
+- Check: `npx vite-node scripts/ledger-test.ts`.
+
+## Budget plan (top of Phases)
+
+- A **Budget plan** card above the phase list: "x of y given to phases" with a bar (the phase budgets added together against the project
+  budget), then either "Still to give out: z", "The whole project budget is given to phases", or, when the phase budgets add up to more
+  than the project budget, a warning badge ("Phase budgets are z more than the project budget"). Without a project budget it says so and
+  links to the project form to set one. It also shows "n of m phases complete", "n without a budget", and "x paid is not in any phase"
+  (paid and approved money with no phase, which no phase bar shows).
+- Rules in `budgetPlan` (`src/lib/stats.ts`); removed phases are ignored and a budget of 0 counts as none. Check:
+  `npx vite-node scripts/budget-plan-test.ts`. Nothing is stored; it is worked out from the phases and payments.
+
+## Compare projects (`/compare`)
+
+A page that puts two projects side by side: where the money went in an earlier project and where it is going in this one. Open it
+from the menu ("Compare projects", also under More on a phone). It starts with this project against the most recently changed other
+one; the two drop-downs choose any pair, and the choice is kept in the address (`?a=…&b=…`).
+
+It is built to be read top to bottom, the answer first:
+
+- **Colour key.** The earlier project is always **orange** and this project always **blue** (tokens `--viz-a` / `--viz-b`, checked with
+  the dataviz palette validator on both themes: colour-blind distance above 24, 3:1 on the surface). The dot beside each drop-down is the
+  key for everything below; marks carry the colour, text stays in ink.
+- **Show amounts: Total or Per sq ft.** Per sq ft divides each project by its own covered area; disabled until both have one.
+- **The answer.** A large figure: "71% more spent than the earlier project", compared **at the same stage** (the month this project
+  is in now), with both amounts, then the phases that cost most more and most less than before.
+- **Key numbers** in tiles with both values: spent so far, cost per sq ft, budget used, and the average change of material prices.
+- **Spending pace:** a line chart of the total spent by the end of each month since the start. It opens on the same-stage month; move
+  the pointer over it, touch it, or use the arrow keys to read any month: the two values and the difference are written under the chart.
+  A project paid within the last 45 days is still running, so its line goes on to today.
+- **By phase** and **By category:** two bars per row on one scale with the value at the tip of each bar, and the difference beside the name.
+  Phases can be ordered by build order or by biggest difference. Phases are matched by standard step, or by name for one added by hand.
+- **Material rates:** how much the average rate paid changed for each item and unit bought in both projects, as bars around zero (amber for
+  a rise, green for a fall, with an arrow and words).
+- **All figures** (collapsed) holds the full list of numbers.
+- **Not a verdict while a project is unfinished.** If either project has a phase that is not complete, differences read "More so far" /
+  "Less so far" in a neutral colour, and a phase that is not complete or not started is never called cheaper. Only paid and approved money
+  counts. Plain SVG and CSS, no chart library; the pace chart also has a hidden table for screen readers.
+- Rules: `src/lib/compare.ts`; drawing: `src/components/CompareParts.tsx`; page: `src/pages/Compare.tsx`. Check:
+  `npx vite-node scripts/compare-test.ts`. Nothing is stored.
+
+## Phase page (`/phases/:id`)
+
+- Under the spent-and-budget bar: **Budget left** (or **Over budget by**, in red, when spending passed the budget), **Planned**,
+  **Awaiting approval** (only when there is some) and **Entries** (everything on the phase that is not removed).
+- **Where the money went**: paid and approved money on the phase grouped by vendor (or payee name, or "No vendor"), largest first,
+  with bars. Planned, waiting and removed entries are not in it.
+- Rules: `phaseFigures` and `spentBy` in `src/lib/stats.ts`. Check: `npx vite-node scripts/phase-detail-test.ts`. Nothing is stored.
+
+## Vendors list and a vendor's page
+
+- **List:** a **Sort by** drop-down (Name, as before; Most paid; Recently paid, with vendors never paid last), a count line ("11 vendors,
+  Rs x paid"), and each row shows the role and **Last paid {date}** under the name and, when the vendor has an active contract with money
+  left, "Rs x left on contracts" under the amount. The search now matches the name, the role as written on screen, or the phone number
+  (spaces and dashes ignored).
+- **A vendor's page:** a **Last paid** card and, when there is an active contract, **Left on contracts**; a **Contracts** card with the
+  vendor's contracts (same bar and state as the Contracts screen, each opens the contract). Planned now means this vendor's planned
+  payments only, as before.
+- **Add payment from a vendor's page** opens `/add?vendor=…` with that vendor already chosen (and its only open contract, its phase,
+  and, for a transfer, its bank details, as when the vendor is picked by hand). The recent-payment chips are hidden then, and "Save and
+  add another" keeps the vendor.
+- Rules in `src/lib/vendors.ts`. Check: `npx vite-node scripts/vendors-test.ts`.
 
 ## Bank details of a transfer (Add payment, Vendors, Ledger)
 

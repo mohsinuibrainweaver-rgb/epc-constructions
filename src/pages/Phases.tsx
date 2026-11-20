@@ -24,6 +24,7 @@ import {
   RotateCcw,
   Shovel,
   Trash2,
+  TriangleAlert,
   type LucideIcon,
 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
@@ -34,11 +35,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
 import { addPhase, deletePhase, movePhase, setPhaseDone, updatePhase } from '@/db/actions'
-import { usePayments, usePhases } from '@/db/hooks'
-import type { Phase } from '@/db/types'
+import { usePayments, usePhases, useVendors } from '@/db/hooks'
+import type { Payment, Phase } from '@/db/types'
 import { groupDigits, money, parseAmount } from '@/lib/format'
-import { budgetLevel, isPlanned, isSpent, percent, sum } from '@/lib/stats'
+import { budgetLevel, budgetPlan, isPlanned, isSpent, percent, phaseFigures, spentBy, sum } from '@/lib/stats'
+import { cn } from '@/lib/utils'
 
 function PhaseDialog({ open, phase, onClose }: { open: boolean; phase?: Phase; onClose: () => void }) {
   const { t, project, phaseName } = useApp()
@@ -124,6 +127,65 @@ const PHASE_ICONS: Record<string, LucideIcon> = {
 }
 const phaseIcon = (ph: Phase): LucideIcon => (ph.key && PHASE_ICONS[ph.key]) || HardHat
 
+/** How the project budget is split across phases, what is left to give out, and money that sits outside every phase. */
+function BudgetPlanCard({ phases, payments }: { phases: Phase[]; payments: Payment[] }) {
+  const { t, project } = useApp()
+  const plan = budgetPlan(phases, payments, project?.budget)
+  const pb = plan.projectBudget
+  const noBudget = plan.total - plan.withBudget
+  const pct = pb ? Math.min(100, Math.round((plan.allocated / pb) * 100)) : 0
+  return (
+    <Card className="gap-3 p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="text-lg font-semibold">{t('phases.plan')}</h2>
+        <span className="text-sm text-muted-foreground">{t('phases.planDone', { done: plan.done, total: plan.total })}</span>
+      </div>
+
+      {pb ? (
+        <>
+          <p>
+            {t('phases.planGiven', { given: money(plan.allocated), total: money(pb) })}
+          </p>
+          <Progress
+            value={pct}
+            aria-label={t('phases.plan')}
+            className={cn('h-2 bg-muted', plan.overAllocated > 0 && '[&>[data-slot=progress-indicator]]:bg-warning')}
+          />
+          {plan.overAllocated > 0 ? (
+            <Badge variant="warning" className="h-auto w-fit whitespace-normal">
+              <TriangleAlert aria-hidden="true" />
+              {t('phases.planOver', { amount: money(plan.overAllocated) })}
+            </Badge>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {plan.unallocated > 0 ? t('phases.planLeft', { amount: money(plan.unallocated) }) : t('phases.planAll')}
+            </p>
+          )}
+        </>
+      ) : (
+        <>
+          <p>{t('phases.planGivenOnly', { given: money(plan.allocated) })}</p>
+          {project && (
+            <p className="text-sm text-muted-foreground">
+              {t('phases.planNoProject')}{' '}
+              <Link className="font-semibold text-primary underline-offset-2 hover:underline" to={`/projects/${project.id}/edit`}>
+                {t('phases.planSetBudget')}
+              </Link>
+            </p>
+          )}
+        </>
+      )}
+
+      {(noBudget > 0 || plan.outsideSpent > 0) && (
+        <ul className="grid gap-1 text-sm text-muted-foreground">
+          {noBudget > 0 && <li>{t('phases.planNoBudget', { count: noBudget })}</li>}
+          {plan.outsideSpent > 0 && <li>{t('phases.planOutside', { amount: money(plan.outsideSpent) })}</li>}
+        </ul>
+      )}
+    </Card>
+  )
+}
+
 export function Phases() {
   const { t, project, phaseName } = useApp()
   const phases = usePhases(project?.id)
@@ -146,6 +208,8 @@ export function Phases() {
       {phases.length === 0 ? (
         <EmptyState icon={Layers3} title={t('phases.empty')} body={t('phases.emptyBody')} />
       ) : (
+        <>
+        <BudgetPlanCard phases={phases} payments={payments} />
         <ul className="grid gap-3">
           {phases.map((ph, i) => {
             const spent = sum(payments.filter((p) => p.phaseId === ph.id && isSpent(p)))
@@ -219,6 +283,7 @@ export function Phases() {
             )
           })}
         </ul>
+        </>
       )}
 
       <PhaseDialog open={adding} onClose={() => setAdding(false)} />
@@ -232,12 +297,16 @@ export function PhaseDetail() {
   const { t, project, phaseName } = useApp()
   const nav = useNavigate()
   const phases = usePhases(project?.id)
+  const vendors = useVendors(project?.id)
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt && p.phaseId === id)
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const phase = phases.find((p) => p.id === id)
   if (!phase) return null
-  const spent = sum(payments.filter(isSpent))
+  const fig = phaseFigures(payments, phase.budget)
+  const spent = fig.spent
+  const vendorName = new Map(vendors.map((v) => [v.id, v.name]))
+  const where = spentBy(payments, (p) => (p.vendorId && vendorName.get(p.vendorId)) || p.payeeName || t('reports.noVendor'))
 
   return (
     <>
@@ -292,7 +361,46 @@ export function PhaseDetail() {
         </div>
         <BudgetBar spent={spent} budget={phase.budget} label={phaseName(phase)} />
         {phase.budget ? <span className="text-sm text-muted-foreground">{t('phases.used', { pct: percent(spent, phase.budget) })}</span> : null}
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3 sm:grid-cols-4">
+          {phase.budget ? (
+            <div>
+              <dt className="text-sm text-muted-foreground">{fig.over > 0 ? t('phases.overBy') : t('phases.left')}</dt>
+              <dd className={cn('tabular font-semibold', fig.over > 0 && 'text-danger')}>{money(fig.over > 0 ? fig.over : fig.left)}</dd>
+            </div>
+          ) : null}
+          <div>
+            <dt className="text-sm text-muted-foreground">{t('phases.planned')}</dt>
+            <dd className="tabular font-semibold">{money(fig.planned)}</dd>
+          </div>
+          {fig.awaiting > 0 && (
+            <div>
+              <dt className="text-sm text-muted-foreground">{t('phases.awaiting')}</dt>
+              <dd className="tabular font-semibold">{money(fig.awaiting)}</dd>
+            </div>
+          )}
+          <div>
+            <dt className="text-sm text-muted-foreground">{t('phases.entries')}</dt>
+            <dd className="tabular font-semibold">{fig.count}</dd>
+          </div>
+        </dl>
       </Card>
+
+      {where.length > 0 && (
+        <Card className="gap-4 p-4">
+          <h2 className="text-lg font-semibold">{t('phases.whereMoney')}</h2>
+          <ul className="grid gap-3">
+            {where.map((r) => (
+              <li key={r.label} className="grid gap-1.5">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="min-w-0 font-semibold">{r.label}</span>
+                  <span className="tabular shrink-0">{money(r.amount)}</span>
+                </div>
+                <Progress value={(r.amount / where[0].amount) * 100} aria-label={r.label} className="h-2 bg-muted" />
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card className="gap-0 overflow-hidden py-0">
         <h2 className="p-4 text-lg font-semibold">{t('phases.payments')}</h2>

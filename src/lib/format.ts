@@ -7,9 +7,12 @@ import { currencyLabel, getRegion, groupNumber, type Region } from './region'
  */
 export const money = (n: number | undefined): string => formatMoney(n, getRegion())
 
+/** A price per unit: whole rupees from Rs 100 up, and up to two decimals below that (Rs 16.5 per brick stays 16.5). */
+export const moneyRate = (n: number | undefined): string => formatMoney(n, getRegion(), (n ?? 0) < 100 ? 2 : 0)
+
 /** The same, in a given writing (for showing examples of each choice). */
-export const formatMoney = (n: number | undefined, r: Region): string => {
-  const value = groupNumber(Math.round(n ?? 0), r.grouping)
+export const formatMoney = (n: number | undefined, r: Region, decimals = 0): string => {
+  const value = decimals > 0 ? groupNumber(n ?? 0, r.grouping, decimals) : groupNumber(Math.round(n ?? 0), r.grouping)
   const cur = currencyLabel('en', false, r)
   return r.currency === 'روپے' ? `${value} ${cur}` : `${cur} ${value}`
 }
@@ -45,7 +48,11 @@ export const formatMonth = (key: string, lang: Lang): string =>
     new Date(`${key}-01T00:00:00`),
   )
 
-export const monthKey = (iso: string): string => iso.slice(0, 7)
+/** A month in few characters, for chart axes: Nov 26. */
+export const formatMonthShort = (key: string, lang: Lang): string =>
+  new Intl.DateTimeFormat(locale(lang), { month: 'short', year: '2-digit' }).format(new Date(`${key}-01T00:00:00`))
+
+export const monthKey =(iso: string): string => iso.slice(0, 7)
 
 export const parseAmount = (raw: string): number => {
   const digits = raw.replace(/[^0-9]/g, '')

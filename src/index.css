@@ -40,6 +40,13 @@
   --danger-soft: #fee2e2;
   --info: #1d4ed8;
   --info-soft: #dbeafe;
+  /* The two projects in the Compare page: the earlier one (orange) and this one (blue). Chart marks only, never text. Checked with
+     the dataviz palette validator on both surfaces: colour-blind distance 24+ and 3:1 on the surface. */
+  --viz-a: #eb6834;
+  --viz-b: #2a78d6;
+  /* A price that rose (amber) and one that fell (green), always shown with an arrow and words. Same in both themes. */
+  --viz-up: #fab219;
+  --viz-down: #0ca30c;
 
   /* The sidebar is dark neutral in both themes. Checked by scripts/contrast-test.ts. */
   --sidebar: #171717;
@@ -97,6 +104,8 @@
     --danger-soft: #3a1417;
     --info: #60a5fa;
     --info-soft: #12233f;
+    --viz-a: #d95926;
+    --viz-b: #3987e5;
   }
 }
 
@@ -131,6 +140,10 @@
   --color-danger-soft: var(--danger-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-viz-a: var(--viz-a);
+  --color-viz-b: var(--viz-b);
+  --color-viz-up: var(--viz-up);
+  --color-viz-down: var(--viz-down);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

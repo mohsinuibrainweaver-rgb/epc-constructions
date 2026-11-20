@@ -17,6 +17,7 @@ const VendorDetail = lazy(() => import('./pages/Vendors').then((m) => ({ default
 const Ledger = lazy(() => import('./pages/Ledger').then((m) => ({ default: m.Ledger })))
 const AddPayment = lazy(() => import('./pages/AddPayment').then((m) => ({ default: m.AddPayment })))
 const Reports = lazy(() => import('./pages/Reports').then((m) => ({ default: m.Reports })))
+const Compare = lazy(() => import('./pages/Compare').then((m) => ({ default: m.Compare })))
 const Plans = lazy(() => import('./pages/Plans').then((m) => ({ default: m.Plans })))
 const Settlement = lazy(() => import('./pages/Settlement').then((m) => ({ default: m.Settlement })))
 const Materials = lazy(() => import('./pages/Materials').then((m) => ({ default: m.Materials })))
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="add" element={<AddPayment />} />
           <Route path="payments/:id" element={<AddPayment />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="compare" element={<Compare />} />
           <Route path="plans" element={<Plans />} />
           <Route path="settlement" element={<Settlement />} />
           <Route path="contracts" element={<Contracts />} />

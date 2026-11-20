@@ -207,6 +207,15 @@ export function AddPayment() {
     pickContract(cid)
   }) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Arriving from a vendor's page ("Add payment" there) chooses that vendor once, which also brings its only open contract.
+  const vendorPrefilled = useRef(false)
+  useEffect(() => {
+    const vid = sp.get('vendor')
+    if (!vid || vendorPrefilled.current || edit || sp.get('contract') || vendors.length === 0) return
+    vendorPrefilled.current = true
+    if (vendors.some((v) => v.id === vid)) pickVendor(vid)
+  }) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Repeat a recent payment: one tap fills vendor, phase, category, mode, purpose and amount (new payments only, and
   // only while the form is empty and the page was not opened from a contract or phase).
   const [filledFrom, setFilledFrom] = useState<string>()
@@ -221,7 +230,7 @@ export function AddPayment() {
           }),
     [edit, payments, vendors, phases, contracts],
   )
-  const fromContext = Boolean(sp.get('contract') || sp.get('phase'))
+  const fromContext = Boolean(sp.get('contract') || sp.get('phase') || sp.get('vendor'))
   const showTemplates = templates.length > 0 && !fromContext && !filledFrom && !amount && !purpose.trim()
   const applyTemplate = (tpl: PaymentTemplate) => {
     setMisc(tpl.category === 'misc')
@@ -277,7 +286,7 @@ export function AddPayment() {
     setDup(false)
     setFilledFrom(undefined)
     setBankRef('')
-    if (!sp.get('contract')) {
+    if (!sp.get('contract') && !sp.get('vendor')) {
       setVendorId('')
       setContractId('')
       setBankName('')

@@ -13,7 +13,7 @@ import { CATEGORIES, type Approval, type Category, type PayMode, type PayStatus 
 import type { Key } from '@/i18n/en'
 import { isMissing, MISSING, type Missing } from '@/lib/attention'
 import { csvEscape, download, formatMonth, money, monthKey } from '@/lib/format'
-import { isSpent, sum } from '@/lib/stats'
+import { ledgerTotals, LEDGER_SORTS, sortPayments, type LedgerSort } from '@/lib/ledger'
 
 export function Ledger() {
   const { t, lang, project, phaseName } = useApp()
@@ -29,6 +29,7 @@ export function Ledger() {
     const m = sp.get('missing')
     return (MISSING as string[]).includes(m ?? '') ? (m as Missing) : ''
   })())
+  const [sort, setSort] = useState<LedgerSort>('newest')
   const [phase, setPhase] = useState('')
   const [vendor, setVendor] = useState('')
   const [category, setCategory] = useState<'' | Category>('')
@@ -46,7 +47,7 @@ export function Ledger() {
   const vendorName = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
   const months = useMemo(() => [...new Set(payments.map((p) => monthKey(p.date)))].sort().reverse(), [payments])
 
-  const rows = payments.filter((p) => {
+  const filtered = payments.filter((p) => {
     if (phase && p.phaseId !== phase) return false
     if (vendor && p.vendorId !== vendor) return false
     if (category && p.category !== category) return false
@@ -62,6 +63,8 @@ export function Ledger() {
     }
     return true
   })
+  const rows = sortPayments(filtered, sort)
+  const totals = ledgerTotals(rows)
 
   const clearFilters = () => {
     setQ('')
@@ -190,9 +193,20 @@ export function Ledger() {
         </div>
       </Card>
 
-      <p className="text-muted-foreground" role="status" aria-live="polite">
-        {t('ledger.shown', { count: rows.length, total: money(sum(rows.filter(isSpent))) })}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-muted-foreground" role="status" aria-live="polite">
+          <span>{t(totals.count === 1 ? 'ledger.shownOne' : 'ledger.shown', { count: totals.count, total: money(totals.paid) })}</span>
+          {totals.planned > 0 && <span>{t('ledger.plannedSum', { total: money(totals.planned) })}</span>}
+          {totals.awaiting > 0 && <span>{t('ledger.awaitingSum', { total: money(totals.awaiting) })}</span>}
+        </p>
+        <Dropdown aria-label={t('ledger.sort')} value={sort} onChange={(e) => setSort(e.target.value as LedgerSort)} className="w-auto min-w-44">
+          {LEDGER_SORTS.map((s) => (
+            <option key={s} value={s}>
+              {t(`ledger.sort.${s}` as Key)}
+            </option>
+          ))}
+        </Dropdown>
+      </div>
 
       <Card className="gap-0 overflow-hidden py-0">
         {rows.length === 0 ? (

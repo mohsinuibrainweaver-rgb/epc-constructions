@@ -6,8 +6,10 @@ import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Key } from '@/i18n/en'
-import { formatMonth, money, monthKey } from '@/lib/format'
+import { formatMonth, money, monthKey, todayISO } from '@/lib/format'
 import { isSpent } from '@/lib/stats'
+import { spendingTrend } from '@/lib/trend'
+import { TrendChart } from '@/components/TrendChart'
 
 interface Row {
   label: string
@@ -51,7 +53,9 @@ function group<T>(items: T[], key: (x: T) => string, amount: (x: T) => number): 
 
 export function Reports() {
   const { t, lang, project, phaseName } = useApp()
-  const payments = usePayments(project?.id).filter((p) => isSpent(p))
+  const everything = usePayments(project?.id)
+  const payments = everything.filter((p) => isSpent(p))
+  const trend = useMemo(() => spendingTrend(everything, todayISO().slice(0, 7)), [everything])
   const phases = usePhases(project?.id)
   const vendors = useVendors(project?.id)
 
@@ -82,6 +86,7 @@ export function Reports() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+          {trend.length > 0 && <TrendChart points={trend} budget={project?.budget} />}
           <Breakdown title={t('reports.byPhase')} rows={data.phase} />
           <Breakdown title={t('reports.byVendor')} rows={data.vendor} />
           <Breakdown title={t('reports.byCategory')} rows={data.category} />

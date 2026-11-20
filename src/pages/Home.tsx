@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, CalendarClock, HandCoins, ReceiptText, Target, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowUpRight, CalendarClock, HandCoins, ReceiptText, Target, TriangleAlert, Wallet, type LucideIcon } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useApp } from '@/app/AppContext'
 import { BudgetBar, CardSkeleton, EmptyState, PageHeader, StatusPill } from '@/components/common'
@@ -15,7 +15,7 @@ import { attentionItems } from '@/lib/attention'
 import { contractAlerts } from '@/lib/contracts'
 import { addDays, formatDate, money, todayISO } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { budgetLevel, buildAlerts, isAwaitingApproval, isPlanned, isSpent, percent, sum } from '@/lib/stats'
+import { budgetLevel, buildAlerts, isAwaitingApproval, isPlanned, isSpent, percent, phaseProgress, sum } from '@/lib/stats'
 
 // A 48 px tile per figure: a light background and the 500 shade of the same colour for the icon (400 on dark). The icon is decoration; the label and the
 // figure carry the meaning.
@@ -78,10 +78,8 @@ export function Home() {
   const left = budget ? budget - spent : undefined
   const lvl = budgetLevel(spent, budget)
 
-  const byPhase = phases
-    .map((ph) => ({ ph, spent: sum(live.filter((p) => p.phaseId === ph.id && isSpent(p))) }))
-    .sort((a, b) => b.spent - a.spent)
-    .slice(0, 5)
+  // The phases worth a line (spending or a budget; over budget first); the empty ones are only counted.
+  const progress = phaseProgress(phases, payments)
 
   // Budgets over their limit, contracts overpaid, and the tidy-up items; due payments and approvals have their own cards.
   const attention = attentionItems(
@@ -202,15 +200,38 @@ export function Home() {
             </Link>
           </div>
           <div className="grid gap-4 border-t p-4">
-            {byPhase.map(({ ph, spent: s }) => (
+            {progress.rows.map(({ phase: ph, spent: s, budget: b, pct, level }) => (
               <Link key={ph.id} to={`/phases/${ph.id}`} className="grid gap-1.5 rounded-md">
-                <span className="flex items-center justify-between gap-2 text-sm">
+                <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-sm">
                   <span className="font-semibold">{phaseName(ph)}</span>
-                  <span className="tabular text-muted-foreground">{money(s)}</span>
+                  <span className="tabular ms-auto whitespace-nowrap text-muted-foreground">{b ? t('home.phaseOf', { spent: money(s), budget: money(b) }) : money(s)}</span>
                 </span>
-                <BudgetBar spent={s} budget={ph.budget} label={phaseName(ph)} />
+                {b ? (
+                  <>
+                    <BudgetBar spent={s} budget={b} label={phaseName(ph)} />
+                    {level === 'error' || level === 'warning' ? (
+                      <Badge variant={level === 'error' ? 'danger' : 'warning'} className="w-fit">
+                        <TriangleAlert aria-hidden="true" />
+                        {level === 'error' ? t(s > b ? 'home.phaseOver' : 'home.phaseReached') : t('phases.used', { pct })}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">{t('phases.used', { pct })}</span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">{t('home.phaseNoBudget')}</span>
+                )}
               </Link>
             ))}
+            {progress.notStarted > 0 && <p className="text-sm text-muted-foreground">{t('home.phasesNotStarted', { count: progress.notStarted })}</p>}
+            {progress.total > 0 && progress.budgeted * 2 < progress.total && (
+              <p className="flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
+                <span>{t('home.phasesBudgeted', { budgeted: progress.budgeted, total: progress.total })}</span>
+                <Link to="/phases" className="inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 hover:underline">
+                  {t('home.phasesSetBudgets')}
+                </Link>
+              </p>
+            )}
           </div>
         </Card>
       </div>
