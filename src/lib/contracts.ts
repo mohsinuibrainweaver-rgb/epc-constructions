@@ -95,3 +95,21 @@ export function contractAlerts(contracts: Contract[], payments: Payment[]): Aler
   }
   return out
 }
+
+export interface NextInstalment {
+  /** The earliest planned payment of the contract (the oldest first when it is overdue). */
+  payment: Payment
+  /** Its day has passed. */
+  overdue: boolean
+  /** How many more planned payments come after it. */
+  more: number
+}
+
+/** The next payment still to be made on a contract, from its planned payments; undefined when none is planned. */
+export function nextInstalment(c: Pick<Contract, 'id'>, payments: Payment[], today: string): NextInstalment | undefined {
+  const planned = contractPayments(c, payments)
+    .filter((p) => p.status === 'planned')
+    .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt)
+  if (planned.length === 0) return undefined
+  return { payment: planned[0], overdue: planned[0].date < today, more: planned.length - 1 }
+}

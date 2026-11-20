@@ -17,8 +17,8 @@ import { deleteContract, removeVariation, restoreContract, saveContract } from '
 import { useContracts, usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Contract, ContractStatus, ContractVariation } from '@/db/types'
 import type { Key } from '@/i18n/en'
-import { contractPayments, summarizeContract, unplannedBalance } from '@/lib/contracts'
-import { formatDate, money } from '@/lib/format'
+import { contractPayments, nextInstalment, summarizeContract, unplannedBalance } from '@/lib/contracts'
+import { formatDate, money, todayISO } from '@/lib/format'
 import { isPlanned } from '@/lib/stats'
 
 function Figure({ label, value, tone }: { label: string; value: string; tone?: 'danger' | 'success' }) {
@@ -41,7 +41,13 @@ export function Contracts() {
 
   const vendorName = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
   const rows = useMemo(
-    () => contracts.map((c) => ({ c, s: summarizeContract(c, payments) })).filter(({ c }) => filter === 'all' || c.status === filter),
+    () =>
+      contracts
+        .map((c) => {
+          const s = summarizeContract(c, payments)
+          return { c, s, next: nextInstalment(c, payments, todayISO()), unplanned: unplannedBalance(s) }
+        })
+        .filter(({ c }) => filter === 'all' || c.status === filter),
     [contracts, payments, filter],
   )
   const live = contracts.filter((c) => c.status === 'active').map((c) => summarizeContract(c, payments))
@@ -94,14 +100,14 @@ export function Contracts() {
             </Card>
           ) : (
             <ul className="grid gap-4 md:grid-cols-2">
-              {rows.map(({ c, s }) => (
+              {rows.map(({ c, s, next, unplanned }) => (
                 <li key={c.id}>
                   <Card className="gap-3 p-4 transition-colors hover:bg-muted/40">
                     <Link to={`/contracts/${c.id}`} className="grid gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
                       <span className="flex items-start justify-between gap-3">
                         <span className="grid min-w-0 gap-0.5">
-                          <span className="truncate text-lg font-bold">{c.title}</span>
-                          <span className="truncate text-sm text-muted-foreground">
+                          <span className="text-lg font-bold [overflow-wrap:anywhere]">{c.title}</span>
+                          <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
                             {[c.vendorId && vendorName.get(c.vendorId), formatDate(c.date, lang)].filter(Boolean).join(' · ')}
                           </span>
                         </span>
@@ -119,6 +125,24 @@ export function Contracts() {
                           {s.state === 'overpaid' ? t('contract.overBy', { amount: money(s.over) }) : t('contract.left', { amount: money(s.remaining) })}
                         </span>
                       </span>
+                      {c.status === 'active' && (next || unplanned > 0) && (
+                        <span className="grid gap-1 border-t pt-2.5 text-sm">
+                          {next ? (
+                            <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                              <span className="min-w-0">
+                                <span className="text-muted-foreground">{t('contract.nextLabel')}: </span>
+                                <span className="font-semibold">{formatDate(next.payment.date, lang)}</span>
+                              </span>
+                              <span className="flex items-center gap-2">
+                                {next.overdue && <Badge variant="warning">{t('status.overdue')}</Badge>}
+                                <span className="tabular font-bold">{money(next.payment.amount)}</span>
+                              </span>
+                            </span>
+                          ) : null}
+                          {next && next.more > 0 && <span className="text-muted-foreground">{t('contract.nextMore', { count: next.more })}</span>}
+                          {unplanned > 0 && <span className="text-muted-foreground">{t('contract.noDay', { amount: money(unplanned) })}</span>}
+                        </span>
+                      )}
                     </Link>
                   </Card>
                 </li>

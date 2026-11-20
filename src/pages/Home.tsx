@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, CalendarClock, HandCoins, ReceiptText, Target, TriangleAlert, Wallet, type LucideIcon } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -62,6 +63,8 @@ function Kpi({ label, value, icon: Icon, tone, to, children, className }: { labe
 
 export function Home() {
   const { t, lang, project, phaseName, settings } = useApp()
+  // Due and upcoming starts with the three that are first in line; the rest open on request (up to eight).
+  const [dueAll, setDueAll] = useState(false)
   const payments = usePayments(project?.id)
   const phases = usePhases(project?.id)
   const contracts = useContracts(project?.id)
@@ -75,6 +78,8 @@ export function Home() {
   const spent = sum(live.filter(isSpent))
   const awaiting = sum(live.filter(isAwaitingApproval))
   const planned = live.filter(isPlanned).sort((a, b) => a.date.localeCompare(b.date))
+  // Recent payments are the ones made (or turned down); the planned ones are in Due and upcoming.
+  const recent = live.filter((p) => !isPlanned(p))
   const budget = project?.budget
   const left = budget ? budget - spent : undefined
   const lvl = budgetLevel(spent, budget)
@@ -110,7 +115,7 @@ export function Home() {
     )
 
   const dueCard = (
-    <Card className="gap-0 overflow-hidden py-0 md:col-span-4 md:col-start-9 md:row-start-1" aria-labelledby="due-title">
+    <Card className={cn('gap-0 overflow-hidden py-0 md:order-none md:col-span-4 md:col-start-9 md:row-start-1', urgent ? 'max-md:order-3' : 'max-md:order-7')} aria-labelledby="due-title">
       <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
         <h2 id="due-title" className="text-lg font-semibold">
           {t('home.due')}
@@ -124,7 +129,7 @@ export function Home() {
         <p className="px-4 pb-4 text-sm text-muted-foreground">{t('home.dueEmpty')}</p>
       ) : (
         <ul className="divide-y border-t">
-          {planned.slice(0, 5).map((p) => (
+          {planned.slice(0, dueAll ? 8 : 3).map((p) => (
             <li key={p.id} className="grid gap-3 p-4">
               <Link to={`/payments/${p.id}`} className="grid min-w-0 gap-1">
                 <span className="truncate font-semibold">{p.purpose}</span>
@@ -138,6 +143,16 @@ export function Home() {
           ))}
         </ul>
       )}
+      {planned.length > 3 && (
+        <button
+          type="button"
+          onClick={() => setDueAll((v) => !v)}
+          aria-expanded={dueAll}
+          className="min-h-11 border-t px-4 text-start text-sm font-semibold text-primary underline-offset-4 hover:underline"
+        >
+          {dueAll ? t('home.dueLess') : t('attn.more', { count: Math.min(planned.length, 8) - 3 })}
+        </button>
+      )}
     </Card>
   )
 
@@ -145,7 +160,7 @@ export function Home() {
     <>
       <PageHeader title={project.name} subtitle={project.location || undefined} />
 
-      <section aria-label={t('home.budget')} className={cn('grid grid-cols-2 gap-3 md:gap-6', showPlanned ? 'md:grid-cols-4' : 'md:grid-cols-3')}>
+      <section aria-label={t('home.budget')} className={cn('order-1 grid grid-cols-2 gap-3 md:order-none md:gap-6', showPlanned ? 'md:grid-cols-4' : 'md:grid-cols-3')}>
         <Kpi label={t('home.spent')} value={money(spent)} icon={HandCoins} tone="orange" to="/ledger">
           {awaiting > 0 && <span className="text-sm text-muted-foreground">{t('home.awaiting', { amount: money(awaiting) })}</span>}
         </Kpi>
@@ -169,17 +184,24 @@ export function Home() {
         {showPlanned && <Kpi label={t('home.planned')} value={money(sum(planned))} icon={CalendarClock} tone="sky" to="/ledger?status=planned" />}
       </section>
 
-      <ApprovalsCard payments={live} />
+      <div className="order-2 empty:hidden md:order-none">
+        <ApprovalsCard payments={live} />
+      </div>
 
-      <AttentionCard items={attention} />
+      <div className="order-4 empty:hidden md:order-none">
+        <AttentionCard items={attention} />
+      </div>
 
-      <ForecastCard />
+      <div className="order-5 empty:hidden md:order-none">
+        <ForecastCard />
+      </div>
 
-      <div className="grid gap-6 md:grid-cols-12">
+      {/* On a phone this wrapper steps aside, so its cards take their place in the order above. */}
+      <div className="grid gap-6 max-md:contents md:grid-cols-12">
         {/* On a phone a payment that is due or overdue comes before the recent payments; on a wide screen the places below hold. */}
         {urgent && dueCard}
 
-        <Card className="gap-0 overflow-hidden py-0 md:col-span-8 md:col-start-1 md:row-span-2 md:row-start-1" aria-labelledby="recent-title">
+        <Card className="gap-0 overflow-hidden py-0 max-md:order-6 md:col-span-8 md:col-start-1 md:row-span-2 md:row-start-1" aria-labelledby="recent-title">
           <div className="flex items-center justify-between gap-3 p-4">
             <h2 id="recent-title" className="text-lg font-semibold">
               {t('home.recent')}
@@ -188,12 +210,12 @@ export function Home() {
               {t('home.viewAll')}
             </Link>
           </div>
-          {live.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('home.recentEmpty')} /> : <PaymentsTable payments={live.slice(0, 6)} />}
+          {recent.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('home.recentEmpty')} /> : <PaymentsTable payments={recent.slice(0, 6)} />}
         </Card>
 
         {!urgent && dueCard}
 
-        <Card className="gap-0 overflow-hidden py-0 md:col-span-4 md:col-start-9 md:row-start-2" aria-labelledby="ph-title">
+        <Card className="gap-0 overflow-hidden py-0 max-md:order-8 md:col-span-4 md:col-start-9 md:row-start-2" aria-labelledby="ph-title">
           <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
             <h2 id="ph-title" className="text-lg font-semibold">
               {t('home.phaseProgress')}

@@ -2,8 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Banknote, ChevronRight, CircleAlert } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
-import { BuilderCash } from '@/components/BuilderCash'
-import { ArrangeBox, ForecastTable } from '@/components/ForecastTable'
+import { ArrangeBox } from '@/components/ForecastTable'
 import { Card } from '@/components/ui/card'
 import { useContracts, usePayments, usePhases, usePlans, useTransfers } from '@/db/hooks'
 import { cashAdvice, forecast } from '@/lib/forecast'
@@ -44,7 +43,16 @@ export function ForecastCard() {
           </span>
         </span>
 
-        <ForecastTable f={f} />
+        <dl className="grid grid-cols-2 gap-x-4">
+          <div className="grid gap-0.5">
+            <dt className="text-sm text-muted-foreground">{t('forecast.next7')}</dt>
+            <dd className="tabular text-lg font-extrabold">{money(f.next7)}</dd>
+          </div>
+          <div className="grid gap-0.5">
+            <dt className="text-sm text-muted-foreground">{t('forecast.next30')}</dt>
+            <dd className="tabular text-lg font-extrabold">{money(f.next30)}</dd>
+          </div>
+        </dl>
 
         {f.overdue > 0 && (
           <p className="flex items-start gap-1.5 text-sm font-semibold">
@@ -53,7 +61,6 @@ export function ForecastCard() {
           </p>
         )}
 
-        <BuilderCash advice={advice} />
         <ArrangeBox f={f} advice={advice} />
 
       </Link>
@@ -65,14 +72,14 @@ export function ForecastCard() {
             <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
           </span>
           <ul className="grid gap-1">
-            {f.unscheduled.slice(0, 3).map(({ contract, amount }) => (
+            {f.unscheduled.slice(0, 2).map(({ contract, amount }) => (
               <li key={contract.id} className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0 text-muted-foreground [overflow-wrap:anywhere]">{contract.title}</span>
                 <span className="tabular font-semibold whitespace-nowrap">{money(amount)}</span>
               </li>
             ))}
           </ul>
-          {f.unscheduled.length > 3 && <span className="text-muted-foreground">{t('forecast.unscheduledMore', { count: f.unscheduled.length - 3 })}</span>}
+          {f.unscheduled.length > 2 && <span className="text-muted-foreground">{t('forecast.unscheduledMore', { count: f.unscheduled.length - 2 })}</span>}
         </Link>
       )}
     </Card>

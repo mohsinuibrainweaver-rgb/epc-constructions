@@ -202,6 +202,23 @@ It is built to be read top to bottom, the answer first:
 - Rules: `src/lib/compare.ts`; drawing: `src/components/CompareParts.tsx`; page: `src/pages/Compare.tsx`. Check:
   `npx vite-node scripts/compare-test.ts`. Nothing is stored.
 
+## Home order and a lighter Home
+
+- **On a phone the cards follow what needs doing:** four figures, approvals, Due and upcoming, Needs your attention, the Cash forecast, Recent
+  payments, Phase progress. (On a wide screen the layout is as before: Recent on the left, Due and Phase progress on the right.) This is
+  done with CSS `order` and a wrapper that steps aside on small screens, so nothing is rendered twice.
+- **Due and upcoming** starts with three payments ("Show n more" for the rest, up to eight) instead of five, so the cards below it are not
+  pushed far down.
+- **Cash forecast on Home** is short: next 7 days, next 30 days, the **cash you need to arrange** and the contracts with no day set. The
+  table and the "Can the builder pay his part?" box are on the forecast page.
+- **Recent payments** no longer lists planned payments; they are in Due and upcoming.
+
+## Contracts list: next payment
+
+Each active contract card shows its **Next payment** (the earliest planned one, with an Overdue badge when its day has passed, and "+n more
+planned") and, when some of the contract has no day yet, "No day set yet for Rs x" (`nextInstalment` in `src/lib/contracts.ts`, tested in
+`scripts/contracts-test.ts`). Titles and vendor names wrap instead of being cut.
+
 ## Contract payment schedule (`/contracts/:id`)
 
 A contract can be with any vendor of the project (or none). Its page now has a **Payment schedule** card:

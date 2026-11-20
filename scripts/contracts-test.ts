@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict'
 import { money } from '../src/lib/format'
 import { TABLES } from '../src/sync/mapping'
-import { contractAlerts, contractPayments, contractTotal, openContracts, previewPayment, summarizeContract } from '../src/lib/contracts'
+import { contractAlerts, contractPayments, contractTotal, nextInstalment, openContracts, previewPayment, summarizeContract } from '../src/lib/contracts'
+import type { Payment } from '../src/db/types'
 
 const contract = (o: Record<string, unknown> = {}) =>
   ({ id: 'c1', projectId: 'p', title: 'Grey structure labour', amount: 2_500_000, date: '2026-11-01', status: 'active', variations: [], createdAt: 0, updatedAt: 0, ...o }) as never
@@ -96,6 +97,22 @@ assert.equal(payments.fromRemote({ ...row({ contractId: 'c1' }), contract_id: nu
   // No payments yet: first instalment; an empty amount changes nothing.
   p = previewPayment(c, [], { ...draft, amount: 0 })
   assert.deepEqual([p.instalment, p.after, p.over], [1, 155_000, 0])
+}
+
+
+// ---- the next instalment of a contract
+{
+  const mk = (o: Partial<Payment>): Payment => ({ id: 'n' + Math.random(), projectId: 'p', date: '2026-12-01', amount: 100, category: 'labour', purpose: 'x', status: 'planned', mode: 'cash', paidBy: 'investor', addedBy: 'a', createdAt: 1, updatedAt: 1, contractId: 'cx', ...o }) as Payment
+  const none = nextInstalment({ id: 'cx' }, [mk({ status: 'paid' }), mk({ deletedAt: 1 }), mk({ contractId: 'other' }), mk({ status: 'skipped' })], '2026-11-20')
+  assert.equal(none, undefined, 'paid, removed, skipped and other contracts: nothing planned')
+  const n = nextInstalment({ id: 'cx' }, [mk({ date: '2026-12-30', amount: 3 }), mk({ date: '2026-11-30', amount: 1 }), mk({ date: '2027-01-30', amount: 4 })], '2026-11-20')
+  assert.equal(n?.payment.amount, 1, 'the earliest day')
+  assert.equal(n?.more, 2)
+  assert.equal(n?.overdue, false)
+  const late = nextInstalment({ id: 'cx' }, [mk({ date: '2026-11-10', amount: 7 }), mk({ date: '2026-12-30' })], '2026-11-20')
+  assert.equal(late?.payment.amount, 7, 'an overdue one comes first')
+  assert.equal(late?.overdue, true)
+  assert.equal(nextInstalment({ id: 'cx' }, [mk({ date: '2026-11-20' })], '2026-11-20')?.overdue, false, 'due today is not overdue')
 }
 
 console.log('contracts: all checks passed')
