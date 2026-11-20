@@ -497,6 +497,7 @@ export const ur: Record<Key, string> = {
   'contract.planOver': 'یہ معاہدے میں باقی رقم سے {amount} زیادہ ہے۔',
   'contract.planUnder': 'اوپر کی رقم میں سے {amount} ان قسطوں میں شامل نہیں۔',
   'contract.planSave': '{count} ادائیگیاں مقرر کریں',
+  'contract.planBefore': 'ان میں سے کچھ دن اس معاہدے کی پہلے سے موجود ادائیگی ({date}) سے پہلے کے ہیں، اس لیے قسطوں کے نمبر دنوں کے مطابق نہیں ہوں گے۔',
   'contract.planSaveOne': '1 ادائیگی مقرر کریں',
   'contract.instalmentsSavedOne': '1 ادائیگی مقرر ہو گئی۔',
   'contract.instalmentPurpose': '{title}: قسط {n}',

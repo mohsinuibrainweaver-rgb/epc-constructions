@@ -47,3 +47,15 @@ export function proposeInstalments(total: number, count: number, first: string, 
   const dates = instalmentDates(first, every, amounts.length)
   return amounts.map((amount, i) => ({ date: dates[i], amount }))
 }
+
+/**
+ * The day to offer for the first new instalment: a week from today, or, when the contract already has payments, one step after the
+ * latest of them (so new instalments come after the ones already there and the numbers follow the days). `latest` is the date of the
+ * contract's latest payment that is not skipped or removed, if any.
+ */
+export function firstInstalmentDay(today: string, latest: string | undefined, every: Every): string {
+  const weekAhead = addDays(today, 7)
+  if (!latest) return weekAhead
+  const next = every === 'month' ? addMonths(latest, 1) : addDays(latest, every === 'week' ? 7 : 14)
+  return next > weekAhead ? next : weekAhead
+}

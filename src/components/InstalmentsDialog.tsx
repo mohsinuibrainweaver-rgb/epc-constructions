@@ -9,8 +9,8 @@ import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
 import { planInstalments } from '@/db/actions'
 import { CATEGORIES, type Category, type Contract, type PayMode, type Payment, type Role } from '@/db/types'
 import type { Key } from '@/i18n/en'
-import { addDays, groupDigits, money, parseAmount, todayISO } from '@/lib/format'
-import { EVERY, proposeInstalments, type Every, type InstalmentRow } from '@/lib/schedule'
+import { formatDate, groupDigits, money, parseAmount, todayISO } from '@/lib/format'
+import { EVERY, firstInstalmentDay, proposeInstalments, type Every, type InstalmentRow } from '@/lib/schedule'
 
 const MAX_COUNT = 12
 
@@ -40,7 +40,7 @@ export function InstalmentsDialog({
   payments: Payment[]
   onClose: () => void
 }) {
-  const { t, settings } = useApp()
+  const { t, lang, settings } = useApp()
   const toast = useToast()
   const [count, setCount] = useState(4)
   const [total, setTotal] = useState('')
@@ -53,19 +53,21 @@ export function InstalmentsDialog({
   const [error, setError] = useState('')
 
   const firstNumber = useMemo(() => payments.filter((p) => !p.deletedAt && p.status !== 'skipped').length + 1, [payments])
+  // The latest day already on this contract: new instalments should come after it.
+  const latest = useMemo(() => payments.filter((p) => !p.deletedAt && p.status !== 'skipped').map((p) => p.date).sort().pop(), [payments])
 
   // Opening: the offer is the money with no day, in four monthly parts starting next week.
   useEffect(() => {
     if (!open) return
     setCount(unplanned >= 400000 ? 4 : unplanned >= 100000 ? 3 : 1)
     setTotal(groupDigits(String(Math.round(unplanned))))
-    setFirst(addDays(todayISO(), 7))
+    setFirst(firstInstalmentDay(todayISO(), latest, 'month'))
     setEvery('month')
     setCategory(usualCategory(payments))
     setMode(payments.find((p) => !p.deletedAt)?.mode ?? 'cash')
     setPaidBy(settings.role)
     setError('')
-  }, [open, unplanned, payments, settings.role])
+  }, [open, unplanned, payments, settings.role, latest])
 
   // The rows follow the choices above; once a row is edited by hand they stay until a choice above changes again.
   useEffect(() => {
@@ -76,6 +78,8 @@ export function InstalmentsDialog({
   const sum = rows.reduce((s, r) => s + (Number.isFinite(r.amount) ? r.amount : 0), 0)
   const over = sum - unplanned
   const planned = rows.filter((r) => r.amount > 0).length
+  // Some new day is earlier than a payment already on the contract: the numbers ("instalment 3") would then not follow the days.
+  const earlier = latest !== undefined && rows.some((r) => r.amount > 0 && r.date && r.date < latest)
 
   const save = async () => {
     if (rows.some((r) => !r.date)) {
@@ -175,6 +179,11 @@ export function InstalmentsDialog({
             <span className="text-muted-foreground">{t('common.total')}</span>
             <strong className="tabular">{money(sum)}</strong>
           </p>
+          {earlier && latest && (
+            <p role="status" className="rounded-xl bg-warning-soft p-3 text-sm font-semibold text-warning">
+              {t('contract.planBefore', { date: formatDate(latest, lang) })}
+            </p>
+          )}
           {over > 0 && (
             <p role="status" className="rounded-xl bg-warning-soft p-3 text-sm font-semibold text-warning">
               {t('contract.planOver', { amount: money(over) })}

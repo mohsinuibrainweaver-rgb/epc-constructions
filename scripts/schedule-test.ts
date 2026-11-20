@@ -1,7 +1,7 @@
 // Checks how a contract's remaining money is split into dated instalments.
 // Run: npx vite-node scripts/schedule-test.ts
 import assert from 'node:assert/strict'
-import { addMonths, instalmentDates, proposeInstalments, splitAmount } from '../src/lib/schedule'
+import { addMonths, firstInstalmentDay, instalmentDates, proposeInstalments, splitAmount } from '../src/lib/schedule'
 
 // ---- months
 assert.equal(addMonths('2026-01-31', 1), '2026-02-28', '31 Jan + 1 month is the last day of February')
@@ -40,5 +40,13 @@ assert.deepEqual(proposeInstalments(500000, 4, '2026-12-01', 'month'), [
   { date: '2027-03-01', amount: 125000 },
 ])
 assert.equal(proposeInstalments(100, 0, '2026-12-01', 'week').length, 1, 'at least one instalment')
+
+// ---- where the first new instalment starts
+assert.equal(firstInstalmentDay('2026-11-20', undefined, 'month'), '2026-11-27', 'no payments yet: a week ahead')
+assert.equal(firstInstalmentDay('2026-11-20', '2026-11-30', 'month'), '2026-12-30', 'after the latest payment (30 Nov): a month later')
+assert.equal(firstInstalmentDay('2026-11-20', '2026-11-30', 'week'), '2026-12-07')
+assert.equal(firstInstalmentDay('2026-11-20', '2026-11-30', 'twoWeeks'), '2026-12-14')
+assert.equal(firstInstalmentDay('2026-11-20', '2026-09-01', 'month'), '2026-11-27', 'the latest is long past: still a week ahead, never in the past')
+assert.equal(firstInstalmentDay('2026-11-20', '2026-11-21', 'week'), '2026-11-28', 'a payment tomorrow: a week after it')
 
 console.log('schedule: all checks passed')

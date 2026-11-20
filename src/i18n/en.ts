@@ -495,6 +495,7 @@ export const en = {
   'contract.planOver': 'This is {amount} more than what is left on the contract.',
   'contract.planUnder': '{amount} of the amount above is not in these instalments.',
   'contract.planSave': 'Plan {count} payments',
+  'contract.planBefore': 'Some of these days are before a payment already on this contract ({date}), so the instalment numbers will not follow the days.',
   'contract.planSaveOne': 'Plan 1 payment',
   'contract.instalmentsSavedOne': '1 payment planned.',
   'contract.instalmentPurpose': '{title}: instalment {n}',
