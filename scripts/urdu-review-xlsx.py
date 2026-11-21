@@ -110,7 +110,7 @@ GLOSSARY = [
     ('Vendor (a shop or contractor you pay)', 'nav.vendors'), ('Labour foreman', 'role.foreman'),
     ('Phase (a stage of the build)', 'nav.phases'), ('Ledger (list of all payments)', 'nav.ledger'),
     ('Weekly payments', 'nav.plans'), ('Settlement (who owes whom at the end)', 'nav.settlement'),
-    ('Materials', 'nav.materials'), ('Contracts', 'nav.contracts'), ('Variation (change to a contract)', 'contract.variations'),
+    ('Material prices', 'mat.prices'), ('Contracts', 'nav.contracts'), ('Variation (change to a contract)', 'contract.variations'),
     ('Statement (list of payments to print)', 'nav.statements'), ('Reports', 'nav.reports'), ('Files', 'nav.files'),
     ('Paid', 'status.paid'), ('Planned', 'status.planned'), ('Advance (money given before the work)', 'status.advance'),
     ('Overdue', 'status.overdue'), ('Skipped', 'status.skipped'),

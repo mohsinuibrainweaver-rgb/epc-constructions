@@ -10,6 +10,8 @@ import { formatMonth, money, monthKey, todayISO } from '@/lib/format'
 import { isSpent } from '@/lib/stats'
 import { spendingTrend } from '@/lib/trend'
 import { TrendChart } from '@/components/TrendChart'
+import { MaterialPrices } from '@/components/MaterialPrices'
+import { priceCoverage, priceRows } from '@/lib/materials'
 
 interface Row {
   label: string
@@ -58,6 +60,8 @@ export function Reports() {
   const trend = useMemo(() => spendingTrend(everything, todayISO().slice(0, 7)), [everything])
   const phases = usePhases(project?.id)
   const vendors = useVendors(project?.id)
+  const prices = useMemo(() => priceRows(everything), [everything])
+  const coverage = useMemo(() => priceCoverage(everything), [everything])
 
   const data = useMemo(() => {
     const phaseMap = new Map(phases.map((p) => [p.id, phaseName(p)]))
@@ -92,6 +96,7 @@ export function Reports() {
           <Breakdown title={t('reports.byCategory')} rows={data.category} />
           <Breakdown title={t('reports.byMonth')} rows={data.month} />
           <Breakdown title={t('reports.byMode')} rows={data.mode} />
+          <MaterialPrices rows={prices} coverage={coverage} className="grid gap-3 md:col-span-2" />
         </div>
       )}
     </>

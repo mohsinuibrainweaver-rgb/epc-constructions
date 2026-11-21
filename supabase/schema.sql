@@ -248,6 +248,36 @@ alter table public.payments add column if not exists bank_account text;
 alter table public.payments add column if not exists bank_ref text;
 alter table public.vendors add column if not exists bank_name text;
 
+-- Material purchases (added after the first release): how much was bought and in what unit, on the payment itself. The rate is
+-- the amount divided by the quantity, so there is one record of a purchase, not two. Safe to run on a project that already has the
+-- older tables; nothing is removed. (The separate materials table is kept, so an older phone does not break.)
+alter table public.payments add column if not exists quantity numeric check (quantity > 0);
+alter table public.payments add column if not exists unit text check (unit in ('bag', 'kg', 'ton', 'piece', 'cft', 'sqft', 'rft', 'trip', 'box', 'litre', 'other'));
+
+-- One-time move of the old materials list: each line's quantity and unit go onto the payment it was created with, and the line is
+-- then marked deleted, so running this file again finds nothing left to move (a quantity removed later is never put back). Only
+-- payments with no quantity yet are touched. The newer updated_at makes every phone pick the change up.
+with folded as (
+  select distinct on (m.payment_id) m.id as line_id, m.payment_id, m.quantity, m.unit
+  from public.materials m
+  join public.payments p on p.id = m.payment_id
+  where m.deleted_at is null and m.quantity > 0 and p.deleted_at is null and p.quantity is null
+  order by m.payment_id, m.updated_at desc
+), moved as (
+  update public.payments p
+  set quantity = f.quantity,
+      unit = case when f.unit in ('bag', 'kg', 'ton', 'piece', 'cft', 'sqft', 'rft', 'trip', 'box', 'litre') then f.unit else 'other' end,
+      updated_at = greatest(p.updated_at, (extract(epoch from now()) * 1000)::bigint)
+  from folded f
+  where p.id = f.payment_id
+  returning f.line_id
+)
+update public.materials m
+set deleted_at = (extract(epoch from now()) * 1000)::bigint,
+    updated_at = greatest(m.updated_at, (extract(epoch from now()) * 1000)::bigint)
+from moved
+where m.id = moved.line_id;
+
 create index if not exists payment_plans_project on public.payment_plans (project_id, server_updated_at);
 create index if not exists transfers_project on public.transfers (project_id, server_updated_at);
 

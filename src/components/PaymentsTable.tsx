@@ -7,7 +7,8 @@ import { usePhases, useVendors } from '@/db/hooks'
 import type { Payment } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { bankLine } from '@/lib/bank'
-import { formatDate, money } from '@/lib/format'
+import { formatDate, money, moneyRate } from '@/lib/format'
+import { hasQuantity, num, rateOf } from '@/lib/materials'
 
 /**
  * A real table when the space is wide, and a list of cards when it is narrow. Both are driven by the
@@ -21,7 +22,13 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
   const phaseMap = useMemo(() => new Map(phases.map((p) => [p.id, phaseName(p)])), [phases, phaseName])
 
   const who = (p: Payment) => (p.vendorId && vendorMap.get(p.vendorId)) || p.payeeName || ''
-  const sub = (p: Payment) => (p.category === 'misc' && p.miscType ? t(`misc.${p.miscType}` as Key) : '')
+  // Under the purpose: the kind of miscellaneous cost, or for a material purchase how much was bought and at what rate.
+  const sub = (p: Payment) =>
+    p.category === 'misc' && p.miscType
+      ? t(`misc.${p.miscType}` as Key)
+      : hasQuantity(p)
+        ? t('mat.at', { qty: num(p.quantity), unit: t(`unit.${p.unit}` as Key), rate: moneyRate(rateOf(p)) })
+        : ''
 
   return (
     <div className="@container">

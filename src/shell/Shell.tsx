@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { EmptyState } from '@/components/common'
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Banknote, Bell, BellOff, CalendarClock, ChartColumn, Ellipsis, FileSignature, FileText, FolderOpen, GitCompareArrows, House, Layers3, Package, Plus, ReceiptText, RefreshCw, Scale, Search, Settings as SettingsIcon, TriangleAlert, Users, WifiOff } from 'lucide-react'
+import { Banknote, Bell, BellOff, CalendarClock, ChartColumn, Ellipsis, FileSignature, FileText, FolderOpen, GitCompareArrows, House, Layers3, Plus, ReceiptText, RefreshCw, Scale, Search, Settings as SettingsIcon, TriangleAlert, Users, WifiOff } from 'lucide-react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { BrandLogo, BrandMark } from '@/components/Brand'
 import { useApp } from '@/app/AppContext'
@@ -34,7 +34,6 @@ const NAV: { to: string; key: Key; icon: typeof House; end?: boolean }[] = [
   { to: '/plans', key: 'nav.plans', icon: CalendarClock },
   { to: '/forecast', key: 'nav.forecast', icon: Banknote },
   { to: '/settlement', key: 'nav.settlement', icon: Scale },
-  { to: '/materials', key: 'nav.materials', icon: Package },
   { to: '/reports', key: 'nav.reports', icon: ChartColumn },
   { to: '/compare', key: 'nav.compare', icon: GitCompareArrows },
   { to: '/statements', key: 'nav.statements', icon: FileText },

@@ -1,6 +1,6 @@
 import type { Table } from 'dexie'
 import { db } from '../db/db'
-import type { Attachment, Contract, MaterialLine, ProjectFile, Payment, PaymentPlan, Phase, Project, Transfer, Vendor } from '../db/types'
+import type { Attachment, Contract, ProjectFile, Payment, PaymentPlan, Phase, Project, Transfer, Vendor } from '../db/types'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = Record<string, any>
@@ -9,7 +9,7 @@ const nul = <T>(v: T | undefined): T | null => (v === undefined ? null : v)
 const und = <T>(v: T | null | undefined): T | undefined => (v === null || v === undefined ? undefined : v)
 
 export interface TableDef {
-  name: 'projects' | 'phases' | 'vendors' | 'contracts' | 'plans' | 'payments' | 'transfers' | 'materials' | 'files' | 'attachments'
+  name: 'projects' | 'phases' | 'vendors' | 'contracts' | 'plans' | 'payments' | 'transfers' | 'files' | 'attachments'
   /** The server table name when it differs from the local one. */
   remote?: string
   /** Added after the first release: a server without the newer schema must not break the rest of the sync. */
@@ -238,6 +238,8 @@ export const TABLES: TableDef[] = [
       ...(p.bankName !== undefined || p.bankAccount !== undefined || p.bankRef !== undefined
         ? { bank_name: nul(p.bankName), bank_account: nul(p.bankAccount), bank_ref: nul(p.bankRef) }
         : {}),
+      // How much was bought (a material purchase): sent only once set (null: it was removed), so an older server keeps syncing.
+      ...(p.quantity !== undefined || p.unit !== undefined ? { quantity: nul(p.quantity), unit: nul(p.unit) } : {}),
       // Sent only once an entry has been through approval, so a server without these columns keeps syncing.
       ...(p.approval
         ? { approval: p.approval, approved_by: nul(p.approvedBy), approved_at: nul(p.approvedAt), reject_reason: nul(p.rejectReason) }
@@ -265,6 +267,8 @@ export const TABLES: TableDef[] = [
       bankName: und(r.bank_name),
       bankAccount: und(r.bank_account),
       bankRef: und(r.bank_ref),
+      quantity: r.quantity === null || r.quantity === undefined ? undefined : Number(r.quantity),
+      unit: und(r.unit),
       approval: und(r.approval),
       approvedBy: und(r.approved_by),
       approvedAt: r.approved_at === null || r.approved_at === undefined ? undefined : Number(r.approved_at),
@@ -291,41 +295,6 @@ export const TABLES: TableDef[] = [
       date: r.date,
       amount: Number(r.amount),
       kind: r.kind,
-      note: und(r.note),
-      ...fromStamps(r),
-    }),
-  },
-  {
-    name: 'materials',
-    optional: true,
-    table: db.materials,
-    toRemote: (m: MaterialLine) => ({
-      id: m.id,
-      project_id: m.projectId,
-      date: m.date,
-      item: m.item,
-      quantity: m.quantity,
-      unit: m.unit,
-      rate: m.rate,
-      amount: m.amount,
-      supplier: nul(m.supplier),
-      phase_id: nul(m.phaseId),
-      payment_id: nul(m.paymentId),
-      note: nul(m.note),
-      ...stamps(m),
-    }),
-    fromRemote: (r): MaterialLine => ({
-      id: r.id,
-      projectId: r.project_id,
-      date: r.date,
-      item: r.item,
-      quantity: Number(r.quantity),
-      unit: r.unit,
-      rate: Number(r.rate),
-      amount: Number(r.amount),
-      supplier: und(r.supplier),
-      phaseId: und(r.phase_id),
-      paymentId: und(r.payment_id),
       note: und(r.note),
       ...fromStamps(r),
     }),

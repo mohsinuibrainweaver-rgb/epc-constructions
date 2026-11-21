@@ -18,9 +18,11 @@ import { canChangePayment } from '@/lib/permissions'
 import { useAttachments, useContracts, usePayments, usePhases, useVendors } from '@/db/hooks'
 import {
   CATEGORIES,
+  MATERIAL_UNITS,
   MISC_TYPES,
   type Attachment,
   type Category,
+  type MaterialUnit,
   type MiscType,
   type PayMode,
   type PayStatus,
@@ -30,8 +32,9 @@ import type { Key } from '@/i18n/en'
 import { ContractBar } from '@/components/ContractParts'
 import { approvalFields, needsApproval } from '@/lib/approval'
 import { openContracts, previewPayment } from '@/lib/contracts'
-import { groupDigits, money, parseAmount, todayISO } from '@/lib/format'
+import { formatDate, groupDigits, money, moneyRate, parseAmount, todayISO } from '@/lib/format'
 import { compressImage } from '@/lib/image'
+import { itemKey, knownItems, parseDecimal, rateOf, solveEntry } from '@/lib/materials'
 import { recentTemplates, type PaymentTemplate } from '@/lib/recent'
 import { BankSelect } from '@/components/BankSelect'
 import { FileDropzone } from '@/components/FileDropzone'
@@ -52,11 +55,29 @@ function StoredReceipt({ attachment, label, onRemove }: { attachment: Attachment
   return <FileThumb blob={known ?? fetched} removeLabel={label} onRemove={onRemove} />
 }
 
+/** The category used last, so a run of labour payments does not open on Material every time. */
+const LAST_CATEGORY = 'epc.lastCategory'
+const lastCategory = (): Category => {
+  try {
+    const v = localStorage.getItem(LAST_CATEGORY)
+    return v && v !== 'misc' && (CATEGORIES as string[]).includes(v) ? (v as Category) : 'material'
+  } catch {
+    return 'material'
+  }
+}
+const rememberCategory = (c: Category) => {
+  try {
+    localStorage.setItem(LAST_CATEGORY, c)
+  } catch {
+    /* private mode: nothing to remember */
+  }
+}
+
 export function AddPayment() {
   const { id } = useParams()
   const edit = Boolean(id)
   const [sp] = useSearchParams()
-  const { t, project, settings, phaseName } = useApp()
+  const { t, lang, project, settings, phaseName } = useApp()
   const nav = useNavigate()
   const toast = useToast()
   const vendors = useVendors(project?.id)
@@ -76,7 +97,13 @@ export function AddPayment() {
   const [contractId, setContractId] = useState(sp.get('contract') ?? '')
   const [payee, setPayee] = useState('')
   const [phaseId, setPhaseId] = useState(sp.get('phase') ?? '')
-  const [category, setCategory] = useState<Category>('material')
+  const [category, setCategory] = useState<Category>(lastCategory)
+  // A material purchase: how much was bought. The rate is worked out from the amount (see solveEntry).
+  const [quantity, setQuantity] = useState('')
+  const [unit, setUnit] = useState<MaterialUnit>('bag')
+  const [unitChosen, setUnitChosen] = useState(false)
+  const [rate, setRate] = useState('')
+  const [byRate, setByRate] = useState(false)
   const [miscType, setMiscType] = useState<MiscType>('meals')
   const [status, setStatus] = useState<PayStatus>('paid')
   const [mode, setMode] = useState<PayMode>('cash')
@@ -88,7 +115,7 @@ export function AddPayment() {
   const [bankRef, setBankRef] = useState('')
   const [newFiles, setNewFiles] = useState<{ key: number; blob: Blob }[]>([])
   const [removed, setRemoved] = useState<string[]>([])
-  const [errors, setErrors] = useState<{ amount?: string; purpose?: string; date?: string }>({})
+  const [errors, setErrors] = useState<{ amount?: string; purpose?: string; date?: string; quantity?: string }>({})
   const [dup, setDup] = useState(false)
   const [vendorOpen, setVendorOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -115,6 +142,13 @@ export function AddPayment() {
     setBankName(existing.bankName ?? '')
     setBankAccount(existing.bankAccount ?? '')
     setBankRef(existing.bankRef ?? '')
+    if (existing.quantity) {
+      const e = solveEntry({ amount: groupDigits(String(existing.amount)), quantity: '', rate: '', byRate: false }, 'quantity', String(existing.quantity))
+      setQuantity(e.quantity)
+      setRate(e.rate)
+      setUnit(existing.unit ?? 'bag')
+      setUnitChosen(true)
+    }
   }, [existing, loaded])
 
   const visibleExisting = useMemo(() => existingFiles.filter((a) => !removed.includes(a.id)), [existingFiles, removed])
@@ -122,6 +156,25 @@ export function AddPayment() {
   /** Open contracts, plus the one this payment is already linked to even if it was closed since. */
   const choosable = useMemo(() => contracts.filter((c) => c.status === 'active' || c.id === (existing?.contractId ?? contractId)), [contracts, existing?.contractId, contractId])
   const vendorLabel = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
+
+  // Material: the form asks how much was bought, and offers the items bought before (not counting this payment itself).
+  const isMaterial = !misc && category === 'material'
+  const items = useMemo(() => knownItems(payments.filter((p) => p.id !== id)), [payments, id])
+  const lastBought = isMaterial && purpose.trim() ? items.find((i) => itemKey(i.purpose) === itemKey(purpose)) : undefined
+  /** Typing in amount, quantity or rate keeps the three in step. */
+  const entry = (edited: 'amount' | 'quantity' | 'rate', value: string) => {
+    const next = solveEntry({ amount, quantity, rate, byRate }, edited, value)
+    setAmount(next.amount)
+    setQuantity(next.quantity)
+    setRate(next.rate)
+    setByRate(next.byRate)
+  }
+  /** An item bought before brings back its unit, unless a unit was already chosen. */
+  const typeItem = (value: string) => {
+    setPurpose(value)
+    const known = items.find((i) => itemKey(i.purpose) === itemKey(value))
+    if (known && isMaterial && !unitChosen && !quantity) setUnit(known.unit)
+  }
 
   /** Choosing a contract fills in its vendor and phase when those are still empty. */
   const pickContract = (cid: string) => {
@@ -222,6 +275,11 @@ export function AddPayment() {
     if (tpl.miscType) setMiscType(tpl.miscType)
     if (tpl.category !== 'misc') setCategory(tpl.category)
     setPurpose(tpl.purpose)
+    setQuantity('')
+    setRate('')
+    setByRate(false)
+    setUnit(tpl.unit ?? 'bag')
+    setUnitChosen(Boolean(tpl.unit))
     setVendorId(tpl.vendorId ?? '')
     setPayee(tpl.payeeName ?? '')
     setPhaseId(tpl.phaseId ?? '')
@@ -261,6 +319,11 @@ export function AddPayment() {
   const addAnotherRef = useRef(false)
   const resetForNext = () => {
     setAmount('')
+    setQuantity('')
+    setRate('')
+    setByRate(false)
+    setUnit('bag')
+    setUnitChosen(false)
     setPurpose('')
     setPayee('')
     setNote('')
@@ -290,10 +353,11 @@ export function AddPayment() {
     if (amt <= 0) errs.amount = t('pay.errAmount')
     if (!purpose.trim()) errs.purpose = t('pay.errPurpose')
     if (!date) errs.date = t('pay.errDate')
+    if (isMaterial && quantity.trim() && parseDecimal(quantity) <= 0) errs.quantity = t('mat.errQty')
     setErrors(errs)
     if (Object.keys(errs).length) {
       // Move focus to the first field with a problem (WCAG 3.3.1).
-      const first = errs.amount ? 'amount' : errs.date ? 'date' : 'purpose'
+      const first = errs.amount ? 'amount' : errs.date ? 'date' : errs.purpose ? 'purpose' : 'quantity'
       document.getElementById(first)?.focus()
       return
     }
@@ -327,6 +391,9 @@ export function AddPayment() {
           phaseId: phaseId || undefined,
           category: misc ? 'misc' : category,
           miscType: misc ? miscType : undefined,
+          // How much was bought: kept only for a material purchase; null removes a value that was saved before.
+          quantity: isMaterial && parseDecimal(quantity) > 0 ? parseDecimal(quantity) : existing?.quantity ? null : undefined,
+          unit: isMaterial && parseDecimal(quantity) > 0 ? unit : existing?.unit ? null : undefined,
           purpose: purpose.trim(),
           status,
           mode,
@@ -342,6 +409,7 @@ export function AddPayment() {
         newFiles.map((f) => f.blob),
         removed,
       )
+      if (!misc) rememberCategory(category)
       if (addAnother && !edit) {
         toast.show({ kind: 'success', message: navigator.onLine ? t('pay.savedNext') : t('pay.savedLocal') })
         resetForNext()
@@ -452,17 +520,24 @@ export function AddPayment() {
           inputMode="numeric"
           autoComplete="off"
           value={amount}
-          onChange={(e) => setAmount(groupDigits(e.target.value))}
+          onChange={(e) => entry('amount', e.target.value)}
         />
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid items-start gap-4 sm:grid-cols-2">
         <Field label={t('pay.date')} htmlFor="date" error={errors.date}>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
-        <Field label={misc ? t('pay.purposeMisc') : t('pay.purpose')} htmlFor="purpose" error={errors.purpose}>
-          <Input value={purpose} onChange={(e) => setPurpose(e.target.value)} autoComplete="off" />
+        <Field label={misc ? t('pay.purposeMisc') : isMaterial ? t('mat.item') : t('pay.purpose')} htmlFor="purpose" error={errors.purpose} hint={isMaterial ? t('mat.itemHint') : undefined}>
+          <Input value={purpose} onChange={(e) => typeItem(e.target.value)} autoComplete="off" list={isMaterial ? 'material-items' : undefined} />
         </Field>
+        {isMaterial && (
+          <datalist id="material-items">
+            {items.map((i) => (
+              <option key={i.id} value={i.purpose} />
+            ))}
+          </datalist>
+        )}
 
         {suggestedVendor && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-info-soft px-3 py-2 text-sm sm:col-span-2">
@@ -519,7 +594,42 @@ export function AddPayment() {
           </p>
         )}
 
-        <Field label={`${t('pay.vendor')} (${t('common.optional')})`}>
+        {isMaterial && (
+          <div className="grid grid-cols-2 gap-4 sm:col-span-2 sm:grid-cols-3">
+            <Field label={t('mat.quantity')} htmlFor="quantity" error={errors.quantity}>
+              <Input className="tabular" inputMode="decimal" autoComplete="off" value={quantity} onChange={(e) => entry('quantity', e.target.value)} />
+            </Field>
+            <Field label={t('mat.unit')} htmlFor="unit">
+              <Dropdown
+                value={unit}
+                onChange={(e) => {
+                  setUnit(e.target.value as MaterialUnit)
+                  setUnitChosen(true)
+                }}
+              >
+                {MATERIAL_UNITS.map((u) => (
+                  <option key={u} value={u}>
+                    {t(`unit.${u}` as Key)}
+                  </option>
+                ))}
+              </Dropdown>
+            </Field>
+            <Field label={t('mat.rate')} htmlFor="rate" hint={byRate ? t('mat.rateHintTyped') : rate ? t('mat.rateHint') : undefined} className="col-span-2 sm:col-span-1">
+              <Input className="tabular" inputMode="decimal" autoComplete="off" value={rate} onChange={(e) => entry('rate', e.target.value)} />
+            </Field>
+            {lastBought && (
+              <p className="col-span-2 text-sm text-muted-foreground sm:col-span-3">
+                {(() => {
+                  const who = lastBought.vendorId ? vendorLabel.get(lastBought.vendorId) : lastBought.payeeName
+                  const args = { rate: moneyRate(rateOf(lastBought)), unit: t(`unit.${lastBought.unit}` as Key), date: formatDate(lastBought.date, lang), who: who ?? '' }
+                  return who ? t('mat.lastBoughtFrom', args) : t('mat.lastBought', args)
+                })()}
+              </p>
+            )}
+          </div>
+        )}
+
+        <Field label={`${isMaterial ? t('mat.supplier') : t('pay.vendor')} (${t('common.optional')})`}>
           <Dropdown
             value={vendorId}
             onChange={(e) => {
@@ -602,7 +712,7 @@ export function AddPayment() {
         )}
 
         {!vendorId && (
-          <Field label={`${t('pay.payee')} (${t('common.optional')})`}>
+          <Field label={`${isMaterial ? t('mat.shopName') : t('pay.payee')} (${t('common.optional')})`}>
             <Input value={payee} onChange={(e) => setPayee(e.target.value)} autoComplete="off" />
           </Field>
         )}

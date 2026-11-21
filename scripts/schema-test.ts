@@ -34,7 +34,7 @@ await db.exec(`
   drop table public.payment_plans, public.transfers, public.materials, public.project_files, public.push_subscriptions, public.push_log, public.contracts;
   alter table public.projects drop column fee_basis, drop column fee_amount, drop column fee_percent, drop column retainer_amount, drop column retainer_start, drop column retainer_end;
   alter table public.phases drop column fee_kind, drop column fee_value, drop column done;
-  alter table public.payments drop column plan_id, drop column approval, drop column approved_by, drop column approved_at, drop column reject_reason, drop column contract_id, drop column bank_name, drop column bank_account, drop column bank_ref;
+  alter table public.payments drop column plan_id, drop column approval, drop column approved_by, drop column approved_at, drop column reject_reason, drop column contract_id, drop column bank_name, drop column bank_account, drop column bank_ref, drop column quantity, drop column unit;
   alter table public.vendors drop column bank_name;
 `)
 await db.exec(schema)
@@ -58,6 +58,27 @@ await db.exec(`insert into payments (id, project_id, date, amount, category, pur
 assert.equal(await count('payment_plans'), 1); assert.equal(await count('transfers'), 1)
 await db.exec(`insert into materials (id, project_id, date, item, quantity, unit, rate, amount, created_at, updated_at) values ('88888888-8888-8888-8888-888888888888','${P}','2026-11-08','Bricks',1000,'piece',16.5,16500,1,1)`)
 assert.equal(await count('materials'), 1)
+// Material purchases live on the payment: the old materials list is moved onto its payments once, and only once.
+await db.exec('reset role')
+await db.exec(`insert into payments (id, project_id, date, amount, category, purpose, status, mode, paid_by, created_at, updated_at) values ('abababab-0000-0000-0000-000000000001','${P}','2026-11-08',16500,'material','Bricks','paid','cash','investor',1,1),('abababab-0000-0000-0000-000000000002','${P}','2026-11-08',500,'material','Sand','paid','cash','investor',1,1),('abababab-0000-0000-0000-000000000003','${P}','2026-11-08',900,'material','Gone','paid','cash','investor',1,1)`)
+await db.exec(`update payments set deleted_at = 5 where id = 'abababab-0000-0000-0000-000000000003'`)
+await db.exec(`insert into materials (id, project_id, date, item, quantity, unit, rate, amount, payment_id, created_at, updated_at) values ('cdcdcdcd-0000-0000-0000-000000000001','${P}','2026-11-08','Bricks',1000,'piece',16.5,16500,'abababab-0000-0000-0000-000000000001',1,1),('cdcdcdcd-0000-0000-0000-000000000003','${P}','2026-11-08','Gone',3,'weird',300,900,'abababab-0000-0000-0000-000000000003',1,1)`)
+await db.exec(schema)
+const pay = async (id: string) => (await db.query<{ quantity: string | null; unit: string | null; updated_at: string }>(`select quantity, unit, updated_at from payments where id = '${id}'`)).rows[0]
+assert.equal(Number((await pay('abababab-0000-0000-0000-000000000001')).quantity), 1000, 'the line\'s quantity moved onto its payment')
+assert.equal((await pay('abababab-0000-0000-0000-000000000001')).unit, 'piece')
+assert.ok(Number((await pay('abababab-0000-0000-0000-000000000001')).updated_at) > 1, 'with a newer time, so phones pick it up')
+assert.equal((await pay('abababab-0000-0000-0000-000000000002')).quantity, null, 'a payment with no line is untouched')
+assert.equal((await pay('abababab-0000-0000-0000-000000000003')).quantity, null, 'a removed payment is not given a quantity')
+assert.ok(Number((await db.query<{ d: string | null }>(`select deleted_at as d from materials where id = 'cdcdcdcd-0000-0000-0000-000000000001'`)).rows[0].d) > 0, 'the moved line is marked deleted')
+await db.exec(`update payments set quantity = null, unit = null where id = 'abababab-0000-0000-0000-000000000001'`)
+await db.exec(schema)
+assert.equal((await pay('abababab-0000-0000-0000-000000000001')).quantity, null, 'running the file again does not put a removed quantity back')
+await assert.rejects(db.exec(`update payments set quantity = 0 where id = 'abababab-0000-0000-0000-000000000002'`), /./, 'a quantity must be above zero')
+await assert.rejects(db.exec(`update payments set quantity = 5, unit = 'furlong' where id = 'abababab-0000-0000-0000-000000000002'`), /./, 'the unit must be a known one')
+await db.exec(`delete from payments where id::text like 'abababab-%'; delete from materials where id::text like 'cdcdcdcd-%'`)
+await as(A, 'a@x.com')
+console.log('material purchases on payments: ok')
 await db.exec(`insert into project_files (id, project_id, kind, title, doc_type, date, name, mime, size, path, created_at, updated_at) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','${P}','document','Contract','contract','2026-11-08','contract.pdf','application/pdf',1000,'${P}/files/x.pdf',1,1)`)
 await assert.rejects(db.exec(`insert into project_files (id, project_id, kind, title, date, created_at, updated_at) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','${P}','video','x','2026-11-08',1,1)`), /./)
 assert.equal(await count('project_files'), 1)

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Dexie, { type Table } from 'dexie'
+import { foldMaterials } from '../lib/materials'
 import type { Attachment, Conflict, Contract, MaterialLine, ProjectFile, Payment, PaymentPlan, Phase, Project, SettingRow, Transfer, Vendor } from './types'
 
 class AppDB extends Dexie {
@@ -122,13 +123,35 @@ class AppDB extends Dexie {
       conflicts: 'id, at',
       settings: 'key',
     })
+    // v8: a material purchase is a payment with a quantity and a unit. The old Materials list is folded onto its payments once,
+    // quietly (as if it came from the server), so nothing is re-sent and nothing changes in any total.
+    this.version(8)
+      .stores({
+        projects: 'id, type, updatedAt, dirty',
+        phases: 'id, projectId, order, dirty',
+        vendors: 'id, projectId, name, dirty',
+        payments: 'id, projectId, date, vendorId, phaseId, status, deletedAt, dirty',
+        attachments: 'id, paymentId, projectId, dirty',
+        transfers: 'id, projectId, date, dirty',
+        plans: 'id, projectId, dirty',
+        materials: 'id, projectId, date, item, dirty',
+        files: 'id, projectId, kind, date, phaseId, dirty',
+        contracts: 'id, projectId, vendorId, status, dirty',
+        conflicts: 'id, at',
+        settings: 'key',
+      })
+      .upgrade(async (tx) => {
+        ;(tx as unknown as RemoteTrans).remote = true
+        const patches = foldMaterials(await tx.table('materials').toArray(), await tx.table('payments').toArray())
+        for (const [id, p] of patches) await tx.table('payments').update(id, { quantity: p.quantity, unit: p.unit, ...(p.dirty ? { dirty: 1 } : {}) })
+      })
   }
 }
 
 export const db = new AppDB()
 
-/** Tables that are synced to the server. */
-export const SYNC_TABLES = [db.projects, db.phases, db.vendors, db.contracts, db.plans, db.payments, db.transfers, db.materials, db.files, db.attachments] as const
+/** Tables that are synced to the server. (The old materials table is not: its rows now live on the payments.) */
+export const SYNC_TABLES = [db.projects, db.phases, db.vendors, db.contracts, db.plans, db.payments, db.transfers, db.files, db.attachments] as const
 
 // Local edits mark a row dirty and stamp it; writes that come from the server (sync) must not.
 // The marker lives on the Dexie transaction, so an edit made while a pull is running is still tracked.

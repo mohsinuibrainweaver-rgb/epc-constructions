@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dropdown } from '@/components/ui/dropdown'
 import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
-import { useMaterials, usePayments, usePhases } from '@/db/hooks'
+import { usePayments, usePhases } from '@/db/hooks'
 import type { Key } from '@/i18n/en'
 import {
   averageRateChange, comparePace, comparePhases, compareCategories, compareMaterials, delta, NO_PHASE, paceSeries, perAreaBasis, phaseInsights, sortPhaseRows, summarizeSide, TOTALS,
@@ -57,11 +57,9 @@ export function Compare() {
   const payB = usePayments(bId)
   const phA = usePhases(aId)
   const phB = usePhases(bId)
-  const matA = useMaterials(aId)
-  const matB = useMaterials(bId)
 
-  const sideA = useMemo<Side | undefined>(() => (A ? { project: A, payments: payA, phases: phA, materials: matA } : undefined), [A, payA, phA, matA])
-  const sideB = useMemo<Side | undefined>(() => (B ? { project: B, payments: payB, phases: phB, materials: matB } : undefined), [B, payB, phB, matB])
+  const sideA = useMemo<Side | undefined>(() => (A ? { project: A, payments: payA, phases: phA } : undefined), [A, payA, phA])
+  const sideB = useMemo<Side | undefined>(() => (B ? { project: B, payments: payB, phases: phB } : undefined), [B, payB, phB])
 
   if (projects.length < 2) {
     return (
@@ -154,7 +152,7 @@ function CompareBody({
   const phaseRows = useMemo(() => comparePhases(sideA, sideB, basis), [sideA, sideB, basis])
   const catRows = useMemo(() => compareCategories(sideA, sideB, basis), [sideA, sideB, basis])
   const insights = useMemo(() => phaseInsights(phaseRows, 2), [phaseRows])
-  const materials = useMemo(() => compareMaterials(sideA.materials, sideB.materials), [sideA.materials, sideB.materials])
+  const materials = useMemo(() => compareMaterials(sideA.payments, sideB.payments), [sideA.payments, sideB.payments])
   const rateChange = averageRateChange(materials)
 
   // A project with a phase that is not complete is still being built: totals and unfinished phases are "so far", not a verdict.

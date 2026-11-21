@@ -69,7 +69,8 @@ new parts wait on the phone and are sent after you run the file.
 The easiest way: in the app open **Settings → Data and backup**. When the server is missing something, a note appears
 there with a **Copy the update SQL** button. Press it, open **SQL Editor → New query** in Supabase, paste, and press **Run**.
 (The bank details of a transfer added four columns: `payments.bank_name`, `payments.bank_account`, `payments.bank_ref`
-and `vendors.bank_name`.)
+and `vendors.bank_name`. Material quantities added two more, `payments.quantity` and `payments.unit`, and the file also moves
+the old Materials list onto its payments once; running it again changes nothing.)
 
 ## 5. Invite your brother (or the builder)
 

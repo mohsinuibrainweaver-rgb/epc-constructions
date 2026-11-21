@@ -1,5 +1,5 @@
 import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { Shell } from './shell/Shell'
 import { Welcome } from './pages/Welcome'
 import { Home } from './pages/Home'
@@ -22,7 +22,6 @@ const Compare = lazy(() => import('./pages/Compare').then((m) => ({ default: m.C
 const Forecast = lazy(() => import('./pages/Forecast').then((m) => ({ default: m.Forecast })))
 const Plans = lazy(() => import('./pages/Plans').then((m) => ({ default: m.Plans })))
 const Settlement = lazy(() => import('./pages/Settlement').then((m) => ({ default: m.Settlement })))
-const Materials = lazy(() => import('./pages/Materials').then((m) => ({ default: m.Materials })))
 const Files = lazy(() => import('./pages/Files').then((m) => ({ default: m.Files })))
 const Contracts = lazy(() => import('./pages/Contracts').then((m) => ({ default: m.Contracts })))
 const ContractDetail = lazy(() => import('./pages/Contracts').then((m) => ({ default: m.ContractDetail })))
@@ -99,7 +98,7 @@ export default function App() {
           <Route path="contracts" element={<Contracts />} />
           <Route path="contracts/:id" element={<ContractDetail />} />
           <Route path="statements" element={<Statements />} />
-          <Route path="materials" element={<Materials />} />
+          <Route path="materials" element={<Navigate to="/reports" replace />} />
           <Route path="files" element={<Files />} />
           <Route path="more" element={<More />} />
           <Route path="settings" element={<SettingsLayout />}>

@@ -160,6 +160,9 @@ export interface Payment extends Stamped {
   bankName?: string | null
   bankAccount?: string | null
   bankRef?: string | null
+  /** For a purchase of material: how much was bought, and in what unit. The rate is amount divided by quantity. null clears a value synced before. */
+  quantity?: number | null
+  unit?: MaterialUnit | null
 }
 
 /** Money moving between the two people. All but 'return' go from the investor to the builder. */
@@ -195,7 +198,10 @@ export interface PaymentPlan extends Stamped {
 export type MaterialUnit = 'bag' | 'kg' | 'ton' | 'piece' | 'cft' | 'sqft' | 'rft' | 'trip' | 'box' | 'litre' | 'other'
 export const MATERIAL_UNITS: MaterialUnit[] = ['bag', 'kg', 'ton', 'piece', 'cft', 'sqft', 'rft', 'trip', 'box', 'litre', 'other']
 
-/** One purchase of a material: what, how much, at what rate. It can also create the matching payment. */
+/**
+ * The old Materials list (retired): one purchase of a material. Its quantity and unit now live on the payment (see
+ * `foldMaterials` in lib/materials.ts). The table is kept so a backup or an older phone can still be read.
+ */
 export interface MaterialLine extends Stamped {
   projectId: string
   date: string

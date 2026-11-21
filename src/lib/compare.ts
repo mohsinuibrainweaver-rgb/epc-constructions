@@ -1,4 +1,4 @@
-import { CATEGORIES, type Category, type MaterialLine, type MaterialUnit, type Payment, type Phase, type Project } from '../db/types'
+import { CATEGORIES, type Category, type MaterialUnit, type Payment, type Phase, type Project } from '../db/types'
 import { addDays } from './format'
 import { priceRows } from './materials'
 import { isSpent } from './stats'
@@ -8,7 +8,6 @@ export interface Side {
   project: Pick<Project, 'id' | 'name' | 'startDate' | 'coveredArea' | 'budget'>
   payments: Payment[]
   phases: Phase[]
-  materials: MaterialLine[]
 }
 
 /** Money is shown either as it is, or per square foot of covered area. Both projects use the same basis. */
@@ -176,7 +175,7 @@ export interface MaterialCompareRow {
 }
 
 /** The materials bought in both projects (same item and unit), with the average rate each paid. Largest spend in B first. */
-export function compareMaterials(a: MaterialLine[], b: MaterialLine[]): MaterialCompareRow[] {
+export function compareMaterials(a: Payment[], b: Payment[]): MaterialCompareRow[] {
   const ra = new Map(priceRows(a).map((r) => [r.key, r]))
   const rows: MaterialCompareRow[] = []
   for (const rb of priceRows(b)) {

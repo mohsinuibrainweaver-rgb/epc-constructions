@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Banknote, CalendarClock, ChartColumn, ChevronRight, Clock, Compass, FileSignature, FileText, FolderOpen, GitCompareArrows, Package, ReceiptText, Scale, Settings as SettingsIcon } from 'lucide-react'
+import { Banknote, CalendarClock, ChartColumn, ChevronRight, Clock, Compass, FileSignature, FileText, FolderOpen, GitCompareArrows, ReceiptText, Scale, Settings as SettingsIcon } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { EmptyState, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,6 @@ export function More() {
     { to: '/plans', key: 'nav.plans', icon: CalendarClock },
     { to: '/forecast', key: 'nav.forecast', icon: Banknote },
     { to: '/settlement', key: 'nav.settlement', icon: Scale },
-    { to: '/materials', key: 'nav.materials', icon: Package },
     { to: '/reports', key: 'nav.reports', icon: ChartColumn },
     { to: '/compare', key: 'nav.compare', icon: GitCompareArrows },
     { to: '/statements', key: 'nav.statements', icon: FileText },

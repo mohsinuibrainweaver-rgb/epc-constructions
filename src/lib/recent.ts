@@ -1,4 +1,4 @@
-import type { Category, MiscType, PayMode, Payment, Role } from '../db/types'
+import type { Category, MaterialUnit, MiscType, PayMode, Payment, Role } from '../db/types'
 
 /** What a recent payment leaves behind for filling the Add payment form again. */
 export interface PaymentTemplate {
@@ -18,6 +18,8 @@ export interface PaymentTemplate {
   bankName?: string
   bankAccount?: string
   paidBy: Role
+  /** For a material: the unit it was bought in (the quantity is what changes, like the amount). */
+  unit?: MaterialUnit
 }
 
 /** Things that still exist, so a template never points at a vendor, phase or contract that is gone or closed. */
@@ -59,6 +61,7 @@ export function recentTemplates(payments: Payment[], known: KnownRefs, limit = 4
       bankName: p.mode === 'bank' ? p.bankName || undefined : undefined,
       bankAccount: p.mode === 'bank' ? p.bankAccount || undefined : undefined,
       paidBy: p.paidBy,
+      unit: p.unit ?? undefined,
     })
     if (out.size >= limit) break
   }

@@ -5,18 +5,21 @@ import {
   comparePace, comparePhases, compareCategories, compareMaterials, delta, monthsSince, NO_PHASE, paceAt, paceSeries, perAreaBasis, phaseIdentity, phaseInsights, summarizeSide,
   type Side,
 } from '../src/lib/compare'
-import type { MaterialLine, Payment, Phase } from '../src/db/types'
+import type { MaterialUnit, Payment, Phase } from '../src/db/types'
 
 let n = 0
 const ph = (o: Partial<Phase>): Phase => ({ id: `ph${++n}`, projectId: 'x', order: n, createdAt: n, updatedAt: n, ...o }) as Phase
 const pay = (o: Partial<Payment>): Payment =>
   ({ id: `p${++n}`, projectId: 'x', date: '2026-01-10', amount: 100, category: 'labour', purpose: 'x', status: 'paid', mode: 'cash', paidBy: 'investor', addedBy: 'investor', createdAt: n, updatedAt: n, ...o }) as Payment
-const mat = (o: Partial<MaterialLine>): MaterialLine => ({ id: `m${++n}`, projectId: 'x', date: '2026-01-10', item: 'Cement', quantity: 10, unit: 'bag', rate: 100, amount: 1000, createdAt: n, updatedAt: n, ...o }) as MaterialLine
+// A material purchase is a payment with a quantity and a unit; `item` is its purpose.
+const mat = (o: { item?: string; quantity?: number; unit?: MaterialUnit; amount?: number; deletedAt?: number }): Payment => {
+  const { item, ...rest } = o
+  return pay({ category: 'material', purpose: item ?? 'Cement', quantity: 10, unit: 'bag', amount: 1000, ...rest })
+}
 const side = (name: string, o: Partial<Side> & { area?: number; start?: string; budget?: number }): Side => ({
   project: { id: name, name, startDate: o.start, coveredArea: o.area, budget: o.budget },
   payments: o.payments ?? [],
   phases: o.phases ?? [],
-  materials: o.materials ?? [],
 })
 
 // ---- delta and identity

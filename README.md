@@ -193,7 +193,7 @@ investor. The server decides what each may do; the app leaves out the buttons a 
 
 | | Investor | Builder |
 |---|---|---|
-| Add payments, vendors, materials, files, weekly payments; mark a phase done | yes | yes |
+| Add payments (with material quantities), vendors, files, weekly payments; mark a phase done | yes | yes |
 | A paid or advance entry | counts at once | waits for the investor (always pending, however it is sent) |
 | Approve or reject entries | yes | no |
 | Change or delete an entry | any | a planned one, or his own that is pending or turned down; not an approved one, and not a paid one the investor entered |
@@ -406,12 +406,29 @@ for approval, says it does not count yet. While the purpose is empty, one button
 from `summarizeContract`, so they match the contract page; `previewPayment` in `src/lib/contracts.ts` adds the "after" part
 and leaves the payment being edited out of "before". Check: `npx vite-node scripts/contracts-test.ts`.
 
-## Materials (`/materials`)
+## Materials (on the payment)
 
-- Record each purchase with item, quantity, unit (bag, kg, ton, piece, cft and more) and rate per unit; the total is
-  quantity times rate. Tick "Also record this as a payment" when adding, so the spend is counted once in the ledger.
-- Price per unit per item: last rate, change on the previous purchase, lowest, highest, average actually paid.
-- Check: `npx vite-node scripts/materials-test.ts`. Needs the `materials` table: run `supabase/schema.sql` once more.
+There is no separate Materials list any more. A material purchase is a payment: on **Add payment**, with Category **Material**,
+the form asks for the item (the old "Purpose" box, with the items bought before offered as suggestions), the **quantity**, the
+**unit** (bag, kg, ton, piece, cft and more) and the **rate per unit**. The supplier is the normal Vendor field (or the shop name).
+
+- The three boxes are tied together (`solveEntry` in `src/lib/materials.ts`). What was paid, the amount, is the figure that must
+  match the ledger, so it wins: typing the amount or the quantity works out the rate. Typing the rate works out the amount, and
+  then a new quantity keeps that rate. The rate is never stored; it is always amount divided by quantity.
+- Quantity and unit are optional (an advance paid before delivery has none) and are stored on the payment (`payments.quantity`,
+  `payments.unit`). They are kept only while the category is Material; moving the payment to another category clears them.
+- The form opens on the category used last (remembered on this phone), not always on Material.
+- Prices are built from payments that count (paid or advance, not removed, not waiting for approval) and carry a quantity:
+  **Reports → Material prices** (last rate, change on the previous purchase, lowest, highest, average actually paid, with a
+  note such as "based on 3 of 9 material payments"), **a phase's page → Materials bought**, the quantity line under a purchase
+  in the ledger, and the rate comparison on **Compare projects**.
+- The old Materials page is gone; `/materials` goes to Reports. The old `materials` table is kept, unused and no longer synced.
+- **Moving the old list.** Dexie v8 puts each old line's quantity and unit on the payment it was created with (once, quietly, as if it
+  came from the server, so nothing is re-sent). Lines with no payment, or whose payment was removed, are left behind. A backup made
+  before this change is folded the same way when it is restored. On the server, `supabase/schema.sql` adds the two columns and does
+  the same move once (then marks the moved lines deleted, so running the file again changes nothing). Run it once more after updating.
+- Checks: `npx vite-node scripts/materials-test.ts` (prices and the three boxes), `scripts/materials-fold-test.ts` (the database
+  upgrade, saving, sync mapping and an old backup), `scripts/schema-test.ts` (the server columns and the move).
 
 ## Files (`/files`)
 
@@ -457,7 +474,7 @@ Save is the only primary there). Destructive actions use the `destructive` style
 
 One component, `EmptyState` (`src/components/common.tsx`), for every list or page with nothing in it, following the recipe from the ClickUp
 design-system study: a simple line icon (decorative, hidden from screen readers; the same icon as the screen's menu entry), a message that **names
-what to do** ("Add your first vendor", not "No vendors yet"), one sentence of why in muted text, and, only when the screen has no add button of its own, one 44 px button. Screens with an add button in the page header (Phases, Vendors, Contracts, Weekly payments, Materials, Files) and the Ledger and Reports (the top bar's Add payment) show no button in the empty state, so there is one way to add, not two.
+what to do** ("Add your first vendor", not "No vendors yet"), one sentence of why in muted text, and, only when the screen has no add button of its own, one 44 px button. Screens with an add button in the page header (Phases, Vendors, Contracts, Weekly payments, Files) and the Ledger and Reports (the top bar's Add payment) show no button in the empty state, so there is one way to add, not two.
 - `compact` is for a list inside a card that already has a title and an add button (recent payments, transfers, the alerts popover).
 - A list with items that the filters empty gets its own message ("No payments match") with a **Clear filters** (or Clear search, Show all contracts)
   button; a list that is truly empty gets the "Add your first ..." version. The Ledger, Vendors, Contracts and Files screens do both.

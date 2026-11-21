@@ -1,8 +1,8 @@
 import { db, now, uid } from './db'
-import type { Attachment, Category, Contract, ContractVariation, FeeBasis, PhaseFeeKind, MaterialLine, MaterialUnit, PayMode, Payment, ProjectFile, PaymentPlan, Phase, Project, Role, Settings, Transfer, Vendor } from './types'
+import type { Attachment, Category, Contract, ContractVariation, FeeBasis, PhaseFeeKind, PayMode, Payment, ProjectFile, PaymentPlan, Phase, Project, Role, Settings, Transfer, Vendor } from './types'
 import { addDays, todayISO } from '../lib/format'
 import { approvalFields } from '../lib/approval'
-import { lineAmount } from '../lib/materials'
+import { foldMaterials } from '../lib/materials'
 import { deterministicId, planDueDates } from '../lib/plans'
 
 export const PHASE_KEYS = [
@@ -284,6 +284,13 @@ export async function importBackup(text: string): Promise<void> {
   const files: ProjectFile[] = await Promise.all(
     (data.files ?? []).map(async (f: ProjectFile & { blob?: string }) => ({ ...f, blob: f.blob ? await fromDataUrl(f.blob) : undefined })),
   )
+  // A backup made before material purchases moved onto payments still has the old list: fold it in, as the upgrade does.
+  const payments: Payment[] = data.payments ?? []
+  const folds = foldMaterials(data.materials ?? [], payments)
+  const paymentsIn = payments.map((p) => {
+    const f = folds.get(p.id)
+    return f ? { ...p, quantity: f.quantity, unit: f.unit } : p
+  })
   await db.transaction('rw', [db.projects, db.phases, db.vendors, db.payments, db.attachments, db.settings, db.transfers, db.plans, db.materials, db.files, db.contracts], async () => {
     await Promise.all([
       db.transfers.clear(),
@@ -301,7 +308,7 @@ export async function importBackup(text: string): Promise<void> {
     await db.projects.bulkAdd(projects)
     await db.phases.bulkAdd(data.phases ?? [])
     await db.vendors.bulkAdd(data.vendors ?? [])
-    await db.payments.bulkAdd(data.payments ?? [])
+    await db.payments.bulkAdd(paymentsIn)
     await db.attachments.bulkAdd(attachments)
     await db.transfers.bulkAdd(data.transfers ?? [])
     await db.plans.bulkAdd(data.plans ?? [])
@@ -460,62 +467,6 @@ export async function unskipPayment(id: string): Promise<void> {
 }
 
 export const nextWeek = (iso: string): string => addDays(iso, 7)
-
-/* Materials */
-
-export type MaterialInput = Omit<MaterialLine, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'dirty' | 'amount' | 'paymentId'> & {
-  id?: string
-  /** Create-only: also record the purchase as a payment so the spend is counted once. */
-  asPayment?: { mode: PayMode; paidBy: Role; addedBy: string; /** True when the builder records it: it then waits for approval. */ pending?: boolean }
-}
-
-export async function saveMaterial(input: MaterialInput): Promise<string> {
-  const t = now()
-  const { asPayment, id: existingId, ...rest } = input
-  const item = rest.item.trim()
-  const amount = lineAmount(rest.quantity, rest.rate)
-  const id = existingId ?? uid()
-  await db.transaction('rw', db.materials, db.payments, async () => {
-    if (existingId) {
-      await db.materials.update(id, { ...rest, item, amount, updatedAt: t })
-      return
-    }
-    let paymentId: string | undefined
-    if (asPayment) {
-      paymentId = uid()
-      await db.payments.add({
-        id: paymentId,
-        projectId: rest.projectId,
-        date: rest.date,
-        amount,
-        payeeName: rest.supplier || undefined,
-        phaseId: rest.phaseId,
-        category: 'material',
-        purpose: item,
-        status: 'paid',
-        ...(asPayment.pending ? { approval: 'pending' as const } : {}),
-        mode: asPayment.mode,
-        paidBy: asPayment.paidBy,
-        addedBy: asPayment.addedBy,
-        createdAt: t,
-        updatedAt: t,
-      })
-    }
-    await db.materials.add({ ...rest, item, amount, id, paymentId, createdAt: t, updatedAt: t })
-  })
-  return id
-}
-
-export async function deleteMaterial(id: string): Promise<void> {
-  const t = now()
-  await db.materials.update(id, { deletedAt: t, updatedAt: t })
-}
-
-export async function restoreMaterial(id: string): Promise<void> {
-  await db.materials.update(id, { deletedAt: undefined, updatedAt: now() })
-}
-
-export type { MaterialUnit }
 
 /* Files: documents and progress photos */
 

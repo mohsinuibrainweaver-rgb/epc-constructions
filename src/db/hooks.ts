@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db'
 import { loadConflicts, type ConflictItem } from '../sync/conflicts'
-import type { Attachment, Contract, MaterialLine, ProjectFile, Payment, PaymentPlan, Phase, Transfer, Vendor } from './types'
+import type { Attachment, Contract, ProjectFile, Payment, PaymentPlan, Phase, Transfer, Vendor } from './types'
 
 export function usePhases(projectId: string | undefined): Phase[] {
   return (
@@ -75,21 +75,6 @@ export function useTransfers(projectId: string | undefined): Transfer[] {
           ? (await db.transfers.where('projectId').equals(projectId).toArray()).sort(
               (a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt,
             )
-          : [],
-      [projectId],
-    ) ?? []
-  )
-}
-
-/** Material purchases of a project, newest first (the bin is not used: deleted lines are filtered out). */
-export function useMaterials(projectId: string | undefined): MaterialLine[] {
-  return (
-    useLiveQuery(
-      async () =>
-        projectId
-          ? (await db.materials.where('projectId').equals(projectId).toArray())
-              .filter((m) => !m.deletedAt)
-              .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
           : [],
       [projectId],
     ) ?? []

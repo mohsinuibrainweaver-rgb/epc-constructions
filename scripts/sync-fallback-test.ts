@@ -11,8 +11,8 @@ Object.defineProperty(globalThis, 'navigator', { value: { onLine: true }, config
 
 let mode: 'old' | 'new' = 'old'
 const store: Record<string, Record<string, any>> = {}
-const NEW_TABLES = ['payment_plans', 'transfers', 'materials', 'project_files', 'contracts']
-const NEW_COLS: Record<string, string[]> = { projects: ['fee_basis', 'fee_amount', 'fee_percent', 'retainer_amount', 'retainer_start', 'retainer_end'], phases: ['fee_kind', 'fee_value', 'done'], payments: ['plan_id', 'approval', 'approved_by', 'approved_at', 'reject_reason', 'contract_id'] }
+const NEW_TABLES = ['payment_plans', 'transfers', 'project_files', 'contracts']
+const NEW_COLS: Record<string, string[]> = { projects: ['fee_basis', 'fee_amount', 'fee_percent', 'retainer_amount', 'retainer_start', 'retainer_end'], phases: ['fee_kind', 'fee_value', 'done'], payments: ['plan_id', 'approval', 'approved_by', 'approved_at', 'reject_reason', 'contract_id', 'quantity', 'unit'] }
 let tick = 0
 const stamp = () => new Date(Date.UTC(2026, 10, 15, 0, 0, 0) + ++tick * 1000).toISOString()
 
@@ -58,7 +58,7 @@ const { startSync, stopSync, getStatus, syncNow } = await import('../src/sync/en
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const dirtyIds = async () => {
   const out: Record<string, number> = {}
-  for (const t of [db.projects, db.phases, db.vendors, db.plans, db.payments, db.transfers, db.materials, db.files, db.contracts]) out[t.name] = await t.where('dirty').equals(1).count()
+  for (const t of [db.projects, db.phases, db.vendors, db.plans, db.payments, db.transfers, db.files, db.contracts]) out[t.name] = await t.where('dirty').equals(1).count()
   return out
 }
 async function settle(label: string, wantDirty: (d: Record<string, number>) => boolean) {
@@ -80,7 +80,8 @@ await actions.saveFee(pid, { basis: 'percent', percent: 5 })
 const donePhase = (await db.phases.where('projectId').equals(pid).first())!
 await actions.setPhaseDone(donePhase.id, true)
 await actions.saveTransfer({ projectId: pid, date: '2026-11-08', amount: 500000, kind: 'advance' })
-await actions.saveMaterial({ projectId: pid, date: '2026-11-09', item: 'Bricks', quantity: 1000, unit: 'piece', rate: 16.5 })
+// A material purchase is a payment with a quantity and a unit (the columns are new, so an old server lacks them).
+await actions.savePayment({ projectId: pid, date: '2026-11-09', amount: 16500, category: 'material', purpose: 'Bricks', status: 'paid', mode: 'cash', paidBy: 'investor', addedBy: 'A', quantity: 1000, unit: 'piece' }, [], [])
 await actions.addFiles(pid, 'document', [{ blob: new Blob(['hello'], { type: 'application/pdf' }), name: 'c.pdf' }], { date: '2026-11-09', docType: 'contract' })
 const cid = await actions.saveContract({ projectId: pid, title: 'Labour', amount: 100000, date: '2026-11-01', status: 'active', variations: [{ id: 'v1', title: 'Extra', amount: 5000, date: '2026-11-02' }] })
 await actions.savePayment({ projectId: pid, date: '2026-11-11', amount: 300, category: 'labour', purpose: 'On contract', status: 'paid', mode: 'cash', paidBy: 'investor', addedBy: 'A', contractId: cid }, [], [])
@@ -91,15 +92,17 @@ assert.equal(await actions.ensurePlanPayments(pid, '2026-11-15'), 0, 'running it
 startSync('test-user')
 
 // 1. Old server: the old tables sync, the new things wait, and nothing crashes.
-await settle('old server', (d) => d.phases === 1 && d.vendors === 0 && d.plans > 0 && d.transfers > 0 && d.materials > 0 && d.files > 0 && d.contracts > 0)
+await settle('old server', (d) => d.phases === 1 && d.vendors === 0 && d.plans > 0 && d.transfers > 0 && d.files > 0 && d.contracts > 0)
 const w = getStatus().warning ?? ''
-assert.match(w, /payment_plans/); assert.match(w, /transfers/); assert.match(w, /materials/); assert.match(w, /project_files/); assert.match(w, /fee_basis/); assert.match(w, /plan_id/); assert.match(w, /retainer_amount/); assert.match(w, /fee_kind/); assert.match(w, /approval/); assert.match(w, /contract/)
+assert.match(w, /payment_plans/); assert.match(w, /transfers/); assert.match(w, /quantity/); assert.match(w, /project_files/); assert.match(w, /fee_basis/); assert.match(w, /plan_id/); assert.match(w, /retainer_amount/); assert.match(w, /fee_kind/); assert.match(w, /approval/); assert.match(w, /contract/)
 assert.equal(Object.keys(store.phases ?? {}).length, 12, 'phases reached the old server')
 assert.equal(Object.keys(store.vendors ?? {}).length, 1)
 assert.ok(Object.values(store.payments ?? {}).some((p: any) => p.purpose === 'Plain payment'), 'plain payment reached the old server')
-assert.equal(Object.keys(store.payment_plans ?? {}).length, 0); assert.equal(Object.keys(store.transfers ?? {}).length, 0); assert.equal(Object.keys(store.materials ?? {}).length, 0); assert.equal(Object.keys(store.project_files ?? {}).length, 0); assert.equal(Object.keys(store.contracts ?? {}).length, 0)
+const bricksOld = Object.values(store.payments ?? {}).find((p: any) => p.purpose === 'Bricks') as any
+assert.ok(bricksOld && !('quantity' in bricksOld), 'the purchase reached the old server without its quantity, which waits')
+assert.equal(Object.keys(store.payment_plans ?? {}).length, 0); assert.equal(Object.keys(store.transfers ?? {}).length, 0); assert.equal(Object.keys(store.project_files ?? {}).length, 0); assert.equal(Object.keys(store.contracts ?? {}).length, 0)
 const d1 = await dirtyIds()
-assert.ok(d1.projects >= 1 && d1.plans === 1 && d1.transfers === 1 && d1.materials === 1 && d1.files === 1 && d1.contracts === 1 && d1.payments >= 2, 'rows using the new schema keep waiting: ' + JSON.stringify(d1))
+assert.ok(d1.projects >= 1 && d1.plans === 1 && d1.transfers === 1 && d1.files === 1 && d1.contracts === 1 && d1.payments >= 3, 'rows using the new schema keep waiting: ' + JSON.stringify(d1))
 console.log('old schema: rest syncs, new rows wait', JSON.stringify(d1), '| warning:', w)
 
 // 2. Schema updated on the server: everything catches up.
@@ -111,7 +114,9 @@ assert.equal(Object.keys(store.transfers).length, 1)
 assert.match((Object.values(store.project_files)[0] as any).path, /\/files\/.+\.pdf$/, 'file path uses the project folder')
 assert.equal((Object.values(store.contracts)[0] as any).variations[0].amount, 5000, 'variations arrive with the contract')
 assert.ok(Object.values(store.payments).some((p: any) => p.contract_id === cid), 'the contract link arrived')
-assert.equal((Object.values(store.materials)[0] as any).rate, 16.5, 'material rate keeps its decimals')
+const bricksNew = Object.values(store.payments).find((p: any) => p.purpose === 'Bricks') as any
+assert.equal(bricksNew.quantity, 1000, 'the quantity arrived once the server had the column')
+assert.equal(bricksNew.unit, 'piece')
 assert.equal((Object.values(store.projects)[0] as any).fee_basis, 'percent')
 assert.equal((Object.values(store.projects)[0] as any).retainer_amount, 100000, 'the retainer kept for later arrived')
 assert.equal((store.phases[donePhase.id] as any).done, true, 'phase completion arrived')

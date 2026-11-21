@@ -40,7 +40,9 @@ import { Progress } from '@/components/ui/progress'
 import { addPhase, deletePhase, movePhase, reorderPhases, setPhaseDone, updatePhase } from '@/db/actions'
 import { usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Payment, Phase } from '@/db/types'
-import { groupDigits, money, parseAmount } from '@/lib/format'
+import type { Key } from '@/i18n/en'
+import { groupDigits, money, moneyRate, parseAmount } from '@/lib/format'
+import { num, priceRows } from '@/lib/materials'
 import { budgetLevel, budgetPlan, isPlanned, isSpent, percent, phaseFigures, spentBy, sum } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 
@@ -515,6 +517,7 @@ export function PhaseDetail() {
   const fig = phaseFigures(payments, phase.budget)
   const spent = fig.spent
   const vendorName = new Map(vendors.map((v) => [v.id, v.name]))
+  const bought = priceRows(payments)
   const where = spentBy(payments, (p) => (p.vendorId && vendorName.get(p.vendorId)) || p.payeeName || t('reports.noVendor'))
 
   return (
@@ -609,6 +612,25 @@ export function PhaseDetail() {
                   <span className="tabular shrink-0">{money(r.amount)}</span>
                 </div>
                 <Progress value={(r.amount / where[0].amount) * 100} aria-label={r.label} className="h-2 bg-muted" />
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {bought.length > 0 && (
+        <Card className="gap-4 p-4">
+          <h2 className="text-lg font-semibold">{t('phases.materials')}</h2>
+          <ul className="grid gap-3">
+            {bought.map((r) => (
+              <li key={r.key} className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold">{r.item}</p>
+                  <p className="tabular text-sm text-muted-foreground">
+                    {t('mat.at', { qty: num(r.quantity), unit: t(`unit.${r.unit}` as Key), rate: moneyRate(r.average) })}
+                  </p>
+                </div>
+                <span className="tabular shrink-0 font-semibold">{money(r.spent)}</span>
               </li>
             ))}
           </ul>
