@@ -1,70 +1,63 @@
-// Checks the "repeat a recent payment" list used on the Add payment screen. Run: npx vite-node scripts/recent-test.ts
+// Checks what the Add payment screen learns from earlier payments: the recent list, a vendor's last payment, and a possible double entry.
+// Run: npx vite-node scripts/recent-test.ts
 import assert from 'node:assert/strict'
-import { recentTemplates, type KnownRefs } from '../src/lib/recent'
+import { lastPaymentTo, possibleDouble, recentEntries, vendorDefaults } from '../src/lib/recent'
 import type { Payment } from '../src/db/types'
 
 let n = 0
 const pay = (o: Partial<Payment>): Payment => ({
-  id: `p${++n}`,
-  projectId: 'p1',
-  date: '2026-11-01',
-  amount: 1000,
-  category: 'labour',
-  purpose: 'Wood work',
-  status: 'paid',
-  mode: 'bank',
-  paidBy: 'investor',
-  addedBy: 'A',
-  createdAt: n,
-  updatedAt: n,
-  ...o,
+  id: `p${++n}`, projectId: 'p1', date: '2026-11-01', amount: 1000, category: 'labour', purpose: 'Wood work', status: 'paid', mode: 'bank', paidBy: 'investor',
+  addedBy: 'A', createdAt: n, updatedAt: n, ...o,
 })
-const known: KnownRefs = { vendors: new Set(['v1', 'v2']), phases: new Set(['ph1']), openContracts: new Set(['c1']) }
 
-// The latest of the same payment wins, with its amount; newest template first.
-const a = recentTemplates([pay({ vendorId: 'v1', date: '2026-10-01', amount: 20000 }), pay({ vendorId: 'v1', date: '2026-11-05', amount: 35000 }), pay({ vendorId: 'v2', purpose: 'Electrician', date: '2026-11-02' })], known)
-assert.deepEqual(a.map((t) => [t.vendorId, t.amount]), [['v1', 35000], ['v2', 1000]])
-
-// Same day: the one added later comes first.
-const b = recentTemplates([pay({ vendorId: 'v1', purpose: 'A', createdAt: 1 }), pay({ vendorId: 'v1', purpose: 'B', createdAt: 9 })], known)
-assert.deepEqual(b.map((t) => t.purpose), ['B', 'A'])
-
-// Spelling and spacing of the purpose do not make a second template; a different phase or category does.
-const c = recentTemplates([pay({ vendorId: 'v1', purpose: ' wood WORK ' }), pay({ vendorId: 'v1', purpose: 'Wood work', phaseId: 'ph1' }), pay({ vendorId: 'v1', purpose: 'Wood work', category: 'material' }), pay({ vendorId: 'v1' })], known)
-assert.equal(c.length, 3)
-
-// Left out: removed, planned, skipped, rejected and weekly-plan payments (nothing was really paid, or it has its own flow).
-const d = recentTemplates(
-  [pay({ vendorId: 'v1', deletedAt: 5 }), pay({ vendorId: 'v1', status: 'skipped' }), pay({ vendorId: 'v1', status: 'planned', date: '2026-12-01' }), pay({ vendorId: 'v1', approval: 'rejected' }), pay({ vendorId: 'v1', planId: 'plan1' })],
-  known,
+// ---- the recent list: by the time entered, newest first
+const a = pay({ purpose: 'A', date: '2026-11-20', createdAt: 1 })
+const b = pay({ purpose: 'B', date: '2026-01-05', createdAt: 5 }) // back-dated, but entered last
+const c = pay({ purpose: 'C', date: '2026-11-10', createdAt: 3 })
+assert.deepEqual(recentEntries([a, b, c], 5).map((p) => p.purpose), ['B', 'C', 'A'], 'newest entered first, whatever its date')
+assert.equal(recentEntries([a, b, c], 2).length, 2, 'limited to what is asked for')
+assert.deepEqual(recentEntries([a, b, c], 5, b.id).map((p) => p.purpose), ['C', 'A'], 'the payment being edited is left out')
+assert.deepEqual(
+  recentEntries([pay({ deletedAt: 5 }), pay({ planId: 'plan1' }), pay({ purpose: 'kept' })], 5).map((p) => p.purpose),
+  ['kept'],
+  'removed payments and weekly-plan payments are left out',
 )
-assert.equal(d.length, 0)
-// Pending, approved and advance ones stay (a builder repeats what he entered before).
-assert.equal(recentTemplates([pay({ vendorId: 'v1', approval: 'pending' }), pay({ vendorId: 'v2', status: 'advance' })], known).length, 2)
+assert.equal(recentEntries([pay({ status: 'planned' }), pay({ approval: 'pending' })], 5).length, 2, 'planned and waiting entries are shown (with their status)')
+assert.deepEqual(recentEntries([], 5), [])
 
-// A vendor, phase or contract that is gone or closed is dropped from the template, not kept as a dead link.
-const e = recentTemplates([pay({ vendorId: 'gone', phaseId: 'gone', contractId: 'closed', payeeName: ' Ali ' })], known)[0]
-assert.deepEqual([e.vendorId, e.phaseId, e.contractId, e.payeeName], [undefined, undefined, undefined, 'Ali'])
-const f = recentTemplates([pay({ vendorId: 'v1', phaseId: 'ph1', contractId: 'c1', payeeName: 'ignored' })], known)[0]
-assert.deepEqual([f.vendorId, f.phaseId, f.contractId, f.payeeName], ['v1', 'ph1', 'c1', undefined], 'a vendor replaces the typed payee')
+// ---- a vendor's last payment
+const v1a = pay({ vendorId: 'v1', date: '2026-10-01', purpose: 'old' })
+const v1b = pay({ vendorId: 'v1', date: '2026-11-05', purpose: 'new', createdAt: 20 })
+const v1c = pay({ vendorId: 'v1', date: '2026-11-05', purpose: 'same day, entered later', createdAt: 30 })
+assert.equal(lastPaymentTo([v1a, v1b], 'v1')?.purpose, 'new', 'the newest date')
+assert.equal(lastPaymentTo([v1a, v1b, v1c], 'v1')?.purpose, 'same day, entered later', 'on the same day, the one entered last')
+assert.equal(lastPaymentTo([v1a, v1b], 'v1', v1b.id)?.purpose, 'old', 'not the payment being edited')
+assert.equal(lastPaymentTo([v1a], 'v2'), undefined, 'another vendor')
+assert.equal(
+  lastPaymentTo([pay({ vendorId: 'v1', deletedAt: 1 }), pay({ vendorId: 'v1', status: 'planned' }), pay({ vendorId: 'v1', status: 'skipped' }), pay({ vendorId: 'v1', approval: 'rejected' })], 'v1'),
+  undefined,
+  'only a payment really made counts: not removed, planned, skipped or turned down',
+)
+assert.equal(lastPaymentTo([pay({ vendorId: 'v1', status: 'advance', purpose: 'adv' })], 'v1')?.purpose, 'adv', 'an advance is a payment made')
 
-// Payees without a vendor are told apart by name.
-assert.equal(recentTemplates([pay({ payeeName: 'Ali' }), pay({ payeeName: 'ali ' }), pay({ payeeName: 'Bilal' })], known).length, 2)
+// ---- what it suggests
+assert.deepEqual(vendorDefaults(pay({ category: 'material', paidBy: 'builder', phaseId: 'ph1', mode: 'bank' })), { category: 'material', paidBy: 'builder', phaseId: 'ph1' }, 'category, who paid and phase; the mode is not suggested')
+assert.equal(vendorDefaults(pay({ category: 'misc' })).category, undefined, 'a miscellaneous payment says nothing about the category')
+assert.equal(vendorDefaults(pay({ phaseId: undefined })).phaseId, undefined)
 
-// Miscellaneous payments keep their type; the list is capped.
-const g = recentTemplates([pay({ category: 'misc', miscType: 'meals', purpose: 'Lunch' })], known)[0]
-assert.deepEqual([g.category, g.miscType], ['misc', 'meals'])
-const many = Array.from({ length: 10 }, (_, i) => pay({ vendorId: 'v1', purpose: `Item ${i}` }))
-assert.equal(recentTemplates(many, known).length, 4)
-assert.equal(recentTemplates(many, known, 2).length, 2)
-assert.equal(recentTemplates([], known).length, 0)
-
-// A bank transfer's bank and account are carried (not the reference); cash payments carry none.
-const h = recentTemplates([pay({ vendorId: 'v1', mode: 'bank', bankName: 'HBL', bankAccount: 'PK36', bankRef: 'TXN-9' }), pay({ vendorId: 'v2', mode: 'cash', bankName: 'HBL', bankAccount: 'PK36' }), pay({ vendorId: 'v1', purpose: 'Other', mode: 'bank', bankName: null, bankAccount: null })], known)
-assert.deepEqual([h[0].bankName, h[0].bankAccount, 'bankRef' in h[0]], [undefined, undefined, false], 'a bank transfer with none, and no reference field')
-const withBank = recentTemplates([pay({ vendorId: 'v1', mode: 'bank', bankName: 'HBL', bankAccount: 'PK36', bankRef: 'TXN-9' })], known)[0]
-assert.deepEqual([withBank.bankName, withBank.bankAccount], ['HBL', 'PK36'])
-const cash = recentTemplates([pay({ vendorId: 'v2', mode: 'cash', bankName: 'HBL', bankAccount: 'PK36' })], known)[0]
-assert.deepEqual([cash.bankName, cash.bankAccount], [undefined, undefined], 'a cash payment carries no bank details')
+// ---- a possible double entry: same vendor, same item, within a week
+const base = pay({ vendorId: 'v1', purpose: 'Bricks', date: '2026-11-15', amount: 495000 })
+const draft = { vendorId: 'v1', purpose: ' bricks ', date: '2026-11-18' }
+assert.equal(possibleDouble([base], draft)?.id, base.id, 'spelling and spacing do not hide it')
+assert.equal(possibleDouble([base], { ...draft, date: '2026-11-22' })?.id, base.id, 'seven days away is still close')
+assert.equal(possibleDouble([base], { ...draft, date: '2026-11-23' }), undefined, 'eight days away is not')
+assert.equal(possibleDouble([base], { ...draft, date: '2026-11-10' })?.id, base.id, 'a week before counts too')
+assert.equal(possibleDouble([base], { ...draft, purpose: 'Sand' }), undefined, 'another item')
+assert.equal(possibleDouble([base], { ...draft, vendorId: 'v2' }), undefined, 'another vendor')
+assert.equal(possibleDouble([base], { ...draft, excludeId: base.id }), undefined, 'not the payment being edited')
+assert.equal(possibleDouble([{ ...base, deletedAt: 1 }, { ...base, status: 'skipped' }, { ...base, approval: 'rejected' }], draft), undefined, 'removed, skipped and turned-down ones do not count')
+assert.equal(possibleDouble([{ ...base, status: 'planned' }], draft)?.id, base.id, 'a planned one for the same week is worth a warning')
+assert.equal(possibleDouble([base], { ...draft, purpose: '' }), undefined, 'nothing typed yet')
+assert.equal(possibleDouble([base], { ...draft, vendorId: '' }), undefined, 'no vendor chosen')
 
 console.log('recent payments: all checks passed')

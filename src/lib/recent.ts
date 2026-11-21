@@ -1,69 +1,57 @@
-import type { Category, MaterialUnit, MiscType, PayMode, Payment, Role } from '../db/types'
+import type { Category, Payment, Role } from '../db/types'
 
-/** What a recent payment leaves behind for filling the Add payment form again. */
-export interface PaymentTemplate {
-  /** Same payee, purpose, category and phase: one template for all of them. */
-  key: string
-  purpose: string
-  /** The amount of the most recent one; the person changes it. */
-  amount: number
-  category: Category
-  miscType?: MiscType
-  vendorId?: string
-  payeeName?: string
-  phaseId?: string
-  contractId?: string
-  mode: PayMode
-  /** The bank and account of a transfer (not its reference, which is different every time). */
-  bankName?: string
-  bankAccount?: string
-  paidBy: Role
-  /** For a material: the unit it was bought in (the quantity is what changes, like the amount). */
-  unit?: MaterialUnit
-}
-
-/** Things that still exist, so a template never points at a vendor, phase or contract that is gone or closed. */
-export interface KnownRefs {
-  vendors: ReadonlySet<string>
-  phases: ReadonlySet<string>
-  /** Contracts that are still open. */
-  openContracts: ReadonlySet<string>
-}
+/*
+ * What the Add payment screen learns from payments already in the project: the entries just made (the list beside the form),
+ * and, once a vendor is chosen, what was true the last time that vendor was paid.
+ */
 
 const norm = (s: string | undefined): string => (s ?? '').trim().toLowerCase()
 
+/** The payments entered most recently (by the time they were entered, so a back-dated entry shows too), newest first. Weekly-plan payments and removed ones are left out. */
+export function recentEntries(payments: Payment[], limit: number, excludeId?: string): Payment[] {
+  return payments
+    .filter((p) => !p.deletedAt && !p.planId && p.id !== excludeId)
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, limit)
+}
+
+/** The latest payment really made to a vendor (paid or an advance, not removed or turned down). Newest date first, then the one entered last. */
+export function lastPaymentTo(payments: Payment[], vendorId: string, excludeId?: string): Payment | undefined {
+  return payments
+    .filter((p) => p.vendorId === vendorId && p.id !== excludeId && !p.deletedAt && (p.status === 'paid' || p.status === 'advance') && p.approval !== 'rejected')
+    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)[0]
+}
+
 /**
- * The payments worth repeating: the latest of each distinct (payee, purpose, category, phase), newest first.
- * Left out: removed payments, planned and skipped ones (nothing was paid), rejected ones, and payments a weekly plan
- * created (they have their own flow).
+ * What a vendor's last payment suggests for a new one. Category and who paid are right nearly every time (98% and 92% on the sample
+ * data), so they are filled in. The phase is right three times in four, but a wrong one charges the wrong budget without a sign,
+ * so it is only suggested. The mode (cash or bank) is not suggested at all: a vendor is paid both ways, and it was barely better
+ * than the plain default.
  */
-export function recentTemplates(payments: Payment[], known: KnownRefs, limit = 4): PaymentTemplate[] {
-  const sorted = payments
-    .filter((p) => !p.deletedAt && p.status !== 'skipped' && p.status !== 'planned' && p.approval !== 'rejected' && !p.planId)
-    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
-  const out = new Map<string, PaymentTemplate>()
-  for (const p of sorted) {
-    const vendorId = p.vendorId && known.vendors.has(p.vendorId) ? p.vendorId : undefined
-    const phaseId = p.phaseId && known.phases.has(p.phaseId) ? p.phaseId : undefined
-    const key = [vendorId ?? `payee:${norm(p.payeeName)}`, norm(p.purpose), p.category, phaseId ?? ''].join('|')
-    if (out.has(key)) continue
-    out.set(key, {
-      key,
-      purpose: p.purpose,
-      amount: p.amount,
-      category: p.category,
-      miscType: p.miscType,
-      vendorId,
-      payeeName: vendorId ? undefined : p.payeeName?.trim() || undefined,
-      phaseId,
-      contractId: p.contractId && known.openContracts.has(p.contractId) ? p.contractId : undefined,
-      mode: p.mode,
-      bankName: p.mode === 'bank' ? p.bankName || undefined : undefined,
-      bankAccount: p.mode === 'bank' ? p.bankAccount || undefined : undefined,
-      paidBy: p.paidBy,
-      unit: p.unit ?? undefined,
-    })
-    if (out.size >= limit) break
-  }
-  return [...out.values()]
+export function vendorDefaults(last: Payment): { category?: Category; paidBy: Role; phaseId?: string } {
+  return { category: last.category === 'misc' ? undefined : last.category, paidBy: last.paidBy, phaseId: last.phaseId }
+}
+
+const DAY = 86_400_000
+const dayOf = (iso: string): number => Date.parse(`${iso}T00:00:00Z`)
+
+/** A payment to the same vendor for the same item within a week either side of this date: possibly the same payment entered twice. */
+export function possibleDouble(
+  payments: Payment[],
+  draft: { vendorId: string; purpose: string; date: string; excludeId?: string },
+): Payment | undefined {
+  if (!draft.vendorId || !norm(draft.purpose) || !draft.date) return undefined
+  const at = dayOf(draft.date)
+  return payments
+    .filter(
+      (p) =>
+        p.vendorId === draft.vendorId &&
+        p.id !== draft.excludeId &&
+        !p.deletedAt &&
+        p.status !== 'skipped' &&
+        p.approval !== 'rejected' &&
+        norm(p.purpose) === norm(draft.purpose) &&
+        Math.abs(dayOf(p.date) - at) <= 7 * DAY,
+    )
+    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)[0]
 }

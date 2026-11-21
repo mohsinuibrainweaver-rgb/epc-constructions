@@ -91,14 +91,24 @@ Install and push need `https` (or `localhost`). To try it on a phone, deploy the
 - Checks: `npx vite-node scripts/money-test.ts` (settlement and plan logic), `npx vite-node scripts/schema-test.ts`
   (the SQL and its access rules, in-process Postgres), `scripts/sync-fallback-test.ts` (old versus updated server).
 
-## Repeat a recent payment (Add payment)
+## What Add payment learns from earlier payments
 
-On a new payment, under the title, up to four chips show the latest payment of each distinct payee, purpose, category and phase
-(`recentTemplates` in `src/lib/recent.ts`). One tap fills vendor, phase, category, contract, mode, paid by, purpose and amount
-(status Paid, date today) and puts the cursor on the amount with the old figure selected. Not shown when editing, when the page was
-opened from a contract or phase (`?contract=`, `?phase=`), or once something is typed. Planned, skipped, removed and rejected
-payments and payments created by a weekly plan are not offered. A vendor, phase or contract that is gone or closed is dropped
-from the chip. Check: `npx vite-node scripts/recent-test.ts`.
+The old "Repeat a recent payment" chips are gone: replaying 134 payments, a chip matched only 5 times (about 4%), and its amount was
+never the same. What does repeat is the vendor, so the form learns from that (`src/lib/recent.ts`).
+
+- **Choosing a vendor** looks at the last payment really made to them (paid or advance, not removed or rejected). It fills in the
+  **category** (right 98% of the time on the sample data) and **who paid** (92%), unless the person already chose that field; the
+  note under the vendor says what was set. The **phase** (77%) is only offered as a button, because a wrong one charges the wrong budget
+  without a sign. The **mode** (cash or bank) is not touched: it was barely better than the default (66% against 62%). Not done when
+  editing or for a miscellaneous payment's category. On average this leaves 0.7 of 4 fields to correct, against 1.3 with the
+  previous entry carried over and 2.25 with plain defaults.
+- **A possible double entry**: the same vendor and the same item within a week of the date gives a warning before saving.
+- **Recent payments** (`RecentPayments`): a grey box to the right of the form with the last 5 entered (View more: 15), newest entry
+  first (so a back-dated one shows), with quantity for material and a status pill for anything not plainly paid. Weekly-plan
+  payments are left out. Read only on purpose (a tap that left the page would lose what is half typed); payments to the chosen vendor
+  are outlined. It shows only where the form's own column is at least 56 rem wide (a container query, so the side menu is taken into
+  account) and is hidden on a phone and on a narrow tablet. The payment being edited is not listed.
+- Check: `npx vite-node scripts/recent-test.ts`.
 
 ## Home: "Needs your attention", and due payments first on a phone
 

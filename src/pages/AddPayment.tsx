@@ -35,10 +35,11 @@ import { openContracts, previewPayment } from '@/lib/contracts'
 import { formatDate, groupDigits, money, moneyRate, parseAmount, todayISO } from '@/lib/format'
 import { compressImage } from '@/lib/image'
 import { itemKey, knownItems, parseDecimal, rateOf, solveEntry } from '@/lib/materials'
-import { recentTemplates, type PaymentTemplate } from '@/lib/recent'
+import { lastPaymentTo, possibleDouble, vendorDefaults } from '@/lib/recent'
 import { BankSelect } from '@/components/BankSelect'
 import { FileDropzone } from '@/components/FileDropzone'
 import { FileThumb } from '@/components/FilePreview'
+import { RecentPayments } from '@/components/RecentPayments'
 import { bankFromVendor } from '@/lib/bank'
 import { previewPhaseBudget } from '@/lib/stats'
 import { cn } from '@/lib/utils'
@@ -108,6 +109,10 @@ export function AddPayment() {
   const [status, setStatus] = useState<PayStatus>('paid')
   const [mode, setMode] = useState<PayMode>('cash')
   const [paidBy, setPaidBy] = useState<Role>(settings.role)
+  // Fields the person chose themselves: a vendor's last payment never overrides these. Cleared for each new entry.
+  const touched = useRef(new Set<'category' | 'paidBy'>())
+  // What was filled in from the chosen vendor's last payment, to say so under the vendor.
+  const [filled, setFilled] = useState<string[]>([])
   const [note, setNote] = useState('')
   // Bank details of a transfer; kept only when the mode is Bank transfer.
   const [bankName, setBankName] = useState('')
@@ -156,6 +161,10 @@ export function AddPayment() {
   /** Open contracts, plus the one this payment is already linked to even if it was closed since. */
   const choosable = useMemo(() => contracts.filter((c) => c.status === 'active' || c.id === (existing?.contractId ?? contractId)), [contracts, existing?.contractId, contractId])
   const vendorLabel = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
+  const vendorName = vendorId ? vendorLabel.get(vendorId) : undefined
+  const vendorLast = useMemo(() => (vendorId ? lastPaymentTo(payments, vendorId, id) : undefined), [payments, vendorId, id])
+  const suggestedPhase = !edit && vendorLast?.phaseId && !phaseId ? phases.find((p) => p.id === vendorLast.phaseId) : undefined
+  const double = useMemo(() => possibleDouble(payments, { vendorId, purpose, date, excludeId: id }), [payments, vendorId, purpose, date, id])
 
   // Material: the form asks how much was bought, and offers the items bought before (not counting this payment itself).
   const isMaterial = !misc && category === 'material'
@@ -196,6 +205,23 @@ export function AddPayment() {
   /** Choosing a vendor: a vendor with exactly one open contract gets that contract, as the payment most likely belongs to it. */
   const pickVendor = (vid: string) => {
     setVendorId(vid)
+    setFilled([])
+    // A new payment learns from the vendor's last one: the category and who paid are filled in (unless chosen already), the phase
+    // is only suggested (see below), and nothing else is touched.
+    const last = !edit && vid ? lastPaymentTo(payments, vid) : undefined
+    if (last) {
+      const d = vendorDefaults(last)
+      const said: string[] = []
+      if (!misc && d.category && !touched.current.has('category') && d.category !== category) {
+        setCategory(d.category)
+        said.push(t(`cat.${d.category}` as Key))
+      }
+      if (!touched.current.has('paidBy') && d.paidBy !== paidBy) {
+        setPaidBy(d.paidBy)
+        said.push(t('pay.paidByWho', { who: t(`paidBy.${d.paidBy}` as Key) }))
+      }
+      setFilled(said)
+    }
     if (mode === 'bank') fillBankFrom(vid)
     if (!edit && !contractId) {
       const mine = openContracts(contracts).filter((c) => c.vendorId === vid)
@@ -254,54 +280,6 @@ export function AddPayment() {
     if (vendors.some((v) => v.id === vid)) pickVendor(vid)
   }) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Repeat a recent payment: one tap fills vendor, phase, category, mode, purpose and amount (new payments only, and
-  // only while the form is empty and the page was not opened from a contract or phase).
-  const [filledFrom, setFilledFrom] = useState<string>()
-  const templates = useMemo(
-    () =>
-      edit
-        ? []
-        : recentTemplates(payments, {
-            vendors: new Set(vendors.map((v) => v.id)),
-            phases: new Set(phases.map((p) => p.id)),
-            openContracts: new Set(openContracts(contracts).map((c) => c.id)),
-          }),
-    [edit, payments, vendors, phases, contracts],
-  )
-  const fromContext = Boolean(sp.get('contract') || sp.get('phase') || sp.get('vendor'))
-  const showTemplates = templates.length > 0 && !fromContext && !filledFrom && !amount && !purpose.trim()
-  const applyTemplate = (tpl: PaymentTemplate) => {
-    setMisc(tpl.category === 'misc')
-    if (tpl.miscType) setMiscType(tpl.miscType)
-    if (tpl.category !== 'misc') setCategory(tpl.category)
-    setPurpose(tpl.purpose)
-    setQuantity('')
-    setRate('')
-    setByRate(false)
-    setUnit(tpl.unit ?? 'bag')
-    setUnitChosen(Boolean(tpl.unit))
-    setVendorId(tpl.vendorId ?? '')
-    setPayee(tpl.payeeName ?? '')
-    setPhaseId(tpl.phaseId ?? '')
-    setContractId(tpl.contractId ?? '')
-    setMode(tpl.mode)
-    setBankName(tpl.bankName ?? '')
-    setBankAccount(tpl.bankAccount ?? '')
-    setBankRef('')
-    setPaidBy(tpl.paidBy)
-    setStatus('paid')
-    setAmount(groupDigits(String(tpl.amount)))
-    setErrors({})
-    setDup(false)
-    setFilledFrom(tpl.purpose)
-    // The amount is what usually changes: put the cursor there with the old amount selected.
-    requestAnimationFrame(() => {
-      const el = document.getElementById('amount') as HTMLInputElement | null
-      el?.focus()
-      el?.select()
-    })
-  }
-
   const goBack = () => {
     if ((window.history.state?.idx ?? 0) > 0) nav(-1)
     else nav('/')
@@ -331,7 +309,8 @@ export function AddPayment() {
     setRemoved([])
     setErrors({})
     setDup(false)
-    setFilledFrom(undefined)
+    setFilled([])
+    touched.current.clear()
     setBankRef('')
     if (!sp.get('contract') && !sp.get('vendor')) {
       setVendorId('')
@@ -443,8 +422,10 @@ export function AddPayment() {
   const nonMisc = CATEGORIES.filter((c) => c !== 'misc')
 
   return (
+    <div className="@container w-full">
+      <div className="mx-auto grid w-full max-w-2xl items-start gap-6 @4xl:max-w-[61.5rem] @4xl:grid-cols-[minmax(0,1fr)_18rem]">
     <form
-      className="mx-auto grid w-full max-w-2xl gap-5 rounded-xl border bg-card p-4 text-card-foreground sm:p-8"
+      className="grid w-full gap-5 rounded-xl border bg-card p-4 text-card-foreground sm:p-8"
       onSubmit={(e) => {
         e.preventDefault()
         void submit()
@@ -465,40 +446,6 @@ export function AddPayment() {
       {locked && (
         <p role="status" className="rounded-xl bg-warning-soft p-3 text-sm font-semibold text-warning">
           {t('pay.locked')}
-        </p>
-      )}
-
-      {showTemplates && (
-        <div role="group" aria-labelledby="recent-title" className="grid gap-2">
-          <span id="recent-title" className="text-sm font-semibold">
-            {t('pay.recent')}
-          </span>
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
-            {templates.map((tpl) => {
-              const who = tpl.vendorId ? vendorLabel.get(tpl.vendorId) : tpl.payeeName
-              return (
-                <Button
-                  key={tpl.key}
-                  type="button"
-                  variant="outline"
-                  aria-label={t('pay.recentFill', { name: tpl.purpose })}
-                  onClick={() => applyTemplate(tpl)}
-                  className="h-auto max-w-[16rem] shrink-0 flex-col items-start gap-0 py-2 text-start whitespace-normal"
-                >
-                  <span className="max-w-full truncate">{tpl.purpose}</span>
-                  <span className="tabular max-w-full truncate text-xs font-medium text-muted-foreground">
-                    {who ? `${who} · ` : ''}
-                    {money(tpl.amount)}
-                  </span>
-                </Button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-      {filledFrom && !edit && (
-        <p role="status" className="text-sm text-muted-foreground">
-          {t('pay.recentFilled', { name: filledFrom })}
         </p>
       )}
 
@@ -560,7 +507,10 @@ export function AddPayment() {
           </Field>
         ) : (
           <Field label={t('pay.category')}>
-            <Dropdown value={category} onChange={(e) => setCategory(e.target.value as Category)}>
+            <Dropdown value={category} onChange={(e) => {
+                touched.current.add('category')
+                setCategory(e.target.value as Category)
+              }}>
               {nonMisc.map((c) => (
                 <option key={c} value={c}>
                   {t(`cat.${c}` as Key)}
@@ -711,6 +661,26 @@ export function AddPayment() {
           </div>
         )}
 
+        {vendorId && vendorLast && (
+          <div className="grid gap-2 text-sm sm:col-span-2">
+            <p className="text-muted-foreground">
+              {t('pay.lastTo', { name: vendorName ?? '', item: vendorLast.purpose, amount: money(vendorLast.amount), date: formatDate(vendorLast.date, lang) })}
+              {filled.length > 0 && !edit && <> {t('pay.filledFrom', { what: filled.join(' · ') })}</>}
+            </p>
+            {suggestedPhase && (
+              <Button type="button" size="sm" variant="secondary" className="h-auto w-fit max-w-full py-1.5 text-start whitespace-normal" onClick={() => setPhaseId(suggestedPhase.id)}>
+                {t('pay.usePhase', { name: phaseName(suggestedPhase) })}
+              </Button>
+            )}
+          </div>
+        )}
+        {double && (
+          <div role="status" className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 text-sm font-semibold text-warning sm:col-span-2">
+            <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            <span>{t('pay.maybeDouble', { name: vendorName ?? '', amount: money(double.amount), item: double.purpose, date: formatDate(double.date, lang) })}</span>
+          </div>
+        )}
+
         {!vendorId && (
           <Field label={`${isMaterial ? t('mat.shopName') : t('pay.payee')} (${t('common.optional')})`}>
             <Input value={payee} onChange={(e) => setPayee(e.target.value)} autoComplete="off" />
@@ -758,7 +728,10 @@ export function AddPayment() {
         </GroupField>
         <GroupField label={t('pay.paidBy')}>
           {(labelId) => (
-            <PillRadioGroup aria-labelledby={labelId} value={paidBy} onValueChange={(v) => setPaidBy(v as Role)}>
+            <PillRadioGroup aria-labelledby={labelId} value={paidBy} onValueChange={(v) => {
+              touched.current.add('paidBy')
+              setPaidBy(v as Role)
+            }}>
               {(['investor', 'builder'] as Role[]).map((r) => (
                 <PillRadioItem key={r} value={r}>
                   {t(`paidBy.${r}` as Key)}
@@ -845,5 +818,15 @@ export function AddPayment() {
 
       <VendorDialog open={vendorOpen} onClose={() => setVendorOpen(false)} onSaved={(vid) => setVendorId(vid)} />
     </form>
+        {/* Beside the form where there is room; hidden on a phone, where the page is one column and the form needs the space. */}
+        <RecentPayments
+          payments={payments}
+          vendorNames={vendorLabel}
+          excludeId={id}
+          vendorId={vendorId}
+          className="hidden @4xl:grid @4xl:sticky @4xl:top-[var(--page-gap)]"
+        />
+      </div>
+    </div>
   )
 }
