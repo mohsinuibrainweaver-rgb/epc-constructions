@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   Building2,
@@ -11,6 +11,7 @@ import {
   DoorOpen,
   FileText,
   Grid3x3,
+  GripVertical,
   Hammer,
   HardHat,
   KeyRound,
@@ -36,7 +37,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
-import { addPhase, deletePhase, movePhase, setPhaseDone, updatePhase } from '@/db/actions'
+import { addPhase, deletePhase, movePhase, reorderPhases, setPhaseDone, updatePhase } from '@/db/actions'
 import { usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Payment, Phase } from '@/db/types'
 import { groupDigits, money, parseAmount } from '@/lib/format'
@@ -186,13 +187,238 @@ function BudgetPlanCard({ phases, payments }: { phases: Phase[]; payments: Payme
   )
 }
 
+/** One phase row. Also drawn as the floating copy that follows the pointer while it is dragged. */
+function PhaseRow({
+  ph,
+  num,
+  payments,
+  editable,
+  canDrag,
+  isFirst,
+  isLast,
+  floating,
+  onEdit,
+  onGrab,
+}: {
+  ph: Phase
+  num: number
+  payments: Payment[]
+  editable: boolean
+  canDrag: boolean
+  isFirst: boolean
+  isLast: boolean
+  floating?: boolean
+  onEdit: () => void
+  onGrab: (e: ReactPointerEvent<HTMLButtonElement>) => void
+}) {
+  const { t, project, phaseName } = useApp()
+  const spent = sum(payments.filter((p) => p.phaseId === ph.id && isSpent(p)))
+  const planned = sum(payments.filter((p) => p.phaseId === ph.id && isPlanned(p)))
+  const lvl = budgetLevel(spent, ph.budget)
+  const name = phaseName(ph)
+  const Icon = phaseIcon(ph)
+  return (
+    // One phase per row: a drag handle, then the details, then three equal icon buttons (under the details on a phone).
+    <Card className={cn('flex-row items-center gap-2 p-3 transition-colors hover:border-foreground/30 sm:gap-3', floating && 'border-primary shadow-xl ring-2 ring-primary/30')}>
+      {canDrag && (
+        <button
+          type="button"
+          aria-label={`${t('phases.drag')}: ${name}`}
+          title={t('phases.drag')}
+          tabIndex={floating ? -1 : 0}
+          onPointerDown={onGrab}
+          onContextMenu={(e) => e.preventDefault()}
+          className={cn(
+            'grid size-9 shrink-0 touch-none place-items-center rounded-md text-muted-foreground outline-none select-none hover:bg-secondary hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50',
+            floating ? 'cursor-grabbing' : 'cursor-grab',
+          )}
+        >
+          <GripVertical aria-hidden="true" className="size-5" />
+        </button>
+      )}
+      <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        <Link to={`/phases/${ph.id}`} className="grid min-w-0 flex-1 gap-2 rounded-md md:grid-cols-[minmax(0,1fr)_minmax(12rem,22rem)] md:items-center md:gap-8">
+          <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+            <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-control bg-secondary text-primary">
+              <Icon className="size-[1.125rem]" strokeWidth={1.75} />
+            </span>
+            <span className="text-base leading-snug font-bold">
+              {num}. {name}
+            </span>
+            {ph.done && (
+              <Badge variant="success">
+                <CircleCheck aria-hidden="true" />
+                {t('phases.done')}
+              </Badge>
+            )}
+            {lvl === 'error' && <Badge variant="danger">{percent(spent, ph.budget)}%</Badge>}
+            {lvl === 'warning' && <Badge variant="warning">{percent(spent, ph.budget)}%</Badge>}
+          </span>
+          <span className="grid gap-1.5">
+            <BudgetBar spent={spent} budget={ph.budget} label={name} />
+            <span className="flex items-center justify-between gap-2 text-sm">
+              <span>
+                {t('phases.spent')}: <strong className="tabular">{money(spent)}</strong>
+              </span>
+              <span className="tabular text-muted-foreground">{ph.budget ? money(ph.budget) : t('phases.setBudget')}</span>
+            </span>
+            {planned > 0 && (
+              <span className="text-sm text-muted-foreground">
+                {t('phases.planned')}: <span className="tabular">{money(planned)}</span>
+              </span>
+            )}
+          </span>
+        </Link>
+        {editable && (
+          <div className="flex shrink-0 justify-end gap-2">
+            <Button
+              size="icon-sm"
+              variant="outline"
+              aria-label={`${t('phases.moveUp')}: ${name}`}
+              title={t('phases.moveUp')}
+              disabled={isFirst}
+              onClick={() => project && void movePhase(project.id, ph.id, -1)}
+            >
+              <ChevronUp aria-hidden="true" />
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="outline"
+              aria-label={`${t('phases.moveDown')}: ${name}`}
+              title={t('phases.moveDown')}
+              disabled={isLast}
+              onClick={() => project && void movePhase(project.id, ph.id, 1)}
+            >
+              <ChevronDown aria-hidden="true" />
+            </Button>
+            <Button size="icon-sm" variant="outline" aria-label={`${t('common.edit')}: ${name}`} title={t('common.edit')} onClick={onEdit}>
+              <Pencil aria-hidden="true" />
+            </Button>
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+/** What is being dragged right now: which phase, which slot it would drop into, and where the pointer is. */
+type Drag = { id: string; to: number; y: number }
+/** Facts about the drag that do not change while it lasts. */
+type DragMeta = { from: number; height: number; width: number; left: number; offsetY: number }
+
 export function Phases() {
-  const { t, project, phaseName, can } = useApp()
+  const { t, project, can } = useApp()
   const editable = can('editPhases')
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<Phase>()
+
+  // The order just dropped, shown straight away until the saved order catches up (so the list never flickers back).
+  const [optimistic, setOptimistic] = useState<string[] | null>(null)
+  const [drag, setDrag] = useState<Drag | null>(null)
+  const meta = useRef<DragMeta | null>(null)
+  const rows = useRef(new Map<string, HTMLLIElement>())
+  const pointerY = useRef(0)
+  const toRef = useRef(0)
+
+  const shown = useMemo(() => {
+    if (!optimistic || optimistic.length !== phases.length) return phases
+    const byId = new Map(phases.map((p) => [p.id, p]))
+    const list = optimistic.map((id) => byId.get(id))
+    return list.every(Boolean) ? (list as Phase[]) : phases
+  }, [phases, optimistic])
+  const shownRef = useRef(shown)
+  shownRef.current = shown
+
+  useEffect(() => {
+    if (optimistic && phases.map((p) => p.id).join() === optimistic.join()) setOptimistic(null)
+  }, [phases, optimistic])
+
+  const dragId = drag?.id
+  useEffect(() => {
+    if (!dragId || !meta.current) return
+    const { offsetY, height } = meta.current
+
+    /** Work out the slot from where the dragged card's centre is, compared with the middle of every other row. */
+    const update = () => {
+      const centre = pointerY.current - offsetY + height / 2
+      let to = 0
+      for (const p of shownRef.current) {
+        if (p.id === dragId) continue
+        const r = rows.current.get(p.id)?.getBoundingClientRect()
+        if (r && centre > r.top + r.height / 2) to++
+      }
+      toRef.current = to
+      setDrag((d) => (d && (d.to !== to || d.y !== pointerY.current) ? { ...d, to, y: pointerY.current } : d))
+    }
+    const move = (e: PointerEvent) => {
+      pointerY.current = e.clientY
+      update()
+    }
+    const finish = (save: boolean) => {
+      const m = meta.current
+      const to = toRef.current
+      setDrag(null)
+      if (!save || !m || !project || to === m.from) return
+      const ids = shownRef.current.map((p) => p.id).filter((id) => id !== dragId)
+      ids.splice(to, 0, dragId)
+      setOptimistic(ids)
+      void reorderPhases(project.id, ids)
+    }
+    const up = () => finish(true)
+    const cancel = () => finish(false)
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && finish(false)
+
+    // Scroll the page when the pointer is held near the top or bottom edge.
+    let raf = 0
+    const tick = () => {
+      const edge = 90
+      const y = pointerY.current
+      const dy = y < edge ? -Math.ceil((edge - y) / 5) : y > window.innerHeight - edge ? Math.ceil((y - (window.innerHeight - edge)) / 5) : 0
+      if (dy) {
+        window.scrollBy(0, dy)
+        update()
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', cancel)
+    window.addEventListener('keydown', key)
+    const { userSelect, cursor } = document.body.style
+    document.body.style.userSelect = 'none'
+    document.body.style.cursor = 'grabbing'
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', cancel)
+      window.removeEventListener('keydown', key)
+      document.body.style.userSelect = userSelect
+      document.body.style.cursor = cursor
+    }
+  }, [dragId, project])
+
+  const grab = (e: ReactPointerEvent<HTMLButtonElement>, ph: Phase) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    const r = rows.current.get(ph.id)?.getBoundingClientRect()
+    if (!r) return
+    e.preventDefault()
+    const from = shownRef.current.findIndex((p) => p.id === ph.id)
+    pointerY.current = e.clientY
+    toRef.current = from
+    meta.current = { from, height: r.height, width: r.width, left: r.left, offsetY: e.clientY - r.top }
+    setDrag({ id: ph.id, to: from, y: e.clientY })
+  }
+
+  // While dragging, the grabbed row leaves the list and a dashed, outlined slot shows where it would land.
+  const dragged = drag ? shown.find((p) => p.id === drag.id) : undefined
+  const slots: Array<{ ph: Phase } | 'slot'> = shown.filter((p) => p.id !== drag?.id).map((ph) => ({ ph }))
+  if (drag && dragged) slots.splice(drag.to, 0, 'slot')
+  const canDrag = editable && shown.length > 1
 
   return (
     <>
@@ -212,80 +438,59 @@ export function Phases() {
         <EmptyState icon={Layers3} title={t('phases.empty')} body={t('phases.emptyBody')} />
       ) : (
         <>
-        <BudgetPlanCard phases={phases} payments={payments} />
-        <ul className="grid gap-3">
-          {phases.map((ph, i) => {
-            const spent = sum(payments.filter((p) => p.phaseId === ph.id && isSpent(p)))
-            const planned = sum(payments.filter((p) => p.phaseId === ph.id && isPlanned(p)))
-            const lvl = budgetLevel(spent, ph.budget)
-            const name = phaseName(ph)
-            const Icon = phaseIcon(ph)
-            return (
-              <li key={ph.id}>
-                {/* One phase per row: the details on the left, three equal icon buttons on the right (under the details on a phone). */}
-                <Card className="gap-2 p-3 transition-colors hover:border-foreground/30 sm:flex-row sm:items-center sm:gap-4">
-                  <Link to={`/phases/${ph.id}`} className="grid min-w-0 flex-1 gap-2 rounded-md md:grid-cols-[minmax(0,1fr)_minmax(12rem,22rem)] md:items-center md:gap-8">
-                    <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                      <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-control bg-secondary text-primary">
-                        <Icon className="size-[1.125rem]" strokeWidth={1.75} />
-                      </span>
-                      <span className="text-base leading-snug font-bold">
-                        {i + 1}. {name}
-                      </span>
-                      {ph.done && (
-                        <Badge variant="success">
-                          <CircleCheck aria-hidden="true" />
-                          {t('phases.done')}
-                        </Badge>
-                      )}
-                      {lvl === 'error' && <Badge variant="danger">{percent(spent, ph.budget)}%</Badge>}
-                      {lvl === 'warning' && <Badge variant="warning">{percent(spent, ph.budget)}%</Badge>}
-                    </span>
-                    <span className="grid gap-1.5">
-                      <BudgetBar spent={spent} budget={ph.budget} label={name} />
-                      <span className="flex items-center justify-between gap-2 text-sm">
-                        <span>
-                          {t('phases.spent')}: <strong className="tabular">{money(spent)}</strong>
-                        </span>
-                        <span className="tabular text-muted-foreground">{ph.budget ? money(ph.budget) : t('phases.setBudget')}</span>
-                      </span>
-                      {planned > 0 && (
-                        <span className="text-sm text-muted-foreground">
-                          {t('phases.planned')}: <span className="tabular">{money(planned)}</span>
-                        </span>
-                      )}
-                    </span>
-                  </Link>
-                  {editable && <div className="flex shrink-0 justify-end gap-2">
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      aria-label={`${t('phases.moveUp')}: ${name}`}
-                      title={t('phases.moveUp')}
-                      disabled={i === 0}
-                      onClick={() => project && void movePhase(project.id, ph.id, -1)}
-                    >
-                      <ChevronUp aria-hidden="true" />
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      aria-label={`${t('phases.moveDown')}: ${name}`}
-                      title={t('phases.moveDown')}
-                      disabled={i === phases.length - 1}
-                      onClick={() => project && void movePhase(project.id, ph.id, 1)}
-                    >
-                      <ChevronDown aria-hidden="true" />
-                    </Button>
-                    <Button size="icon-sm" variant="outline" aria-label={`${t('common.edit')}: ${name}`} title={t('common.edit')} onClick={() => setEditing(ph)}>
-                      <Pencil aria-hidden="true" />
-                    </Button>
-                  </div>}
-                </Card>
-              </li>
-            )
-          })}
-        </ul>
+          <BudgetPlanCard phases={phases} payments={payments} />
+          <ul className="grid gap-3">
+            {slots.map((s, i) =>
+              s === 'slot' ? (
+                <li
+                  key="drop-slot"
+                  aria-hidden="true"
+                  style={{ height: meta.current?.height }}
+                  className="rounded-xl border-2 border-dashed border-primary/60 bg-primary/5"
+                />
+              ) : (
+                <li
+                  key={s.ph.id}
+                  ref={(el) => {
+                    if (el) rows.current.set(s.ph.id, el)
+                    else rows.current.delete(s.ph.id)
+                  }}
+                >
+                  <PhaseRow
+                    ph={s.ph}
+                    num={i + 1}
+                    payments={payments}
+                    editable={editable}
+                    canDrag={canDrag}
+                    isFirst={i === 0}
+                    isLast={i === slots.length - 1}
+                    onEdit={() => setEditing(s.ph)}
+                    onGrab={(e) => grab(e, s.ph)}
+                  />
+                </li>
+              ),
+            )}
+          </ul>
+          {drag && dragged && meta.current && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none fixed z-50"
+              style={{ left: meta.current.left, top: drag.y - meta.current.offsetY, width: meta.current.width }}
+            >
+              <PhaseRow
+                floating
+                ph={dragged}
+                num={drag.to + 1}
+                payments={payments}
+                editable={false}
+                canDrag
+                isFirst={false}
+                isLast={false}
+                onEdit={() => {}}
+                onGrab={() => {}}
+              />
+            </div>
+          )}
         </>
       )}
 

@@ -175,6 +175,7 @@ export const en = {
   'phases.setBudget': 'Set budget',
   'phases.moveUp': 'Move up',
   'phases.moveDown': 'Move down',
+  'phases.drag': 'Drag to reorder',
   'phases.deleteConfirm': 'Delete this phase? Its payments stay, with no phase.',
   'phases.payments': 'Payments in this phase',
   'phases.empty': 'Add your first phase',

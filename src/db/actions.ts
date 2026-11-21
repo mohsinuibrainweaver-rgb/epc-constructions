@@ -99,6 +99,18 @@ export async function movePhase(projectId: string, id: string, dir: -1 | 1): Pro
   })
 }
 
+/** Save a new phase order (the full list of ids, top to bottom). Only phases whose place changed are touched, so sync stays small. */
+export async function reorderPhases(projectId: string, orderedIds: string[]): Promise<void> {
+  const list = (await db.phases.where('projectId').equals(projectId).toArray()).filter((p) => !p.deletedAt)
+  const byId = new Map(list.map((p) => [p.id, p]))
+  await db.transaction('rw', db.phases, async () => {
+    for (const [index, id] of orderedIds.entries()) {
+      const ph = byId.get(id)
+      if (ph && ph.order !== index) await db.phases.update(id, { order: index, updatedAt: now() })
+    }
+  })
+}
+
 export async function deletePhase(id: string): Promise<void> {
   await db.transaction('rw', db.phases, db.payments, async () => {
     await db.payments.where('phaseId').equals(id).modify({ phaseId: undefined, updatedAt: now() })

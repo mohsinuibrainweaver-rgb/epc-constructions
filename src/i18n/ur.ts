@@ -177,6 +177,7 @@ export const ur: Record<Key, string> = {
   'phases.setBudget': 'بجٹ مقرر کریں',
   'phases.moveUp': 'اوپر کریں',
   'phases.moveDown': 'نیچے کریں',
+  'phases.drag': 'ترتیب بدلنے کے لیے گھسیٹیں',
   'phases.deleteConfirm': 'یہ مرحلہ حذف کریں؟ اس کی ادائیگیاں بغیر مرحلے کے رہیں گی۔',
   'phases.payments': 'اس مرحلے کی ادائیگیاں',
   'phases.empty': 'اپنا پہلا مرحلہ شامل کریں',
