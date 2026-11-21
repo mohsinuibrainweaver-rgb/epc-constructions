@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Camera, FileUp } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { Dialog, Field, GroupField } from '@/components/common'
+import { FileDropzone } from '@/components/FileDropzone'
+import { PickedFiles } from '@/components/FilePreview'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +14,7 @@ import { addFiles, updateFile } from '@/db/actions'
 import { usePhases } from '@/db/hooks'
 import { DOC_TYPES, MAX_FILE_BYTES, type DocType, type FileKind, type ProjectFile } from '@/db/types'
 import type { Key } from '@/i18n/en'
-import { fileSize, todayISO } from '@/lib/format'
+import { todayISO } from '@/lib/format'
 import { compressImage } from '@/lib/image'
 
 const DOC_ACCEPT = 'application/pdf,image/*,.doc,.docx,.xls,.xlsx'
@@ -141,31 +143,25 @@ export function FileDialog({
                 </PillRadioGroup>
               )}
             </GroupField>
-            <div className="grid gap-2">
-              <Button asChild variant="outline" className="w-fit cursor-pointer">
-                <label>
-                  <Icon aria-hidden="true" />
-                  {kind === 'photo' ? t('files.pickPhoto') : t('files.pick')}
-                  <input
-                    type="file"
-                    multiple
-                    accept={kind === 'photo' ? 'image/*' : DOC_ACCEPT}
-                    className="sr-only"
-                    onChange={(e) => {
-                      setPicked(Array.from(e.target.files ?? []))
-                      setError('')
-                      e.target.value = ''
-                    }}
-                  />
-                </label>
-              </Button>
-              <div role="status" aria-live="polite" className={error ? 'text-sm font-semibold text-danger' : 'text-sm text-muted-foreground'}>
-                {error ||
-                  (picked.length === 0
-                    ? t('files.none')
-                    : `${t('files.chosen', { count: picked.length })}: ${picked.map((f) => `${f.name} (${fileSize(f.size)})`).join(', ')}`)}
-              </div>
-            </div>
+            <FileDropzone
+              key={kind}
+              accept={kind === 'photo' ? 'image/*' : DOC_ACCEPT}
+              multiple
+              maxBytes={MAX_FILE_BYTES}
+              icon={Icon}
+              browseLabel={kind === 'photo' ? t('files.pickPhoto') : t('files.pick')}
+              onFiles={(files) => {
+                setPicked((xs) => [...xs, ...files])
+                setError('')
+              }}
+            >
+              <PickedFiles files={picked} onRemove={(i) => setPicked((xs) => xs.filter((_, at) => at !== i))} />
+              {error && (
+                <div role="alert" className="text-sm font-semibold text-danger">
+                  {error}
+                </div>
+              )}
+            </FileDropzone>
           </>
         )}
 

@@ -5,6 +5,7 @@ import { Camera, Loader2 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { BrandLogo } from '@/components/Brand'
 import { BackLink, Field, GroupField, PageHeader } from '@/components/common'
+import { FileDropzone } from '@/components/FileDropzone'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -138,29 +139,18 @@ export function ProjectForm() {
 
       <form className="grid gap-4" onSubmit={(e) => void submit(e)} noValidate>
         <Section title={t('pf.secBasics')}>
-          <div className="flex items-center gap-4">
-            <div className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-secondary text-primary sm:size-28">
-              {url ? <img src={url} alt="" className="size-full object-cover" /> : <Camera className="size-8" aria-hidden="true" />}
-            </div>
-            <div className="grid min-w-0 justify-items-start gap-2">
-              <span className="text-sm font-semibold">{t('pf.thumb')}</span>
-              <span className="text-sm text-muted-foreground">{t('pf.thumbHint')}</span>
-              <Button asChild variant="outline" size="sm" className="cursor-pointer">
-                <label>
-                  {url ? t('pf.changeThumb') : t('pf.chooseThumb')}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0]
-                      if (f) void compressImage(f, 1200).then(setThumb)
-                    }}
-                  />
-                </label>
-              </Button>
-            </div>
-          </div>
+          <FileDropzone
+            accept="image/*"
+            title={t('pf.thumb')}
+            hint={t('pf.thumbHint')}
+            browseLabel={url ? t('pf.changeThumb') : t('pf.chooseThumb')}
+            onFiles={async (files) => setThumb(await compressImage(files[0], 1200))}
+            lead={
+              <div className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-secondary text-primary sm:size-28">
+                {url ? <img src={url} alt="" className="size-full object-cover" /> : <Camera className="size-8" aria-hidden="true" />}
+              </div>
+            }
+          />
           <Field label={t('pf.name')} error={nameMissing ? t('pf.nameRequired') : ''}>
             <Input
               ref={nameRef}

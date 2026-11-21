@@ -12,6 +12,7 @@ import { PushSettings } from '@/components/PushCard'
 import { RegionSettings } from '@/components/RegionSettings'
 import { SettingRow, SettingsSection } from '@/components/settings'
 import { useToast } from '@/components/Toast'
+import { FileDropzone } from '@/components/FileDropzone'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -415,20 +416,13 @@ function DataSection() {
           label={t('set.importJson')}
           help={t('set.importHelp')}
           control={
-            <Button asChild variant="outline" className="cursor-pointer">
-              <label>
-                {t('set.importJson')}
-                <input
-                  type="file"
-                  accept="application/json,.json"
-                  className="sr-only"
-                  onChange={(e) => {
-                    void restore(e.target.files?.[0])
-                    e.target.value = ''
-                  }}
-                />
-              </label>
-            </Button>
+            <FileDropzone
+              variant="button"
+              accept="application/json,.json"
+              browseLabel={t('set.importJson')}
+              onFiles={(files) => restore(files[0])}
+              onReject={() => toast.show({ kind: 'error', message: t('set.restoreFailed') })}
+            />
           }
         />
       </SettingsSection>

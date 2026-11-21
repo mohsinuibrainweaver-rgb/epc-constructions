@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Camera, Clock, Loader2, Trash2, TriangleAlert, X } from 'lucide-react'
+import { Clock, ImagePlus, Loader2, Trash2, TriangleAlert } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { Field, GroupField } from '@/components/common'
 import { useToast } from '@/components/Toast'
@@ -31,46 +31,25 @@ import { ContractBar } from '@/components/ContractParts'
 import { approvalFields, needsApproval } from '@/lib/approval'
 import { openContracts, previewPayment } from '@/lib/contracts'
 import { groupDigits, money, parseAmount, todayISO } from '@/lib/format'
-import { compressImage, useObjectUrl } from '@/lib/image'
+import { compressImage } from '@/lib/image'
 import { recentTemplates, type PaymentTemplate } from '@/lib/recent'
 import { BankSelect } from '@/components/BankSelect'
+import { FileDropzone } from '@/components/FileDropzone'
+import { FileThumb } from '@/components/FilePreview'
 import { bankFromVendor } from '@/lib/bank'
 import { previewPhaseBudget } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 import { matchVendor } from '@/lib/vendorMatch'
 import { ensureAttachmentBlob } from '@/sync/engine'
 
-function Thumb({
-  blob,
-  attachment,
-  label,
-  onRemove,
-}: {
-  blob?: Blob
-  attachment?: Attachment
-  label: string
-  onRemove: () => void
-}) {
-  // A photo another phone uploaded is downloaded the first time it is shown.
-  const known = blob ?? attachment?.blob
+/** A receipt that is already stored. One another phone uploaded is downloaded the first time it is shown. */
+function StoredReceipt({ attachment, label, onRemove }: { attachment: Attachment; label: string; onRemove: () => void }) {
+  const known = attachment.blob
   const [fetched, setFetched] = useState<Blob>()
   useEffect(() => {
-    if (!known && attachment) void ensureAttachmentBlob(attachment).then(setFetched)
+    if (!known) void ensureAttachmentBlob(attachment).then(setFetched)
   }, [known, attachment])
-  const url = useObjectUrl(known ?? fetched)
-  return (
-    <div className="relative size-20 overflow-hidden rounded-lg border bg-muted">
-      {url ? <img src={url} alt="" className="size-full object-cover" /> : <Loader2 aria-hidden="true" className="absolute inset-0 m-auto size-5 animate-spin text-muted-foreground" />}
-      <button
-        type="button"
-        aria-label={label}
-        onClick={onRemove}
-        className="absolute inset-e-1 top-1 grid size-6 place-items-center rounded-control bg-black/70 text-white transition-colors hover:bg-black"
-      >
-        <X className="size-3.5" aria-hidden="true" />
-      </button>
-    </div>
-  )
+  return <FileThumb blob={known ?? fetched} removeLabel={label} onRemove={onRemove} />
 }
 
 export function AddPayment() {
@@ -270,10 +249,9 @@ export function AddPayment() {
     else nav('/')
   }
 
-  const addFiles = async (list: FileList | null) => {
-    if (!list) return
+  const addFiles = async (list: File[]) => {
     const out: { key: number; blob: Blob }[] = []
-    for (const f of Array.from(list)) out.push({ key: Date.now() + out.length, blob: await compressImage(f) })
+    for (const f of list) out.push({ key: Date.now() + out.length, blob: await compressImage(f) })
     setNewFiles((xs) => [...xs, ...out])
   }
 
@@ -698,37 +676,18 @@ export function AddPayment() {
 
       <div className="grid gap-2">
         <span className="text-sm font-semibold">{t('pay.receipts')}</span>
-        {(visibleExisting.length > 0 || newFiles.length > 0) && (
-          <div className="flex flex-wrap gap-2">
-            {visibleExisting.map((a) => (
-              <Thumb key={a.id} attachment={a} label={t('pay.removePhoto')} onRemove={() => setRemoved((r) => [...r, a.id])} />
-            ))}
-            {newFiles.map((f) => (
-              <Thumb
-                key={f.key}
-                blob={f.blob}
-                label={t('pay.removePhoto')}
-                onRemove={() => setNewFiles((xs) => xs.filter((x) => x.key !== f.key))}
-              />
-            ))}
-          </div>
-        )}
-        <Button asChild variant="outline" className="w-fit cursor-pointer">
-          <label>
-            <Camera aria-hidden="true" />
-            {t('pay.addReceipt')}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="sr-only"
-              onChange={(e) => {
-                void addFiles(e.target.files)
-                e.target.value = ''
-              }}
-            />
-          </label>
-        </Button>
+        <FileDropzone accept="image/*" multiple icon={ImagePlus} browseLabel={t('pay.addReceipt')} onFiles={addFiles}>
+          {(visibleExisting.length > 0 || newFiles.length > 0) && (
+            <div className="flex flex-wrap gap-2">
+              {visibleExisting.map((a) => (
+                <StoredReceipt key={a.id} attachment={a} label={t('pay.removePhoto')} onRemove={() => setRemoved((r) => [...r, a.id])} />
+              ))}
+              {newFiles.map((f) => (
+                <FileThumb key={f.key} blob={f.blob} removeLabel={t('pay.removePhoto')} onRemove={() => setNewFiles((xs) => xs.filter((x) => x.key !== f.key))} />
+              ))}
+            </div>
+          )}
+        </FileDropzone>
       </div>
 
       <Field label={`${t('pay.note')} (${t('common.optional')})`}>
