@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { Banknote, Landmark } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { StatusPill } from '@/components/common'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -9,6 +10,12 @@ import type { Key } from '@/i18n/en'
 import { bankLine } from '@/lib/bank'
 import { formatDate, money, moneyRate } from '@/lib/format'
 import { hasQuantity, num, rateOf } from '@/lib/materials'
+
+/** Cash or bank transfer, with an icon so the two are told apart at a glance (the words stay, so it never relies on the icon alone). */
+function ModeIcon({ mode }: { mode: Payment['mode'] }) {
+  const Icon = mode === 'cash' ? Banknote : Landmark
+  return <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+}
 
 /**
  * A real table when the space is wide, and a list of cards when it is narrow. Both are driven by the
@@ -57,8 +64,11 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
                 </TableCell>
                 {showPhase && <TableCell>{(p.phaseId && phaseMap.get(p.phaseId)) || '—'}</TableCell>}
                 <TableCell>
-                  {t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')}
-                  {p.mode === 'bank' && bankLine(p) && <div className="text-sm text-muted-foreground">{bankLine(p)}</div>}
+                  <span className="inline-flex items-center gap-2">
+                    <ModeIcon mode={p.mode} />
+                    {t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')}
+                  </span>
+                  {p.mode === 'bank' && bankLine(p) && <div className="ps-6 text-sm text-muted-foreground">{bankLine(p)}</div>}
                 </TableCell>
                 <TableCell className="tabular text-end font-bold whitespace-nowrap">{money(p.amount)}</TableCell>
                 <TableCell>
@@ -82,7 +92,10 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                 <span className="tabular">{formatDate(p.date, lang)}</span>
                 {showPhase && p.phaseId && phaseMap.get(p.phaseId) && <span>{phaseMap.get(p.phaseId)}</span>}
-                <span>{[t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank'), p.mode === 'bank' ? bankLine(p) : ''].filter(Boolean).join(' · ')}</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <ModeIcon mode={p.mode} />
+                  {[t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank'), p.mode === 'bank' ? bankLine(p) : ''].filter(Boolean).join(' · ')}
+                </span>
                 <StatusPill payment={p} />
               </div>
             </Link>
