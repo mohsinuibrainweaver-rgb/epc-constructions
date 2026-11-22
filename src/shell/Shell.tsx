@@ -248,7 +248,7 @@ export function Shell() {
 
       <aside
         aria-label={t('app.full')}
-        className="sticky top-[var(--page-gap)] hidden h-[calc(100dvh-2*var(--page-gap))] flex-col gap-3 overflow-y-auto rounded-2xl border border-sidebar-border sidebar-mesh p-2.5 text-sidebar-foreground [--ring:var(--sidebar-ring)] sm:flex print:hidden"
+        className="sticky top-[var(--page-gap)] hidden h-[calc(100dvh-2*var(--page-gap))] flex-col gap-3 overflow-y-auto rounded-2xl border border-sidebar-border sidebar-mesh p-4 text-sidebar-foreground [--ring:var(--sidebar-ring)] sm:flex print:hidden"
       >
         <div className="flex flex-col items-center gap-2 lg:flex-row lg:gap-2 lg:[&>[data-slot=badge]]:ms-auto">
           <Link to="/" aria-label={t('app.name')} className="flex min-h-9 items-center justify-center gap-2.5 rounded-control px-1 lg:shrink-0 lg:justify-start">
