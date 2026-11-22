@@ -179,7 +179,7 @@ export function Home() {
         <Kpi label={t('home.left')} value={left === undefined ? '—' : money(left)} icon={Wallet} mesh={2} to="/phases" className={showPlanned ? undefined : 'max-sm:col-span-2'} corner={budget ? usedNote : undefined}>
           {budget ? (
             <>
-              <BudgetBar spent={spent} budget={budget} label={t('home.budgetUsed', { pct: percent(spent, budget) })} />
+              <BudgetBar spent={spent} budget={budget} label={t('home.budgetUsed', { pct: percent(spent, budget) })} className="bg-white dark:bg-white/20" />
               {/* On a phone the note stays under the bar; from a tablet up it sits in the card's top right corner. */}
               <span className="sm:hidden">{usedNote}</span>
             </>

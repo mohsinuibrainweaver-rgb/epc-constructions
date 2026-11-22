@@ -86,14 +86,14 @@ export function SignIn() {
   }
 
   return (
-    <main className="relative grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center rounded-2xl border bg-card px-4 py-8 max-sm:pt-20">
+    <main className="relative grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center rounded-2xl border auth-bg px-4 py-8 max-sm:pt-20">
       <LanguageSwitcher />
-      <div className="grid w-full max-w-md justify-items-start gap-5">
-        <BrandLogo className="h-auto w-[min(70%,14rem)]" alt={t('app.full')} />
+      <div className="grid w-full max-w-lg justify-items-start gap-5 rounded-2xl border bg-card p-6 shadow-sm sm:p-10">
+        <BrandLogo className="h-auto w-[min(55%,9.5rem)] justify-self-center" alt={t('app.full')} />
         <Tabs value={mode} onValueChange={switchMode} className="w-full">
-          <TabsList aria-label={t('auth.mode')}>
-            <TabsTrigger value="signin">{t('auth.signIn')}</TabsTrigger>
-            <TabsTrigger value="create">{t('auth.createAccount')}</TabsTrigger>
+          <TabsList aria-label={t('auth.mode')} className="w-full">
+            <TabsTrigger value="signin" className="flex-1 px-2 sm:px-4">{t('auth.signIn')}</TabsTrigger>
+            <TabsTrigger value="create" className="flex-1 px-2 sm:px-4">{t('auth.createAccount')}</TabsTrigger>
           </TabsList>
           <TabsContent value={mode} className="grid gap-5">
         <h1 className="text-3xl font-semibold tracking-tight">{create ? t('auth.createTitle') : t('auth.title')}</h1>
@@ -141,7 +141,7 @@ export function SignIn() {
               {notice}
             </p>
           )}
-          <Button type="submit" size="lg" disabled={busy} className="w-full sm:w-fit">
+          <Button type="submit" size="lg" disabled={busy} className="w-full">
             {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
             {create ? t('auth.createAccount') : t('auth.signIn')}
           </Button>

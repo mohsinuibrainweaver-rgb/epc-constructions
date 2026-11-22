@@ -82,7 +82,7 @@ export function StatusPill({ payment }: { payment: Pick<Payment, 'status' | 'dat
 }
 
 /** Progress bar; neutral under 80 percent, amber from 80, red from 100. The percentage is also printed by callers. */
-export function BudgetBar({ spent, budget, label }: { spent: number; budget?: number; label?: string }) {
+export function BudgetBar({ spent, budget, label, className }: { spent: number; budget?: number; label?: string; /** Replaces the track colour (a mesh card wants a white one). */ className?: string }) {
   const tone = budgetTone(budgetState(spent, budget))
   const pct = Math.min(percent(spent, budget), 100)
   return (
@@ -93,6 +93,7 @@ export function BudgetBar({ spent, budget, label }: { spent: number; budget?: nu
         'h-2 bg-muted',
         tone === 'warning' && '[&>[data-slot=progress-indicator]]:bg-warning',
         tone === 'danger' && '[&>[data-slot=progress-indicator]]:bg-danger',
+        className,
       )}
     />
   )

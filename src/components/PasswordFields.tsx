@@ -55,14 +55,13 @@ const TEXT: Record<string, string> = { weak: 'text-danger', fair: 'text-warning'
 export function PasswordStrength({ id, check }: { id: string; check: PasswordCheck }) {
   const { t } = useApp()
   const none = check.strength === 'none'
-  const rulesId = `${id}-list`
   return (
     <div id={id} className="grid gap-3 rounded-xl bg-muted/60 p-3">
       <div className="grid gap-1.5">
         <div className="flex items-baseline justify-between gap-3 text-sm">
           <span className="font-semibold">{t('auth.strength')}</span>
           <span role="status" className={cn('font-semibold', !none && TEXT[check.strength])}>
-            {none ? <span className="font-normal text-muted-foreground">{t('auth.strength.none')}</span> : t(`auth.strength.${check.strength}` as Key)}
+            {none ? null : t(`auth.strength.${check.strength}` as Key)}
           </span>
         </div>
         <div aria-hidden="true" className="grid grid-cols-4 gap-1.5">
@@ -73,11 +72,9 @@ export function PasswordStrength({ id, check }: { id: string; check: PasswordChe
         {check.common && check.ok && <p className="text-sm font-semibold text-warning">{t('auth.common')}</p>}
       </div>
 
+      {/* No visible heading: the four lines say what is needed. The list still has a name for screen readers. */}
       <div className="grid gap-1.5">
-        <p id={`${rulesId}-title`} className="text-sm font-semibold">
-          {t('auth.rules')}
-        </p>
-        <ul aria-labelledby={`${rulesId}-title`} className="grid gap-1 text-sm">
+        <ul aria-label={t('auth.rules')} className="grid gap-1 text-sm">
           {check.rules.map((r) => (
             <li key={r.id} className={cn('flex items-start gap-2', r.met ? 'text-success' : 'text-muted-foreground')}>
               {r.met ? <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" strokeWidth={2.5} /> : <Circle aria-hidden="true" className="mt-0.5 size-4 shrink-0" />}

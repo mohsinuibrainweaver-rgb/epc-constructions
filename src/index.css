@@ -404,6 +404,32 @@
   }
 }
 
+/* The signed-out screens (sign in, welcome): a soft blue four-corner mesh behind the form. Sized to the whole box so the border does not
+   pick up a strip of the opposite side's colour. In dark mode the same blues are mixed into near-black. The form itself sits on a
+   white card (bg-card) on top of it, so no text is ever set directly on the gradient. */
+@layer components {
+  .auth-bg {
+    --auth-1: #c6dfff;
+    --auth-2: #daebfc;
+    --auth-3: #ddf3f7;
+    --auth-4: #f0f2ff;
+    background:
+      radial-gradient(ellipse at 0% 0%, var(--auth-1) 0%, transparent 65%),
+      radial-gradient(ellipse at 100% 0%, var(--auth-2) 0%, transparent 65%),
+      radial-gradient(ellipse at 0% 100%, var(--auth-3) 0%, transparent 70%),
+      radial-gradient(ellipse at 100% 100%, var(--auth-4) 0%, transparent 70%),
+      var(--auth-4);
+    background-origin: border-box;
+    background-clip: border-box;
+  }
+  .dark .auth-bg {
+    --auth-1: color-mix(in oklab, #c6dfff 24%, #0b0b0f);
+    --auth-2: color-mix(in oklab, #daebfc 24%, #0b0b0f);
+    --auth-3: color-mix(in oklab, #ddf3f7 24%, #0b0b0f);
+    --auth-4: color-mix(in oklab, #f0f2ff 24%, #0b0b0f);
+  }
+}
+
 @media print {
   .mesh-card {
     background: #fff !important;
