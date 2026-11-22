@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { ChartColumn } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { EmptyState, PageHeader } from '@/components/common'
@@ -8,6 +8,7 @@ import { usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Key } from '@/i18n/en'
 import { formatMonth, money, monthKey, todayISO } from '@/lib/format'
 import { isSpent } from '@/lib/stats'
+import { cn } from '@/lib/utils'
 import { spendingTrend } from '@/lib/trend'
 import { TrendChart } from '@/components/TrendChart'
 import { MaterialPrices } from '@/components/MaterialPrices'
@@ -18,30 +19,47 @@ interface Row {
   amount: number
 }
 
+/** On a phone a long list shows its top rows and a button for the rest (the list is already sorted by amount); from `sm` up every row shows. */
+const PHONE_ROWS = 5
+
 function Breakdown({ title, rows }: { title: string; rows: Row[] }) {
   const { t } = useApp()
+  const [all, setAll] = useState(false)
   const max = Math.max(1, ...rows.map((r) => r.amount))
   const total = rows.reduce((s, r) => s + r.amount, 0)
+  const extra = rows.length - PHONE_ROWS
+  const listId = `bd-${title.replace(/\W+/g, '-')}`
   return (
-    <Card className="h-full gap-4 p-4">
+    <Card className="h-full gap-3 p-4 sm:gap-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <h2 className="text-base font-semibold sm:text-lg">{title}</h2>
         <strong className="tabular">{money(total)}</strong>
       </div>
       {rows.length === 0 ? (
         <p className="text-muted-foreground">{t('reports.noData')}</p>
       ) : (
-        <ul className="grid gap-3">
-          {rows.map((r) => (
-            <li key={r.label} className="grid gap-1.5">
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="font-semibold">{r.label}</span>
-                <span className="tabular">{money(r.amount)}</span>
+        <ul id={listId} className="grid gap-2.5 sm:gap-3">
+          {rows.map((r, i) => (
+            <li key={r.label} className={cn('grid gap-1 sm:gap-1.5', !all && i >= PHONE_ROWS && 'max-sm:hidden')}>
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="min-w-0 font-semibold [overflow-wrap:anywhere]">{r.label}</span>
+                <span className="tabular whitespace-nowrap">{money(r.amount)}</span>
               </div>
-              <Progress value={(r.amount / max) * 100} aria-label={r.label} className="h-2 bg-muted" />
+              <Progress value={(r.amount / max) * 100} aria-label={r.label} className="h-1.5 bg-muted sm:h-2" />
             </li>
           ))}
         </ul>
+      )}
+      {extra > 0 && (
+        <button
+          type="button"
+          aria-expanded={all}
+          aria-controls={listId}
+          onClick={() => setAll((v) => !v)}
+          className="-mb-1 min-h-11 w-full rounded-md border-t pt-1 text-start text-sm font-semibold text-primary active:bg-accent sm:hidden"
+        >
+          {all ? t('attn.less') : t('attn.more', { count: extra })}
+        </button>
       )}
     </Card>
   )
@@ -89,7 +107,7 @@ export function Reports() {
           <EmptyState icon={ChartColumn} title={t('reports.empty')} body={t('reports.emptyBody')} />
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
           {trend.length > 0 && <TrendChart points={trend} budget={project?.budget} />}
           <Breakdown title={t('reports.byPhase')} rows={data.phase} />
           <Breakdown title={t('reports.byVendor')} rows={data.vendor} />

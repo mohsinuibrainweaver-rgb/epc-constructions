@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Download, ReceiptText, Search, SearchX, SlidersHorizontal } from 'lucide-react'
+import { Download, ReceiptText, Search, SearchX, SlidersHorizontal, X } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
-import { EmptyState, PageHeader } from '@/components/common'
+import { Dialog, EmptyState, PageHeader } from '@/components/common'
 import { PaymentsTable } from '@/components/PaymentsTable'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -14,7 +14,6 @@ import type { Key } from '@/i18n/en'
 import { isMissing, MISSING, type Missing } from '@/lib/attention'
 import { csvEscape, download, formatMonth, money, monthKey } from '@/lib/format'
 import { ledgerTotals, LEDGER_SORTS, sortPayments, type LedgerSort } from '@/lib/ledger'
-import { cn } from '@/lib/utils'
 
 export function Ledger() {
   const { t, lang, project, phaseName } = useApp()
@@ -70,7 +69,8 @@ export function Ledger() {
   // Filters in use (not the search words). On a phone they sit behind one button, so the payments are on the first screen; arriving with
   // a filter already set (from Home) opens them, so what is applied is visible.
   const activeFilters = [phase, vendor, category, status, mode, month, approval, missing].filter(Boolean).length
-  const [showFilters, setShowFilters] = useState(activeFilters > 0)
+  // On a phone the filters open in a bottom sheet (live: the list behind it updates as you choose; "Show N payments" closes it).
+  const [sheet, setSheet] = useState(false)
 
   const clearFilters = () => {
     setQ('')
@@ -114,48 +114,8 @@ export function Ledger() {
 
   const all = t('common.all')
 
-  return (
+  const filterFields = (
     <>
-      <PageHeader
-        title={t('ledger.title')}
-        actions={
-          <Button variant="outline" onClick={exportCsv} disabled={rows.length === 0}>
-            <Download aria-hidden="true" />
-            {t('common.export')}
-          </Button>
-        }
-      />
-
-      <Card className="p-4">
-        <div role="search" aria-label={t('ledger.filtersLabel')} className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <div className="col-span-full flex gap-2">
-            <div className="relative min-w-0 flex-1">
-              <Search aria-hidden="true" className="pointer-events-none absolute inset-s-3.5 top-1/2 size-[1.125rem] -translate-y-1/2 text-muted-foreground" />
-              <label className="sr-only" htmlFor="lq">
-                {t('common.search')}
-              </label>
-              <Input id="lq" type="search" enterKeyHint="search" className="ps-10" placeholder={t('ledger.search')} value={q} onChange={(e) => setQ(e.target.value)} />
-            </div>
-            {/* Phone only: from a small tablet up there is room for every filter at once. */}
-            <Button
-              type="button"
-              variant="outline"
-              className="shrink-0 px-3 sm:hidden"
-              aria-expanded={showFilters}
-              aria-controls="ledger-filters"
-              aria-label={activeFilters > 0 ? `${t('ledger.filters')}: ${t('ledger.filtersOn', { count: activeFilters })}` : t('ledger.filters')}
-              onClick={() => setShowFilters((v) => !v)}
-            >
-              <SlidersHorizontal aria-hidden="true" />
-              {t('ledger.filters')}
-              {activeFilters > 0 && (
-                <span aria-hidden="true" className="grid size-5 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                  {activeFilters}
-                </span>
-              )}
-            </Button>
-          </div>
-          <div id="ledger-filters" className={cn('col-span-full grid grid-cols-2 gap-3 sm:contents', !showFilters && 'max-sm:hidden')}>
           <Dropdown aria-label={t('ledger.phase')} value={phase} onChange={(e) => setPhase(e.target.value)}>
             <option value="">{`${t('ledger.phase')}: ${all}`}</option>
             {phases.map((p) => (
@@ -217,14 +177,103 @@ export function Ledger() {
               </option>
             ))}
           </Dropdown>
-          {activeFilters > 0 && (
-            <Button type="button" variant="ghost" size="sm" className="col-span-full w-fit sm:hidden" onClick={clearFilters}>
-              {t('ledger.clearFilters')}
+    </>
+  )
+
+  // What is switched on, as removable chips under the search box (phone). Each says which filter it is and what it is set to.
+  const chips: { key: string; label: string; clear: () => void }[] = [
+    phase && { key: 'phase', label: `${t('ledger.phase')}: ${phaseName(phases.find((p) => p.id === phase)!)}`, clear: () => setPhase('') },
+    vendor && { key: 'vendor', label: `${t('ledger.vendor')}: ${vendorName.get(vendor) ?? ''}`, clear: () => setVendor('') },
+    category && { key: 'category', label: `${t('ledger.category')}: ${t(`cat.${category}` as Key)}`, clear: () => setCategory('') },
+    status && { key: 'status', label: `${t('ledger.status')}: ${t(`status.${status}` as Key)}`, clear: () => setStatus('') },
+    mode && { key: 'mode', label: `${t('ledger.mode')}: ${t(mode === 'cash' ? 'mode.cash' : 'mode.bank')}`, clear: () => setMode('') },
+    approval && { key: 'approval', label: `${t('ledger.approval')}: ${t(`approval.${approval}` as Key)}`, clear: () => setApproval('') },
+    missing && { key: 'missing', label: `${t('ledger.missing')}: ${t(`ledger.missing.${missing}` as Key)}`, clear: () => setMissing('') },
+    month && { key: 'month', label: `${t('ledger.month')}: ${formatMonth(month, lang)}`, clear: () => setMonth('') },
+  ].filter(Boolean) as { key: string; label: string; clear: () => void }[]
+
+  return (
+    <>
+      <PageHeader
+        title={t('ledger.title')}
+        actions={
+          <Button variant="outline" onClick={exportCsv} disabled={rows.length === 0}>
+            <Download aria-hidden="true" />
+            {t('common.export')}
+          </Button>
+        }
+      />
+
+      <Card className="p-4">
+        <div role="search" aria-label={t('ledger.filtersLabel')} className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="col-span-full flex gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search aria-hidden="true" className="pointer-events-none absolute inset-s-3.5 top-1/2 size-[1.125rem] -translate-y-1/2 text-muted-foreground" />
+              <label className="sr-only" htmlFor="lq">
+                {t('common.search')}
+              </label>
+              <Input id="lq" type="search" enterKeyHint="search" className="ps-10" placeholder={t('ledger.search')} value={q} onChange={(e) => setQ(e.target.value)} />
+            </div>
+            {/* Phone only: from a small tablet up there is room for every filter at once. */}
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0 px-3 sm:hidden"
+              aria-haspopup="dialog"
+              aria-label={activeFilters > 0 ? `${t('ledger.filters')}: ${t('ledger.filtersOn', { count: activeFilters })}` : t('ledger.filters')}
+              onClick={() => setSheet(true)}
+            >
+              <SlidersHorizontal aria-hidden="true" />
+              {t('ledger.filters')}
+              {activeFilters > 0 && (
+                <span aria-hidden="true" className="grid size-5 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                  {activeFilters}
+                </span>
+              )}
             </Button>
+          </div>
+          {chips.length > 0 && (
+            <ul aria-label={t('ledger.filters')} className="col-span-full -mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:hidden">
+              {chips.map((c) => (
+                <li key={c.key} className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={c.clear}
+                    aria-label={t('ledger.removeFilter', { name: c.label })}
+                    className="inline-flex min-h-8 items-center gap-1.5 rounded-full border bg-background py-1 ps-3 pe-2 text-sm font-medium active:bg-accent"
+                  >
+                    {c.label}
+                    <X aria-hidden="true" className="size-3.5 text-muted-foreground" />
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
+          <div id="ledger-filters" className="max-sm:hidden sm:contents">
+            {filterFields}
           </div>
         </div>
       </Card>
+
+      <Dialog
+        open={sheet}
+        title={t('ledger.filters')}
+        onClose={() => setSheet(false)}
+        footer={
+          <>
+            {activeFilters > 0 && (
+              <Button type="button" variant="ghost" onClick={clearFilters}>
+                {t('ledger.clearFilters')}
+              </Button>
+            )}
+            <Button type="button" onClick={() => setSheet(false)}>
+              {t('ledger.showResults', { count: rows.length })}
+            </Button>
+          </>
+        }
+      >
+        <div className="grid gap-3">{filterFields}</div>
+      </Dialog>
 
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-muted-foreground" role="status" aria-live="polite">
@@ -232,7 +281,7 @@ export function Ledger() {
           {totals.planned > 0 && <span>{t('ledger.plannedSum', { total: money(totals.planned) })}</span>}
           {totals.awaiting > 0 && <span>{t('ledger.awaitingSum', { total: money(totals.awaiting) })}</span>}
         </p>
-        <Dropdown aria-label={t('ledger.sort')} value={sort} onChange={(e) => setSort(e.target.value as LedgerSort)} className="w-auto min-w-44">
+        <Dropdown aria-label={t('ledger.sort')} value={sort} onChange={(e) => setSort(e.target.value as LedgerSort)} className="w-auto min-w-36 sm:min-w-44">
           {LEDGER_SORTS.map((s) => (
             <option key={s} value={s}>
               {t(`ledger.sort.${s}` as Key)}

@@ -36,12 +36,12 @@ export function MaterialPrices({ rows, coverage, className }: { rows: PriceRow[]
           <p className="text-sm">{t('mat.empty')}</p>
         </Card>
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
+        <ul className="grid grid-cols-[minmax(0,1fr)] gap-2.5 sm:gap-4 md:grid-cols-2">
           {rows.map((r) => {
             const pct = r.change === undefined ? undefined : Math.round(Math.abs(r.change))
             return (
               <li key={r.key}>
-                <Card className="gap-3 p-4">
+                <Card className="gap-2 p-3 sm:gap-3 sm:p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h3 className="truncate font-semibold">{r.item}</h3>

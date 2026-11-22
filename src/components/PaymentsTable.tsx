@@ -180,7 +180,7 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
           const line = [who(p), sub(p)].filter(Boolean).join(' · ')
           return (
             <li key={p.id}>
-              <Link to={`/payments/${p.id}`} className="grid gap-3 px-4 py-4 transition-colors hover:bg-accent active:bg-accent">
+              <Link to={`/payments/${p.id}`} className="grid gap-2 px-4 py-3 transition-colors hover:bg-accent active:bg-accent">
                 <div className="flex items-start gap-3">
                   {phase && <PhaseIcon phase={phase} colour={phaseColour.get(p.phaseId!)} className="size-10 rounded-xl [&>svg]:size-5" />}
                   <div className="grid min-w-0 flex-1 gap-0.5">
@@ -193,7 +193,7 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
                     <StatusPill payment={p} />
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t border-dashed pt-3 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t border-dashed pt-2 text-sm text-muted-foreground">
                   <span className="tabular">{formatDate(p.date, lang)}</span>
                   <span className="inline-flex items-center gap-1.5">
                     <ModeIcon mode={p.mode} />

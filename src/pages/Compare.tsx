@@ -89,11 +89,11 @@ export function Compare() {
 
   // The two choices. The colour key beside each name is the key for every chart below.
   const controls = (
-    <Card className="gap-4 p-4">
-      <p className="text-muted-foreground">{t('compare.intro')}</p>
-      <div className="grid gap-4 md:grid-cols-2">
+    <Card className="gap-3 p-4 sm:gap-4">
+      <p className="text-sm text-muted-foreground sm:text-base">{t('compare.intro')}</p>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {([['a', t('compare.projectA'), aId], ['b', t('compare.projectB'), bId]] as const).map(([side, label, value]) => (
-          <div key={side} className="grid gap-1.5">
+          <div key={side} className="grid min-w-0 content-start gap-1.5">
             <span className="text-sm font-semibold">
               <KeyChip side={side}>{label}</KeyChip>
             </span>
@@ -230,11 +230,11 @@ function CompareBody({
 
       {/* The answer first: how this project stands at the same stage, then what differs most. */}
       {pace && pacePct !== undefined && heroWord && (
-        <Card className="gap-5 p-5">
+        <Card className="gap-3 p-4 sm:gap-5 sm:p-5">
           <div className="grid gap-1">
             <p className="text-sm font-medium text-muted-foreground">{t('compare.heroTitle', { month: pace.month + 1 })}</p>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <p className="flex items-center gap-2 text-5xl leading-none font-extrabold tracking-tight">
+              <p className="flex items-center gap-2 text-4xl leading-none font-extrabold tracking-tight sm:text-5xl">
                 {heroWord === 'more' ? <TrendingUp aria-hidden="true" className="size-9 text-warning" /> : heroWord === 'less' ? <TrendingDown aria-hidden="true" className="size-9 text-success" /> : null}
                 <bdi>{pacePct === 0 ? '0%' : `${Math.abs(pacePct)}%`}</bdi>
               </p>
@@ -256,7 +256,7 @@ function CompareBody({
             </div>
           </dl>
           {(insights.higher.length > 0 || insights.lower.length > 0) && (
-            <div className="grid gap-4 border-t pt-4 md:grid-cols-2 md:gap-8">
+            <div className="grid gap-3 border-t pt-3 sm:pt-4 md:grid-cols-2 md:gap-8">
               {([['higher', insights.higher, TrendingUp, 'compare.higher'], ['lower', insights.lower, TrendingDown, 'compare.lower']] as const).map(([k, list, Icon, title]) => (
                 <section key={k} aria-label={t(title)} className="grid content-start gap-1.5">
                   <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -289,8 +289,9 @@ function CompareBody({
       )}
 
       {/* The key numbers, two values each. */}
-      <Legend />
-      <section aria-label={t('compare.summary')} className="-mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {/* On a phone the key (which colour is which project) stays under the app bar while you scroll, so the cards below do not each repeat it. */}
+      <Legend className="max-sm:sticky max-sm:top-[calc(3.5rem+env(safe-area-inset-top))] max-sm:z-10 max-sm:-mx-4 max-sm:border-b max-sm:bg-card max-sm:px-4 max-sm:py-2" />
+      <section aria-label={t('compare.summary')} className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         <StatTile label={t('compare.spent')} a={money(sumA.spent)} b={money(sumB.spent)} d={spentDelta} format={money} soFar={anyUnfinished} mesh={0} />
         {sumA.perArea !== undefined && sumB.perArea !== undefined && (
           <StatTile
@@ -305,9 +306,9 @@ function CompareBody({
         )}
         {usedA !== undefined && usedB !== undefined && <StatTile label={t('compare.budgetUsed')} a={`${usedA}%`} b={`${usedB}%`} format={money} note={t('compare.budgetUsedNote')} mesh={2} />}
         {rateChange !== undefined && (
-          <div className={cn('flex flex-col gap-3 rounded-xl border p-4', meshCard(3))}>
+          <div className={cn('flex flex-col gap-2 rounded-xl border p-3 sm:gap-3 sm:p-4', meshCard(3))}>
             <p className="text-sm font-medium text-muted-foreground">{t('compare.matChange')}</p>
-            <p className="flex items-center gap-2 text-3xl leading-none font-extrabold">
+            <p className="flex items-center gap-2 text-2xl leading-none font-extrabold sm:text-3xl">
               {rateChange > 0 ? <TrendingUp aria-hidden="true" className="size-6 text-warning" /> : rateChange < 0 ? <TrendingDown aria-hidden="true" className="size-6 text-success" /> : null}
               <bdi>{rateChange === 0 ? '0%' : `${Math.abs(rateChange)}%`}</bdi>
             </p>
@@ -318,17 +319,17 @@ function CompareBody({
       </section>
 
       {pace && (
-        <Card className="gap-4 p-4">
+        <Card className="gap-3 p-4 sm:gap-4">
           <div className="grid gap-1">
             <CardHeading icon={Timer}>{t('compare.paceTitle')}</CardHeading>
             <p className="text-sm text-muted-foreground">{t('compare.paceSub')}</p>
           </div>
-          <Legend />
+          <Legend className="max-sm:hidden" />
           <PaceChart a={paceA} b={paceB} format={fmt} />
         </Card>
       )}
 
-      <Card className="gap-4 p-4">
+      <Card className="gap-3 p-4 sm:gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="grid gap-1">
             <CardHeading icon={Layers3}>{t('compare.byPhase')}</CardHeading>
@@ -344,17 +345,17 @@ function CompareBody({
             ]}
           />
         </div>
-        <Legend />
+        <Legend className="max-sm:hidden" />
         {phaseBars.length === 0 ? <p className="text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={phaseBars} format={fmt} labelWidth={labelWidth} />}
       </Card>
 
-      <Card className="gap-4 p-4">
+      <Card className="gap-3 p-4 sm:gap-4">
         <CardHeading icon={Tags}>{t('compare.byCategory')}</CardHeading>
-        <Legend />
+        <Legend className="max-sm:hidden" />
         {catBars.length === 0 ? <p className="text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={catBars} format={fmt} labelWidth={labelWidth} />}
       </Card>
 
-      <Card className="gap-4 p-4">
+      <Card className="gap-3 p-4 sm:gap-4">
         <div className="grid gap-1">
           <CardHeading icon={Package}>{t('compare.materials')}</CardHeading>
           <p className="text-sm text-muted-foreground">{t('compare.materialsNote')}</p>

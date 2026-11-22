@@ -25,10 +25,10 @@ export function KeyChip({ side, children }: { side: 'a' | 'b'; children: React.R
   )
 }
 
-export function Legend() {
+export function Legend({ className }: { className?: string }) {
   const { t } = useApp()
   return (
-    <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
+    <ul className={cn('flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground', className)}>
       <li>
         <KeyChip side="a">{t('compare.projectA')}</KeyChip>
       </li>
@@ -71,16 +71,16 @@ export function DeltaBadge({ d, format, showAmount = false, soFar = false }: { d
 export function StatTile({ label, a, b, d, format, soFar, note, mesh }: { label: string; a: string; b: string; d?: Delta; format: (n: number) => string; soFar?: boolean; note?: string; /** Position in the row: picks the tile's mesh gradient (lib/mesh.ts). */ mesh: number }) {
   const { t } = useApp()
   return (
-    <div className={cn('flex flex-col gap-3 rounded-xl border p-4', meshCard(mesh))}>
+    <div className={cn('flex flex-col gap-2 rounded-xl border p-3 sm:gap-3 sm:p-4', meshCard(mesh))}>
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <dl className="grid gap-1.5">
+      <dl className="grid gap-1 sm:gap-1.5">
         {([['a', a], ['b', b]] as const).map(([side, v]) => (
           <div key={side} className="flex items-center justify-between gap-3">
             <dt>
               <span aria-hidden="true" className={cn('inline-block h-3 w-3 rounded-full', side === 'a' ? SIDE_A.bar : SIDE_B.bar)} />
               <span className="sr-only">{side === 'a' ? t('compare.projectA') : t('compare.projectB')}</span>
             </dt>
-            <dd className="tabular min-w-0 text-lg font-extrabold break-words">{v}</dd>
+            <dd className="tabular min-w-0 text-base font-extrabold break-words sm:text-lg">{v}</dd>
           </div>
         ))}
       </dl>
@@ -109,7 +109,7 @@ export function CompareBars({ rows, format, labelWidth }: { rows: BarRow[]; form
   const { t } = useApp()
   const max = Math.max(1e-9, ...rows.flatMap((r) => [r.a, r.b]))
   return (
-    <ul className="grid gap-6">
+    <ul className="grid gap-4 sm:gap-6">
       {rows.map((r) => {
         const d: Delta = { delta: r.b - r.a, pct: r.a > 0 ? Math.round(((r.b - r.a) / r.a) * 100) : undefined }
         return (
@@ -137,7 +137,8 @@ export function CompareBars({ rows, format, labelWidth }: { rows: BarRow[]; form
   )
 }
 
-const H = 240
+const H_FULL = 240
+const H_PHONE = 184
 const PAD = { top: 16, right: 18, bottom: 28, left: 46 }
 
 const inRange = (s: number[], i: number): boolean => i >= 0 && i < s.length
@@ -156,6 +157,8 @@ export function PaceChart({ a, b, format }: { a: number[]; b: number[]; format: 
   const [picked, setPicked] = useState<number | null>(null)
   const active = Math.min(picked ?? endB, n - 1)
   const { top, ticks } = axisTicks(Math.max(0, ...a, ...b))
+  // A shorter chart on a phone: the line needs width, not height, and the figures under it matter more than empty space above it.
+  const H = width > 0 && width < 420 ? H_PHONE : H_FULL
   const innerW = width - PAD.left - PAD.right
   const innerH = H - PAD.top - PAD.bottom
   const x = (i: number): number => PAD.left + (n <= 1 ? innerW / 2 : (i * innerW) / (n - 1))

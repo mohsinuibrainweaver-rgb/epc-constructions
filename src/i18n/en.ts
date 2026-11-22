@@ -305,6 +305,8 @@ export const en = {
   'ledger.clearFilters': 'Clear filters',
   'ledger.filters': 'Filters',
   'ledger.filtersOn': '{count} on',
+  'ledger.showResults': 'Show {count} payments',
+  'ledger.removeFilter': 'Remove filter: {name}',
   'ledger.emptyAll': 'Add your first payment',
   'ledger.emptyAllBody': 'Every payment you record shows here, with its phase, vendor and approval.',
   'reports.empty': 'No payments to report yet',

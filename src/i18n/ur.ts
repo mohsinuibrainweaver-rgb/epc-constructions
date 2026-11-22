@@ -307,6 +307,8 @@ export const ur: Record<Key, string> = {
   'ledger.clearFilters': 'فلٹر ہٹائیں',
   'ledger.filters': 'فلٹر',
   'ledger.filtersOn': '{count} فعال',
+  'ledger.showResults': '{count} ادائیگیاں دکھائیں',
+  'ledger.removeFilter': 'فلٹر ہٹائیں: {name}',
   'ledger.emptyAll': 'اپنی پہلی ادائیگی شامل کریں',
   'ledger.emptyAllBody': 'آپ جو بھی ادائیگی درج کریں گے وہ یہاں مرحلے، وینڈر اور منظوری کے ساتھ نظر آئے گی۔',
   'reports.empty': 'رپورٹ کے لیے ابھی کوئی ادائیگی نہیں',

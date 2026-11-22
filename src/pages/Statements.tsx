@@ -160,17 +160,17 @@ export function Statements() {
           title={t('nav.statements')}
           actions={
             <>
-              <Button variant="secondary" onClick={() => window.print()} disabled={needsChoice}>
+              <Button variant="secondary" className="max-sm:flex-1" onClick={() => window.print()} disabled={needsChoice}>
                 <Printer aria-hidden="true" />
                 {t('stmt.print')}
               </Button>
-              <Button variant="outline" onClick={exportCsv} disabled={needsChoice || result.rows.length === 0}>
+              <Button variant="outline" className="max-sm:w-11 max-sm:px-0" onClick={exportCsv} disabled={needsChoice || result.rows.length === 0}>
                 <Download aria-hidden="true" />
-                {t('common.export')}
+                <span className="max-sm:sr-only">{t('common.export')}</span>
               </Button>
-              <Button variant="outline" onClick={() => void share()} disabled={needsChoice || result.rows.length === 0}>
+              <Button variant="outline" className="max-sm:w-11 max-sm:px-0" onClick={() => void share()} disabled={needsChoice || result.rows.length === 0}>
                 <Share2 aria-hidden="true" />
-                {t('stmt.share')}
+                <span className="max-sm:sr-only">{t('stmt.share')}</span>
               </Button>
             </>
           }
@@ -217,14 +217,14 @@ export function Statements() {
             </Dropdown>
           )}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="grid gap-1.5">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid min-w-0 gap-1.5">
             <Label htmlFor="stmt-from" className="text-sm font-semibold">
               {t('stmt.from')}
             </Label>
             <Input id="stmt-from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
           </div>
-          <div className="grid gap-1.5">
+          <div className="grid min-w-0 gap-1.5">
             <Label htmlFor="stmt-to" className="text-sm font-semibold">
               {t('stmt.to')}
             </Label>
@@ -232,11 +232,11 @@ export function Statements() {
           </div>
         </div>
         <div className="grid gap-2">
-          <label className="flex items-center gap-3">
+          <label className="flex min-h-11 items-center gap-3">
             <Checkbox checked={includePlanned} onCheckedChange={(c) => setIncludePlanned(c === true)} />
             <span>{t('stmt.includePlanned')}</span>
           </label>
-          <label className="flex items-center gap-3">
+          <label className="flex min-h-11 items-center gap-3">
             <Checkbox checked={includePending} onCheckedChange={(c) => setIncludePending(c === true)} />
             <span>{t('stmt.includePending')}</span>
           </label>
@@ -250,7 +250,7 @@ export function Statements() {
       ) : (
         <article
           aria-label={`${project.name} — ${title}`}
-          className="grid gap-6 rounded-2xl border bg-card p-5 sm:p-8 print:gap-4 print:rounded-none print:border-0 print:p-0 print:shadow-none"
+          className="grid gap-6 rounded-2xl border bg-card p-3.5 sm:p-8 print:gap-4 print:rounded-none print:border-0 print:p-0 print:shadow-none"
         >
           <header className="grid gap-1 border-b pb-4">
             <p className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">{t('stmt.heading')}</p>

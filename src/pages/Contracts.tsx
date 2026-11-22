@@ -115,14 +115,14 @@ export function Contracts() {
               <EmptyState icon={SearchX} title={t('contract.noMatch')} action={<Button variant="outline" onClick={() => setFilter('all')}>{t('contract.showAll')}</Button>} />
             </Card>
           ) : (
-            <ul className="grid gap-4 md:grid-cols-2">
+            <ul className="grid divide-y overflow-hidden rounded-xl border bg-card md:grid-cols-2 md:gap-4 md:divide-y-0 md:overflow-visible md:rounded-none md:border-0 md:bg-transparent">
               {rows.map(({ c, s, next, unplanned }) => (
                 <li key={c.id}>
-                  <Card className="gap-3 p-4 transition-colors hover:bg-muted/40">
-                    <Link to={`/contracts/${c.id}`} className="grid gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+                  <Card className="gap-3 p-3.5 transition-colors hover:bg-muted/40 active:bg-muted/40 max-md:rounded-none max-md:border-0 md:p-4">
+                    <Link to={`/contracts/${c.id}`} className="grid gap-2.5 rounded-md md:gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
                       <span className="flex items-start justify-between gap-3">
                         <span className="grid min-w-0 gap-0.5">
-                          <span className="text-lg font-bold [overflow-wrap:anywhere]">{c.title}</span>
+                          <span className="text-base font-bold [overflow-wrap:anywhere] md:text-lg">{c.title}</span>
                           <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
                             {[c.vendorId && vendorName.get(c.vendorId), formatDate(c.date, lang)].filter(Boolean).join(' · ')}
                           </span>
@@ -142,7 +142,7 @@ export function Contracts() {
                         </span>
                       </span>
                       {c.status === 'active' && (next || unplanned > 0) && (
-                        <span className="grid gap-1 border-t pt-2.5 text-sm">
+                        <span className="grid gap-1 border-t border-dashed pt-2 text-sm md:border-solid md:pt-2.5">
                           {next ? (
                             <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                               <span className="min-w-0">

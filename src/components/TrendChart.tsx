@@ -7,7 +7,8 @@ import { formatMonth, formatMonthShort, money } from '@/lib/format'
 import { compact, niceCeil, noBreak } from '@/lib/chart'
 import type { TrendPoint } from '@/lib/trend'
 
-const H = 200
+const H_FULL = 200
+const H_PHONE = 164
 const PAD = { top: 12, right: 12, bottom: 26, left: 44 }
 
 
@@ -37,6 +38,7 @@ export function TrendChart({ points, budget }: { points: TrendPoint[]; budget?: 
   const highest = Math.max(dataMax, showBudget ? budget : 0)
   const tickStep = niceCeil(highest / 3) // round steps (25K, 50K, 75K), so the labels read easily
   const top = Math.ceil(highest / tickStep) * tickStep
+  const H = width < 420 ? H_PHONE : H_FULL
   const innerW = width - PAD.left - PAD.right
   const innerH = H - PAD.top - PAD.bottom
   const n = points.length
@@ -61,7 +63,7 @@ export function TrendChart({ points, budget }: { points: TrendPoint[]; budget?: 
   const labelAt = (i: number): boolean => i % step === 0
 
   return (
-    <Card className="gap-4 p-4 md:col-span-2">
+    <Card className="gap-3 p-4 sm:gap-4 md:col-span-2">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <CardHeading icon={TrendingUp}>{t('reports.trend')}</CardHeading>
         <strong className="tabular">{money(points[Math.max(0, pastEnd)]?.spent ?? 0)}</strong>

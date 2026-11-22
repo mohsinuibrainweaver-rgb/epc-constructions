@@ -86,9 +86,9 @@ export function Forecast() {
   return (
     <>
       <PageHeader title={t('forecast.title')} />
-      <p className="-mt-3 text-muted-foreground">{t('forecast.intro')}</p>
+      <p className="-mt-2 text-sm text-muted-foreground sm:-mt-3 sm:text-base">{t('forecast.intro')}</p>
 
-      <Card className="gap-5 p-5">
+      <Card className="gap-3 p-4 sm:gap-5 sm:p-5">
         <div className="grid gap-1">
           <p className="text-sm font-medium text-muted-foreground">{t('forecast.heroTitle')}</p>
           <p className="tabular text-4xl leading-none font-extrabold tracking-tight sm:text-5xl">{money(f.next30)}</p>
@@ -99,10 +99,10 @@ export function Forecast() {
             </p>
           )}
         </div>
-        <div className="border-t pt-4">
+        <div className="border-t pt-3 sm:pt-4">
           <ForecastTable f={f} />
         </div>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-4 sm:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3 sm:grid-cols-3 sm:gap-y-4 sm:pt-4">
           {[
             [t('forecast.overdue'), f.overdue],
             [t('forecast.later'), f.later],
@@ -110,7 +110,7 @@ export function Forecast() {
           ].map(([label, v]) => (
             <div key={label as string} className="grid gap-0.5">
               <dt className="text-sm text-muted-foreground">{label}</dt>
-              <dd className="tabular text-lg font-extrabold">{money(v as number)}</dd>
+              <dd className="tabular text-base font-extrabold sm:text-lg">{money(v as number)}</dd>
             </div>
           ))}
         </dl>
@@ -125,7 +125,7 @@ export function Forecast() {
         </Card>
       )}
 
-      <Card className="gap-4 p-4">
+      <Card className="gap-3 p-4 sm:gap-4">
         <div className="grid gap-1">
           <CardHeading icon={ChartLine}>{t('forecast.chartTitle')}</CardHeading>
           <p className="text-sm text-muted-foreground">{t('forecast.chartSub')}</p>

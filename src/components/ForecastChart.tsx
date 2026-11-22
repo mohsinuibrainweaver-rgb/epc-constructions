@@ -12,7 +12,8 @@ export interface ForecastColumn {
   overdue?: boolean
 }
 
-const H = 230
+const H_FULL = 230
+const H_PHONE = 180
 const PAD = { top: 24, right: 12, bottom: 30, left: 46 }
 /** The thickest a column gets, so a few weeks never turn into fat blocks. */
 const MAX_BAR = 26
@@ -28,6 +29,7 @@ export function ForecastChart({ columns, active, onPick, format }: { columns: Fo
   const n = columns.length
   const highest = Math.max(0, ...columns.map((c) => c.scheduled + c.expected))
   const { top, ticks } = axisTicks(highest)
+  const H = width > 0 && width < 420 ? H_PHONE : H_FULL
   const innerW = width - PAD.left - PAD.right
   const innerH = H - PAD.top - PAD.bottom
   const slot = innerW / Math.max(1, n)
