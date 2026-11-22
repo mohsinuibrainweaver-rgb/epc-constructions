@@ -416,11 +416,11 @@
   .nav-glass[aria-current='page'] {
     overflow: hidden;
     background:
-      radial-gradient(ellipse at 0% 0%, #7864d9 0%, transparent 65%),
-      radial-gradient(ellipse at 100% 0%, #9c78e8 0%, transparent 65%),
-      radial-gradient(ellipse at 0% 100%, #6555b8 0%, transparent 70%),
-      radial-gradient(ellipse at 100% 100%, #382d70 0%, transparent 70%),
-      #382d70;
+      radial-gradient(ellipse at 0% 0%, #4939d2 0%, transparent 65%),
+      radial-gradient(ellipse at 100% 0%, #9c65fa 0%, transparent 65%),
+      radial-gradient(ellipse at 0% 100%, #7952ed 0%, transparent 70%),
+      radial-gradient(ellipse at 100% 100%, #3920a0 0%, transparent 70%),
+      #3920a0;
     background-origin: border-box;
     border-color: rgb(255 255 255 / 0.3);
     border-radius: 9px;
@@ -439,7 +439,7 @@
     .nav-glass[aria-current='page'] {
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
-      background: #382d70;
+      background: #3920a0;
     }
     .nav-glass:not([aria-current='page']):hover,
     .nav-glass:not([aria-current='page']):focus-visible {
@@ -497,14 +497,15 @@
 
 @layer components {
   /* Primary buttons: a violet four-corner mesh with white text, the same in light and dark mode. Hover brightens it a little. */
-  .btn-primary {
+  .btn-primary,
+  .mesh-violet {
     color: #fff;
     background:
-      radial-gradient(ellipse at 0% 0%, #7864d9 0%, transparent 65%),
-      radial-gradient(ellipse at 100% 0%, #9c78e8 0%, transparent 65%),
-      radial-gradient(ellipse at 0% 100%, #6555b8 0%, transparent 70%),
-      radial-gradient(ellipse at 100% 100%, #382d70 0%, transparent 70%),
-      #382d70;
+      radial-gradient(ellipse at 0% 0%, #4939d2 0%, transparent 65%),
+      radial-gradient(ellipse at 100% 0%, #9c65fa 0%, transparent 65%),
+      radial-gradient(ellipse at 0% 100%, #7952ed 0%, transparent 70%),
+      radial-gradient(ellipse at 100% 100%, #3920a0 0%, transparent 70%),
+      #3920a0;
     background-origin: border-box;
     transition: filter 150ms, transform 150ms;
   }

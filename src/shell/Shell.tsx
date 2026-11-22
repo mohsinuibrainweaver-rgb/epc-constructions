@@ -305,7 +305,7 @@ export function Shell() {
           to="/settings"
           className="mt-auto flex min-h-10 items-center justify-center gap-2.5 nav-glass rounded-control px-1 text-sm lg:justify-start"
         >
-          <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-primary text-xs font-extrabold text-sidebar-primary-foreground">
+          <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full mesh-violet text-xs font-extrabold text-white">
             {initials(who)}
           </span>
           <span className="hidden truncate font-semibold lg:inline">{who}</span>
