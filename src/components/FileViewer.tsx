@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Download, ExternalLink, FileText, Loader2, Pencil, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Download, ExternalLink, FileText, Loader2, Pencil, ReceiptText, Trash2 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { Dialog } from '@/components/common'
 import { useToast } from '@/components/Toast'
@@ -11,14 +12,14 @@ import { useObjectUrl } from '@/lib/image'
 import { ensureFileBlob } from '@/sync/engine'
 
 /** The file's blob: from this device, or downloaded the first time another person's upload is shown. */
-export function useFileBlob(file: ProjectFile | undefined): { blob?: Blob; failed: boolean } {
+export function useFileBlob(file: ProjectFile | undefined, fetchBlob: (f: ProjectFile) => Promise<Blob | undefined> = ensureFileBlob): { blob?: Blob; failed: boolean } {
   const [fetched, setFetched] = useState<{ id: string; blob?: Blob }>()
   const [failed, setFailed] = useState(false)
   useEffect(() => {
     setFailed(false)
     if (!file || file.blob) return
     let live = true
-    void ensureFileBlob(file).then((b) => {
+    void fetchBlob(file).then((b) => {
       if (!live) return
       if (b) setFetched({ id: file.id, blob: b })
       else setFailed(true)
@@ -37,16 +38,22 @@ export function FileViewer({
   onClose,
   onEdit,
   onDelete,
+  fetchBlob,
+  openPayment,
 }: {
   file?: ProjectFile
   phaseLabel?: string
   onClose: () => void
   onEdit: (f: ProjectFile) => void
   onDelete: (f: ProjectFile) => void
+  /** Where to download it from when this device has not got it yet (a receipt is stored differently from an upload). */
+  fetchBlob?: (f: ProjectFile) => Promise<Blob | undefined>
+  /** For a payment's receipt: the payment to open. Its photo is changed there, so there is no edit or delete here. */
+  openPayment?: { id: string; amount: string }
 }) {
   const { t, lang } = useApp()
   const toast = useToast()
-  const { blob, failed } = useFileBlob(file)
+  const { blob, failed } = useFileBlob(file, fetchBlob)
   const url = useObjectUrl(blob)
   const isImage = !!file && (file.kind === 'photo' || file.mime.startsWith('image/'))
 
@@ -57,10 +64,12 @@ export function FileViewer({
   if (!file) return null
 
   const details = [
+    openPayment && t('files.receipt'),
+    openPayment?.amount,
     file.docType && t(`ftype.${file.docType}` as Key),
     phaseLabel,
     formatDate(file.date, lang),
-    fileSize(file.size),
+    file.size > 0 && fileSize(file.size),
   ].filter(Boolean)
 
   return (
@@ -71,14 +80,25 @@ export function FileViewer({
       onClose={onClose}
       footer={
         <>
-          <Button variant="outline" onClick={() => onEdit(file)}>
-            <Pencil aria-hidden="true" />
-            {t('common.edit')}
-          </Button>
-          <Button variant="outline" onClick={() => onDelete(file)}>
-            <Trash2 aria-hidden="true" />
-            {t('common.delete')}
-          </Button>
+          {openPayment ? (
+            <Button asChild variant="outline">
+              <Link to={`/payments/${openPayment.id}`}>
+                <ReceiptText aria-hidden="true" />
+                {t('files.openPayment')}
+              </Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => onEdit(file)}>
+                <Pencil aria-hidden="true" />
+                {t('common.edit')}
+              </Button>
+              <Button variant="outline" onClick={() => onDelete(file)}>
+                <Trash2 aria-hidden="true" />
+                {t('common.delete')}
+              </Button>
+            </>
+          )}
           {url && (
             <Button asChild>
               <a href={url} download={file.name}>

@@ -4,14 +4,13 @@ import {
   Building2,
   BrickWall,
   Cable,
-  ChevronDown,
-  ChevronUp,
   CircleCheck,
   ClipboardList,
   DoorOpen,
   FileText,
   Grid3x3,
   GripVertical,
+  EllipsisVertical,
   Hammer,
   HardHat,
   KeyRound,
@@ -30,12 +29,14 @@ import {
 import { useApp } from '@/app/AppContext'
 import { BackLink, BudgetBar, Dialog, EmptyState, Field, PageHeader } from '@/components/common'
 import { BudgetChip } from '@/components/BudgetChip'
+import { ConfirmDelete } from '@/components/ConfirmDelete'
 import { BudgetOutlookCard } from '@/components/BudgetOutlook'
 import { PaymentsTable } from '@/components/PaymentsTable'
 import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { addPhase, deletePhase, movePhase, reorderPhases, setPhaseDone, updatePhase } from '@/db/actions'
@@ -138,10 +139,9 @@ function PhaseRow({
   payments,
   editable,
   canDrag,
-  isFirst,
-  isLast,
   floating,
   onEdit,
+  onDelete,
   onGrab,
 }: {
   ph: Phase
@@ -149,29 +149,51 @@ function PhaseRow({
   payments: Payment[]
   editable: boolean
   canDrag: boolean
-  isFirst: boolean
-  isLast: boolean
   floating?: boolean
   onEdit: () => void
+  onDelete: () => void
   onGrab: (e: ReactPointerEvent<HTMLButtonElement>) => void
 }) {
   const { t, project, phaseName } = useApp()
   const spent = sum(payments.filter((p) => p.phaseId === ph.id && isSpent(p)))
   const planned = sum(payments.filter((p) => p.phaseId === ph.id && isPlanned(p)))
   const toast = useToast()
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const launching = useRef(false)
+  /** Open a dialog from a menu item: the menu is gone first, the focus goes back to its button, and the dialog (which returns focus there when it closes) opens. */
+  const launch = (open: () => void) => {
+    launching.current = true
+    setTimeout(() => {
+      triggerRef.current?.focus()
+      open()
+    }, 0)
+  }
   const done = Boolean(ph.done)
   const state = budgetState(spent, ph.budget, done)
   const name = phaseName(ph)
   const Icon = phaseIcon(ph)
   return (
-    // One phase per row: a drag handle, then the details, then three equal icon buttons (under the details on a phone).
+    // One phase per row: a drag handle, then the details, then two icon buttons (under the details on a phone).
     <Card className={cn('flex-row items-center gap-2 p-3 transition-colors hover:border-foreground/30 sm:gap-3', floating && 'border-primary shadow-xl ring-2 ring-primary/30')}>
       {canDrag && (
         <button
           type="button"
           aria-label={`${t('phases.drag')}: ${name}`}
-          title={t('phases.drag')}
+          title={`${t('phases.drag')} (↑ ↓)`}
           tabIndex={floating ? -1 : 0}
+          data-grip={ph.id}
+          aria-keyshortcuts="ArrowUp ArrowDown"
+          // Without a mouse or a finger: the arrow keys move the phase one place, and the focus stays on its handle.
+          onKeyDown={(e) => {
+            const dir = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0
+            if (!dir || !project || floating) return
+            e.preventDefault()
+            void movePhase(project.id, ph.id, dir).then(() =>
+              setTimeout(() => {
+                if (document.activeElement === document.body || !document.activeElement?.isConnected) document.querySelector<HTMLElement>(`[data-grip="${CSS.escape(ph.id)}"]`)?.focus()
+              }, 80),
+            )
+          }}
           onPointerDown={onGrab}
           onContextMenu={(e) => e.preventDefault()}
           className={cn(
@@ -222,26 +244,6 @@ function PhaseRow({
             <Button
               size="icon-sm"
               variant="outline"
-              aria-label={`${t('phases.moveUp')}: ${name}`}
-              title={t('phases.moveUp')}
-              disabled={isFirst}
-              onClick={() => project && void movePhase(project.id, ph.id, -1)}
-            >
-              <ChevronUp aria-hidden="true" />
-            </Button>
-            <Button
-              size="icon-sm"
-              variant="outline"
-              aria-label={`${t('phases.moveDown')}: ${name}`}
-              title={t('phases.moveDown')}
-              disabled={isLast}
-              onClick={() => project && void movePhase(project.id, ph.id, 1)}
-            >
-              <ChevronDown aria-hidden="true" />
-            </Button>
-            <Button
-              size="icon-sm"
-              variant="outline"
               aria-label={done ? t('phases.reopenNamed', { name }) : t('phases.markDoneNamed', { name })}
               title={done ? t('phases.reopen') : t('phases.markDone')}
               className={cn(done && 'border-success/40 text-success')}
@@ -252,9 +254,31 @@ function PhaseRow({
             >
               {done ? <RotateCcw aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
             </Button>
-            <Button size="icon-sm" variant="outline" aria-label={`${t('common.edit')}: ${name}`} title={t('common.edit')} onClick={onEdit}>
-              <Pencil aria-hidden="true" />
-            </Button>
+            {/* More actions: edit and delete. Delete asks first (see ConfirmDelete). */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button ref={triggerRef} size="icon-sm" variant="outline" aria-label={t('phases.moreNamed', { name })} title={t('phases.more')}>
+                  <EllipsisVertical aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                onCloseAutoFocus={(e) => {
+                  if (launching.current) {
+                    e.preventDefault()
+                    launching.current = false
+                  }
+                }}
+              >
+                <DropdownMenuItem onSelect={() => launch(onEdit)}>
+                  <Pencil aria-hidden="true" />
+                  {t('common.edit')}
+                </DropdownMenuItem>
+                <DropdownMenuItem destructive onSelect={() => launch(onDelete)}>
+                  <Trash2 aria-hidden="true" />
+                  {t('common.delete')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
       </div>
@@ -268,12 +292,14 @@ type Drag = { id: string; to: number; y: number }
 type DragMeta = { from: number; height: number; width: number; left: number; offsetY: number }
 
 export function Phases() {
-  const { t, project, can } = useApp()
+  const { t, project, phaseName, can } = useApp()
   const editable = can('editPhases')
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<Phase>()
+  const [deleting, setDeleting] = useState<Phase>()
+  const toast = useToast()
 
   // The order just dropped, shown straight away until the saved order catches up (so the list never flickers back).
   const [optimistic, setOptimistic] = useState<string[] | null>(null)
@@ -423,9 +449,8 @@ export function Phases() {
                     payments={payments}
                     editable={editable}
                     canDrag={canDrag}
-                    isFirst={i === 0}
-                    isLast={i === slots.length - 1}
                     onEdit={() => setEditing(s.ph)}
+                    onDelete={() => setDeleting(s.ph)}
                     onGrab={(e) => grab(e, s.ph)}
                   />
                 </li>
@@ -445,9 +470,8 @@ export function Phases() {
                 payments={payments}
                 editable={false}
                 canDrag
-                isFirst={false}
-                isLast={false}
                 onEdit={() => {}}
+                onDelete={() => {}}
                 onGrab={() => {}}
               />
             </div>
@@ -457,6 +481,19 @@ export function Phases() {
 
       <PhaseDialog open={adding} onClose={() => setAdding(false)} />
       <PhaseDialog open={Boolean(editing)} phase={editing} onClose={() => setEditing(undefined)} />
+      <ConfirmDelete
+        open={Boolean(deleting)}
+        title={t('phases.deleteTitle', { name: deleting ? phaseName(deleting) : '' })}
+        description={t('phases.deleteBody')}
+        confirmLabel={t('common.delete')}
+        onClose={() => setDeleting(undefined)}
+        onConfirm={() => {
+          if (!deleting) return
+          const gone = phaseName(deleting)
+          void deletePhase(deleting.id).then(() => toast.show({ kind: 'info', message: t('phases.deletedNamed', { name: gone }) }))
+          setDeleting(undefined)
+        }}
+      />
     </>
   )
 }

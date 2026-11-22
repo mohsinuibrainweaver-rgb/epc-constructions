@@ -157,6 +157,10 @@ thresholds are `ON_TOLERANCE` (0.5%) and `SLIGHT_OVER` (5%, the usual contingenc
   a starting figure that moves up and down. Passing it is an amber alert (red only when clearly over) with the same action, not an alarm.
 - **Phase rows**: spending (or "Final cost"), the estimate if there is one, and a one-tap **Mark complete** (with Undo) so a phase whose
   price came after paying can be closed without opening it. A phase with no estimate shows no bar and no prompt.
+  Phases are reordered by dragging the handle on the left (with the keyboard: focus the handle and press the up or down arrow). The
+  **⋮ menu** holds **Edit** and **Delete**; Delete opens a confirmation ("Delete Grey structure? Its payments stay, but they will no
+  longer belong to a phase. This cannot be undone.") with focus on Cancel, and focus goes back to the ⋮ button afterwards
+  (`ConfirmDelete`, `ui/dropdown-menu.tsx`).
 - **Needs your attention**: only unfinished phases that are over or near their estimate, and the project passing its budget. Phases at
   exactly their estimate are one quiet row ("4 phases have used their whole estimate. Mark them complete if the work is finished.").
 - **Add payment** says what has been paid so far on a phase with no estimate, and that a finished phase is complete.
@@ -477,6 +481,12 @@ the form asks for the item (the old "Purpose" box, with the items bought before 
   filtered by phase and type. Open, save to the device, edit the details, or delete (with Undo).
 - Files are stored in the same private storage as receipts, under the project folder, and download to another
   device the first time they are opened there. Needs the `project_files` table: run `supabase/schema.sql` once more.
+- **Receipts are here too.** A receipt photo attached to a payment is stored with the payment, so Files used to miss it. Photos now lists both:
+  what was uploaded in Files and every payment's receipt photos, newest day first (a receipt takes its payment's date and phase). A
+  receipt tile has a "Receipt" tag and says what it was for and the amount; opening it shows the picture with an **Open payment** link
+  (its photo is changed on the payment, so there is no edit or delete here). A **Source** menu (All photos / Progress photos / Payment
+  receipts) shows when both kinds exist, and the phase filter covers both. Receipts of a removed payment are not listed. Built in
+  `src/lib/receipts.ts`; check: `npx vite-node scripts/receipts-test.ts`.
 
 ## Corner radius
 

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { FileText, FolderOpen, Images, Loader2, Plus, SearchX } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { FileText, FolderOpen, Images, Loader2, Plus, ReceiptText, SearchX } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { EmptyState, PageHeader } from '@/components/common'
 import { FileDialog } from '@/components/FileDialog'
@@ -11,11 +11,13 @@ import { Card } from '@/components/ui/card'
 import { Dropdown } from '@/components/ui/dropdown'
 import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
 import { deleteFile, restoreFile } from '@/db/actions'
-import { useFiles, usePhases } from '@/db/hooks'
-import { DOC_TYPES, type DocType, type FileKind, type ProjectFile } from '@/db/types'
+import { useFiles, usePayments, usePhases, useProjectAttachments } from '@/db/hooks'
+import { DOC_TYPES, type Attachment, type DocType, type FileKind, type Payment, type ProjectFile } from '@/db/types'
 import type { Key } from '@/i18n/en'
-import { fileSize, formatDate } from '@/lib/format'
+import { fileSize, formatDate, money } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
+import { itemPhaseId, photoItems, receiptAsFile } from '@/lib/receipts'
+import { ensureAttachmentBlob } from '@/sync/engine'
 
 function PhotoTile({ file, onOpen }: { file: ProjectFile; onOpen: () => void }) {
   const { blob } = useFileBlob(file)
@@ -38,30 +40,74 @@ function PhotoTile({ file, onOpen }: { file: ProjectFile; onOpen: () => void }) 
   )
 }
 
+/** A receipt photo attached to a payment: the picture, a "Receipt" tag, and what it was for. */
+function ReceiptTile({ attachment, payment, onOpen }: { attachment: Attachment; payment: Payment; onOpen: () => void }) {
+  const { t } = useApp()
+  // A receipt another phone uploaded is downloaded the first time it is shown.
+  const [fetched, setFetched] = useState<Blob>()
+  useEffect(() => {
+    if (!attachment.blob) void ensureAttachmentBlob(attachment).then(setFetched)
+  }, [attachment])
+  const url = useObjectUrl(attachment.blob ?? fetched)
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group grid min-w-0 gap-1.5 rounded-xl text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+    >
+      <span className="relative block aspect-square overflow-hidden rounded-xl border bg-muted">
+        {url ? (
+          <img src={url} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />
+        ) : (
+          <Loader2 aria-hidden="true" className="absolute inset-0 m-auto size-5 animate-spin text-muted-foreground" />
+        )}
+        <Badge variant="neutral" className="absolute start-1.5 top-1.5 bg-background/90 shadow-sm">
+          <ReceiptText aria-hidden="true" />
+          {t('files.receipt')}
+        </Badge>
+      </span>
+      <span className="grid min-w-0">
+        <span className="truncate text-sm font-semibold">{payment.purpose}</span>
+        <span className="tabular truncate text-xs text-muted-foreground">{money(payment.amount)}</span>
+      </span>
+    </button>
+  )
+}
+
 export function Files() {
   const { t, lang, project, phaseName } = useApp()
   const toast = useToast()
   const files = useFiles(project?.id)
+  const payments = usePayments(project?.id)
+  const receipts = useProjectAttachments(project?.id)
   const phases = usePhases(project?.id)
   const [kind, setKind] = useState<FileKind>('photo')
   const [phase, setPhase] = useState('')
+  // Photos are what was uploaded here plus the receipt photos attached to payments; this narrows to one of the two.
+  const [source, setSource] = useState<'' | 'progress' | 'receipt'>('')
   const [docType, setDocType] = useState<'' | DocType>('')
   const [viewing, setViewing] = useState<ProjectFile | undefined>()
+  const [viewingReceipt, setViewingReceipt] = useState<{ attachment: Attachment; payment: Payment } | undefined>()
   const [editing, setEditing] = useState<ProjectFile | undefined>()
   const [adding, setAdding] = useState(false)
 
   const phaseLabel = useMemo(() => new Map(phases.map((p) => [p.id, phaseName(p)])), [phases, phaseName])
-  const ofKind = files.filter((f) => f.kind === kind)
-  const rows = ofKind.filter((f) => (!phase || f.phaseId === phase) && (kind !== 'document' || !docType || f.docType === docType))
-  const photoCount = files.filter((f) => f.kind === 'photo').length
-  const docCount = files.length - photoCount
+  const items = useMemo(() => photoItems(files, receipts, payments), [files, receipts, payments])
+  const docs = files.filter((f) => f.kind === 'document')
+  const photoRows = items.filter((i) => (!source || (source === 'progress') === (i.kind === 'progress')) && (!phase || itemPhaseId(i) === phase))
+  const docRows = docs.filter((f) => (!phase || f.phaseId === phase) && (!docType || f.docType === docType))
+  const total = kind === 'photo' ? items.length : docs.length
+  const shownCount = kind === 'photo' ? photoRows.length : docRows.length
+  const photoCount = items.length
+  const docCount = docs.length
+  const hasBoth = items.some((i) => i.kind === 'receipt') && items.some((i) => i.kind === 'progress')
 
-  /** Photos grouped by the day they were taken, newest day first. */
+  /** Pictures grouped by the day they were taken (a receipt: the day of its payment), newest day first. */
   const byDay = useMemo(() => {
-    const m = new Map<string, ProjectFile[]>()
-    for (const f of rows) m.set(f.date, [...(m.get(f.date) ?? []), f])
+    const m = new Map<string, typeof photoRows>()
+    for (const i of photoRows) m.set(i.date, [...(m.get(i.date) ?? []), i])
     return [...m.entries()]
-  }, [rows])
+  }, [photoRows])
 
   const remove = async (f: ProjectFile) => {
     setViewing(undefined)
@@ -102,6 +148,13 @@ export function Files() {
               </option>
             ))}
           </Dropdown>
+          {kind === 'photo' && hasBoth && (
+            <Dropdown aria-label={t('files.source')} value={source} onChange={(e) => setSource(e.target.value as '' | 'progress' | 'receipt')}>
+              <option value="">{t('files.srcAll')}</option>
+              <option value="progress">{t('files.srcProgress')}</option>
+              <option value="receipt">{t('files.srcReceipts')}</option>
+            </Dropdown>
+          )}
           {kind === 'document' && (
             <Dropdown aria-label={t('files.docType')} value={docType} onChange={(e) => setDocType(e.target.value as '' | DocType)}>
               <option value="">{t('files.allTypes')}</option>
@@ -115,7 +168,7 @@ export function Files() {
         </div>
       </Card>
 
-      {ofKind.length === 0 ? (
+      {total === 0 ? (
         <Card>
           <EmptyState
             icon={kind === 'photo' ? Images : FolderOpen}
@@ -123,7 +176,7 @@ export function Files() {
             body={t(kind === 'photo' ? 'files.emptyPhotosBody' : 'files.emptyDocsBody')}
           />
         </Card>
-      ) : rows.length === 0 ? (
+      ) : shownCount === 0 ? (
         <Card>
           <EmptyState
             icon={SearchX}
@@ -135,6 +188,7 @@ export function Files() {
                 onClick={() => {
                   setPhase('')
                   setDocType('')
+                  setSource('')
                 }}
               >
                 {t('files.clearFilters')}
@@ -148,9 +202,13 @@ export function Files() {
             <section key={day} aria-label={formatDate(day, lang)} className="grid gap-3">
               <h2 className="text-lg font-semibold">{formatDate(day, lang)}</h2>
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {list.map((f) => (
-                  <li key={f.id} className="min-w-0">
-                    <PhotoTile file={f} onOpen={() => setViewing(f)} />
+                {list.map((i) => (
+                  <li key={i.id} className="min-w-0">
+                    {i.kind === 'progress' ? (
+                      <PhotoTile file={i.file} onOpen={() => setViewing(i.file)} />
+                    ) : (
+                      <ReceiptTile attachment={i.attachment} payment={i.payment} onOpen={() => setViewingReceipt({ attachment: i.attachment, payment: i.payment })} />
+                    )}
                   </li>
                 ))}
               </ul>
@@ -160,7 +218,7 @@ export function Files() {
       ) : (
         <Card className="gap-0 overflow-hidden py-0">
           <ul className="divide-y">
-            {rows.map((f) => (
+            {docRows.map((f) => (
               <li key={f.id}>
                 <button
                   type="button"
@@ -192,6 +250,17 @@ export function Files() {
         }}
         onDelete={(f) => void remove(f)}
       />
+      {viewingReceipt && (
+        <FileViewer
+          file={receiptAsFile(viewingReceipt.attachment, viewingReceipt.payment)}
+          phaseLabel={viewingReceipt.payment.phaseId ? phaseLabel.get(viewingReceipt.payment.phaseId) : undefined}
+          fetchBlob={() => ensureAttachmentBlob(viewingReceipt.attachment)}
+          openPayment={{ id: viewingReceipt.payment.id, amount: money(viewingReceipt.payment.amount) }}
+          onClose={() => setViewingReceipt(undefined)}
+          onEdit={() => undefined}
+          onDelete={() => undefined}
+        />
+      )}
       <FileDialog open={adding} defaultKind={kind} defaultPhaseId={phase || undefined} onClose={() => setAdding(false)} />
       <FileDialog open={!!editing} file={editing} defaultKind={kind} onClose={() => setEditing(undefined)} />
     </>

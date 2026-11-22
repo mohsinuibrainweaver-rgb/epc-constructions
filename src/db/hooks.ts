@@ -52,6 +52,16 @@ export function useAttachments(paymentId: string | undefined): Attachment[] {
   )
 }
 
+/** Every receipt photo attached to a payment of the project (not removed), for the Files page. */
+export function useProjectAttachments(projectId: string | undefined): Attachment[] {
+  return (
+    useLiveQuery(
+      async () => (projectId ? (await db.attachments.where('projectId').equals(projectId).toArray()).filter((a) => !a.deletedAt) : []),
+      [projectId],
+    ) ?? []
+  )
+}
+
 export function usePlans(projectId: string | undefined): PaymentPlan[] {
   return (
     useLiveQuery(
