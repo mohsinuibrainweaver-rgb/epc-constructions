@@ -57,7 +57,7 @@ export function ForecastChart({ columns, active, onPick, format }: { columns: Fo
         {ticks.map((v) => (
           <g key={v}>
             <line x1={PAD.left} x2={width - PAD.right} y1={y(v)} y2={y(v)} className="stroke-border" strokeWidth={1} />
-            <text x={PAD.left - 8} y={y(v)} dy="0.32em" textAnchor="end" className="fill-muted-foreground" fontSize={11}>
+            <text x={PAD.left - 8} y={y(v)} dy="0.32em" textAnchor="end" className="fill-muted-foreground" fontSize={12}>
               {compact(v)}
             </text>
           </g>
@@ -89,13 +89,13 @@ export function ForecastChart({ columns, active, onPick, format }: { columns: Fo
                 />
               )}
               {total > 0 && (i === active || roomForLabels) && (
-                <text x={cx(i)} y={y(0) - sched - (c.expected > 0 ? Math.max(6, exp) + 2 : 0) - 6} textAnchor="middle" className={i === active ? 'fill-foreground' : 'fill-muted-foreground'} fontSize={10} fontWeight={i === active ? 700 : 400}>
+                <text x={cx(i)} y={y(0) - sched - (c.expected > 0 ? Math.max(6, exp) + 2 : 0) - 6} textAnchor="middle" className={i === active ? 'fill-foreground' : 'fill-muted-foreground'} fontSize={12} fontWeight={i === active ? 700 : 400}>
                   {compact(total)}
                 </text>
               )}
               {total === 0 && <rect x={x0} y={y(0) - 2} width={bar} height={2} className="fill-border" />}
               {i % step === 0 || i === active ? (
-                <text x={cx(i)} y={H - 10} textAnchor="middle" className={i === active ? 'fill-foreground' : 'fill-muted-foreground'} fontSize={11} fontWeight={i === active ? 700 : 400}>
+                <text x={cx(i)} y={H - 10} textAnchor="middle" className={i === active ? 'fill-foreground' : 'fill-muted-foreground'} fontSize={12} fontWeight={i === active ? 700 : 400}>
                   {c.label}
                 </text>
               ) : null}

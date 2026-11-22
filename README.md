@@ -164,6 +164,26 @@ thresholds are `ON_TOLERANCE` (0.5%) and `SLIGHT_OVER` (5%, the usual contingenc
 - Checks: `npx vite-node scripts/budget-outlook-test.ts` (states, outlook, alerts), `budget-test.ts`, `phase-progress-test.ts`,
   `attention-test.ts`. Nothing is stored; it is worked out from the phases and payments.
 
+## Mobile (phone) experience
+
+Audited at 375 x 812 and 320 x 640 on Home, Phases, Ledger, Add payment, Vendors, More, Settings, Forecast, Reports, Files and
+Contracts, by measuring every visible control (target size), input font size, text size and sideways overflow, and compared with
+finance and expense apps on Mobbin (Venmo, Copilot, Monzo, Starling, Lightyear, Lloyds, Affirm). Already good: no sideways overflow at 320,
+every input 16 px or more (so iOS never zooms), 44 px fields and buttons, a floating bottom bar with a centre "+" (the same pattern
+as TikTok, Slack and OpenTable), safe-area insets, `dvh` heights, hover styles only for a mouse, reduced-motion support.
+
+Changed after the audit:
+- **Ledger on a phone** opened with eight stacked filter menus and the first payment below the screen. Now: search plus one **Filters**
+  button with a count of what is on; the payments are on the first screen. The menus open in two columns, "Clear filters" shows when any
+  is on, and arriving with a filter set (from Home's attention list) opens them. From a small tablet up it is unchanged.
+- **Native feel** (`src/index.css`, `index.html`): no grey tap flash; `touch-action: manipulation` so taps are not delayed; buttons and
+  tabs do not select their label when held (text stays selectable); `overscroll-behavior-y: contain` so pulling down cannot reload the
+  page and lose a half-filled payment; `scroll-padding` keeps a focused field clear of the sticky header and the Save bar;
+  `interactive-widget=resizes-content` so the keyboard resizes the page on Android like on iOS.
+- **Targets**: the phase drag handle is 44 px on a phone (it was 36; 14 controls on Phases were under 44).
+- **Charts**: axis labels are 12 px (they were 11).
+- Needs a real phone to confirm: tap delay and flash, pull-to-refresh, keyboard behaviour with the Save bar, safe areas as an installed app.
+
 ## Cash forecast (`/forecast`)
 
 What the coming weeks will cost, from what is already written down. Open it from the menu ("Cash forecast"). Nothing is stored; it is

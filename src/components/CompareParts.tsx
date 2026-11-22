@@ -197,7 +197,7 @@ export function PaceChart({ a, b, format }: { a: number[]; b: number[]; format: 
           {ticks.map((v) => (
             <g key={v}>
               <line x1={PAD.left} x2={width - PAD.right} y1={y(v)} y2={y(v)} className="stroke-border" strokeWidth={1} />
-              <text x={PAD.left - 8} y={y(v)} dy="0.32em" textAnchor="end" className="fill-muted-foreground" fontSize={11}>
+              <text x={PAD.left - 8} y={y(v)} dy="0.32em" textAnchor="end" className="fill-muted-foreground" fontSize={12}>
                 {compact(v)}
               </text>
             </g>
@@ -212,7 +212,7 @@ export function PaceChart({ a, b, format }: { a: number[]; b: number[]; format: 
           {vb !== undefined && <circle cx={x(active)} cy={y(vb)} r={5} className={cn(SIDE_B.fill, 'stroke-card')} strokeWidth={2} />}
           {Array.from({ length: n }, (_, i) =>
             i === active || (i % step === 0 && Math.abs(i - active) > 1) ? (
-              <text key={i} x={x(i)} y={H - 10} textAnchor={i === 0 && n > 1 ? 'start' : 'middle'} className={i === active ? 'fill-foreground' : 'fill-muted-foreground'} fontSize={11} fontWeight={i === active ? 700 : 400}>
+              <text key={i} x={x(i)} y={H - 10} textAnchor={i === 0 && n > 1 ? 'start' : 'middle'} className={i === active ? 'fill-foreground' : 'fill-muted-foreground'} fontSize={12} fontWeight={i === active ? 700 : 400}>
                 {i + 1}
               </text>
             ) : null,

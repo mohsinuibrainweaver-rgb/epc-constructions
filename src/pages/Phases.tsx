@@ -175,7 +175,7 @@ function PhaseRow({
           onPointerDown={onGrab}
           onContextMenu={(e) => e.preventDefault()}
           className={cn(
-            'grid size-9 shrink-0 touch-none place-items-center rounded-md text-muted-foreground outline-none select-none hover:bg-secondary hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50',
+            'grid size-9 shrink-0 touch-none place-items-center rounded-md max-sm:size-11 text-muted-foreground outline-none select-none hover:bg-secondary hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50',
             floating ? 'cursor-grabbing' : 'cursor-grab',
           )}
         >

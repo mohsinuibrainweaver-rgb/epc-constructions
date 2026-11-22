@@ -287,6 +287,8 @@ export const ur: Record<Key, string> = {
   'ledger.empty': 'کوئی ادائیگی نہیں ملی',
   'ledger.noMatchBody': 'دوسرے فلٹر یا تلاش کے الفاظ آزمائیں۔',
   'ledger.clearFilters': 'فلٹر ہٹائیں',
+  'ledger.filters': 'فلٹر',
+  'ledger.filtersOn': '{count} فعال',
   'ledger.emptyAll': 'اپنی پہلی ادائیگی شامل کریں',
   'ledger.emptyAllBody': 'آپ جو بھی ادائیگی درج کریں گے وہ یہاں مرحلے، وینڈر اور منظوری کے ساتھ نظر آئے گی۔',
   'reports.empty': 'رپورٹ کے لیے ابھی کوئی ادائیگی نہیں',

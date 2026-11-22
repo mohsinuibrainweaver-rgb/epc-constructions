@@ -70,7 +70,7 @@ export function TrendChart({ points, budget }: { points: TrendPoint[]; budget?: 
           {ticks.map((v) => (
             <g key={v}>
               <line x1={PAD.left} x2={width - PAD.right} y1={y(v)} y2={y(v)} className="stroke-border" strokeWidth={1} />
-              <text x={PAD.left - 6} y={y(v)} dy="0.32em" textAnchor="end" className="fill-muted-foreground" fontSize={11}>
+              <text x={PAD.left - 6} y={y(v)} dy="0.32em" textAnchor="end" className="fill-muted-foreground" fontSize={12}>
                 {compact(v)}
               </text>
             </g>
@@ -78,7 +78,7 @@ export function TrendChart({ points, budget }: { points: TrendPoint[]; budget?: 
           {showBudget && (
             <g>
               <line x1={PAD.left} x2={width - PAD.right} y1={y(budget)} y2={y(budget)} className="stroke-warning" strokeWidth={1.5} strokeDasharray="2 4" />
-              <text x={width - PAD.right} y={y(budget) - 5} textAnchor="end" className="fill-warning" fontSize={11} fontWeight={600}>
+              <text x={width - PAD.right} y={y(budget) - 5} textAnchor="end" className="fill-warning" fontSize={12} fontWeight={600}>
                 {t('reports.trendBudget')}
               </text>
             </g>
@@ -92,7 +92,7 @@ export function TrendChart({ points, budget }: { points: TrendPoint[]; budget?: 
           {pastEnd >= 0 && <circle cx={x(pastEnd)} cy={y(points[pastEnd].spent)} r={4} className="fill-primary stroke-card" strokeWidth={2} />}
           {points.map((p, i) =>
             labelAt(i) ? (
-              <text key={p.month} x={x(i)} y={H - 6} textAnchor={i === 0 && n > 1 ? 'start' : i === n - 1 && n > 1 ? 'end' : 'middle'} className="fill-muted-foreground" fontSize={11}>
+              <text key={p.month} x={x(i)} y={H - 6} textAnchor={i === 0 && n > 1 ? 'start' : i === n - 1 && n > 1 ? 'end' : 'middle'} className="fill-muted-foreground" fontSize={12}>
                 {formatMonthShort(p.month, lang)}
               </text>
             ) : null,

@@ -180,6 +180,37 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     background: var(--canvas);
+    /* No grey flash on a tap: every control has its own pressed state. */
+    -webkit-tap-highlight-color: transparent;
+    /* Pulling down at the top must not reload the page and throw away a half-filled payment (Android Chrome). The bounce stays. */
+    overscroll-behavior-y: contain;
+  }
+  /* A field that is focused or scrolled to is kept clear of the sticky header and of the Save bar and floating menu below it. */
+  @media (width < 40rem) {
+    html {
+      scroll-padding-top: calc(4.5rem + env(safe-area-inset-top, 0px));
+      scroll-padding-bottom: 7.5rem;
+    }
+  }
+  /* Controls answer a tap at once (no double-tap-zoom wait) and never select their own label when held. Text stays selectable. */
+  button,
+  [role='button'],
+  [role='tab'],
+  [role='radio'],
+  [role='combobox'],
+  [role='switch'],
+  summary,
+  a[href] {
+    touch-action: manipulation;
+  }
+  button,
+  [role='button'],
+  [role='tab'],
+  [role='radio'],
+  [role='switch'] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
   html[lang='ur'] {
     --font-sans: 'Noto Naskh Arabic Variable', 'Noto Naskh Arabic', 'Inter Variable', serif;

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Download, ReceiptText, Search, SearchX } from 'lucide-react'
+import { Download, ReceiptText, Search, SearchX, SlidersHorizontal } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { EmptyState, PageHeader } from '@/components/common'
 import { PaymentsTable } from '@/components/PaymentsTable'
@@ -14,6 +14,7 @@ import type { Key } from '@/i18n/en'
 import { isMissing, MISSING, type Missing } from '@/lib/attention'
 import { csvEscape, download, formatMonth, money, monthKey } from '@/lib/format'
 import { ledgerTotals, LEDGER_SORTS, sortPayments, type LedgerSort } from '@/lib/ledger'
+import { cn } from '@/lib/utils'
 
 export function Ledger() {
   const { t, lang, project, phaseName } = useApp()
@@ -65,6 +66,11 @@ export function Ledger() {
   })
   const rows = sortPayments(filtered, sort)
   const totals = ledgerTotals(rows)
+
+  // Filters in use (not the search words). On a phone they sit behind one button, so the payments are on the first screen; arriving with
+  // a filter already set (from Home) opens them, so what is applied is visible.
+  const activeFilters = [phase, vendor, category, status, mode, month, approval, missing].filter(Boolean).length
+  const [showFilters, setShowFilters] = useState(activeFilters > 0)
 
   const clearFilters = () => {
     setQ('')
@@ -121,14 +127,35 @@ export function Ledger() {
       />
 
       <Card className="p-4">
-        <div role="search" aria-label={t('ledger.filtersLabel')} className="grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-3">
-          <div className="relative col-span-full">
-            <Search aria-hidden="true" className="pointer-events-none absolute inset-s-3.5 top-1/2 size-[1.125rem] -translate-y-1/2 text-muted-foreground" />
-            <label className="sr-only" htmlFor="lq">
-              {t('common.search')}
-            </label>
-            <Input id="lq" type="search" className="ps-10" placeholder={t('ledger.search')} value={q} onChange={(e) => setQ(e.target.value)} />
+        <div role="search" aria-label={t('ledger.filtersLabel')} className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+          <div className="col-span-full flex gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search aria-hidden="true" className="pointer-events-none absolute inset-s-3.5 top-1/2 size-[1.125rem] -translate-y-1/2 text-muted-foreground" />
+              <label className="sr-only" htmlFor="lq">
+                {t('common.search')}
+              </label>
+              <Input id="lq" type="search" enterKeyHint="search" className="ps-10" placeholder={t('ledger.search')} value={q} onChange={(e) => setQ(e.target.value)} />
+            </div>
+            {/* Phone only: from a small tablet up there is room for every filter at once. */}
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0 px-3 sm:hidden"
+              aria-expanded={showFilters}
+              aria-controls="ledger-filters"
+              aria-label={activeFilters > 0 ? `${t('ledger.filters')}: ${t('ledger.filtersOn', { count: activeFilters })}` : t('ledger.filters')}
+              onClick={() => setShowFilters((v) => !v)}
+            >
+              <SlidersHorizontal aria-hidden="true" />
+              {t('ledger.filters')}
+              {activeFilters > 0 && (
+                <span aria-hidden="true" className="grid size-5 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                  {activeFilters}
+                </span>
+              )}
+            </Button>
           </div>
+          <div id="ledger-filters" className={cn('col-span-full grid grid-cols-2 gap-3 sm:contents', !showFilters && 'max-sm:hidden')}>
           <Dropdown aria-label={t('ledger.phase')} value={phase} onChange={(e) => setPhase(e.target.value)}>
             <option value="">{`${t('ledger.phase')}: ${all}`}</option>
             {phases.map((p) => (
@@ -190,6 +217,12 @@ export function Ledger() {
               </option>
             ))}
           </Dropdown>
+          {activeFilters > 0 && (
+            <Button type="button" variant="ghost" size="sm" className="col-span-full w-fit sm:hidden" onClick={clearFilters}>
+              {t('ledger.clearFilters')}
+            </Button>
+          )}
+          </div>
         </div>
       </Card>
 

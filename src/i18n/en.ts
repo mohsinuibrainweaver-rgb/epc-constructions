@@ -285,6 +285,8 @@ export const en = {
   'ledger.empty': 'No payments match',
   'ledger.noMatchBody': 'Try other filters or different search words.',
   'ledger.clearFilters': 'Clear filters',
+  'ledger.filters': 'Filters',
+  'ledger.filtersOn': '{count} on',
   'ledger.emptyAll': 'Add your first payment',
   'ledger.emptyAllBody': 'Every payment you record shows here, with its phase, vendor and approval.',
   'reports.empty': 'No payments to report yet',
