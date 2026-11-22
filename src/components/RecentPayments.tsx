@@ -36,7 +36,7 @@ export function RecentPayments({
   const shown = more ? all : all.slice(0, FEW)
 
   return (
-    <aside aria-labelledby="recent-heading" className={cn('grid content-start gap-3 rounded-xl border bg-muted/60 p-4', className)}>
+    <aside aria-labelledby="recent-heading" className={cn('grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-3 rounded-xl border bg-muted/60 p-4', className)}>
       <h2 id="recent-heading" className="text-base font-semibold">
         {t('pay.recentTitle')}
       </h2>
@@ -44,14 +44,14 @@ export function RecentPayments({
         <p className="text-sm text-muted-foreground">{t('pay.recentEmpty')}</p>
       ) : (
         <>
-          <ul className="grid gap-2">
+          <ul className="grid min-w-0 gap-2">
             {shown.map((p) => {
               const who = (p.vendorId && vendorNames.get(p.vendorId)) || p.payeeName
               const sameVendor = Boolean(vendorId) && p.vendorId === vendorId
               const plain = p.status === 'paid' && !p.approval
               return (
-                <li key={p.id} className={cn('grid gap-0.5 rounded-lg border bg-card px-3 py-2', sameVendor && 'border-primary/60 ring-1 ring-primary/30')}>
-                  <div className="flex items-baseline justify-between gap-3">
+                <li key={p.id} className={cn('grid min-w-0 gap-0.5 rounded-lg border bg-card px-3 py-2', sameVendor && 'border-primary/60 ring-1 ring-primary/30')}>
+                  <div className="flex min-w-0 items-baseline justify-between gap-3">
                     <span className="min-w-0 truncate text-sm font-semibold">{p.purpose}</span>
                     <span className="tabular text-sm font-bold whitespace-nowrap">{money(p.amount)}</span>
                   </div>

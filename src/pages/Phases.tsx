@@ -623,11 +623,11 @@ export function PhaseDetail() {
       </Card>
 
       {where.length > 0 && (
-        <Card className="gap-4 p-4">
-          <CardHeading icon={ChartPie}>{t('phases.whereMoney')}</CardHeading>
-          <ul className="grid gap-3">
+        <Card className="gap-0 overflow-hidden py-0">
+          <CardHeading icon={ChartPie} className="p-4">{t('phases.whereMoney')}</CardHeading>
+          <ul className="divide-y border-t">
             {where.map((r) => (
-              <li key={r.label} className="grid gap-1.5">
+              <li key={r.label} className="grid gap-1.5 px-4 py-3">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="min-w-0 font-semibold">{r.label}</span>
                   <span className="tabular shrink-0">{money(r.amount)}</span>
@@ -640,11 +640,11 @@ export function PhaseDetail() {
       )}
 
       {bought.length > 0 && (
-        <Card className="gap-4 p-4">
-          <CardHeading icon={Package}>{t('phases.materials')}</CardHeading>
-          <ul className="grid gap-3">
+        <Card className="gap-0 overflow-hidden py-0">
+          <CardHeading icon={Package} className="p-4">{t('phases.materials')}</CardHeading>
+          <ul className="divide-y border-t">
             {bought.map((r) => (
-              <li key={r.key} className="flex items-start justify-between gap-3">
+              <li key={r.key} className="flex items-start justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <p className="font-semibold">{r.item}</p>
                   <p className="tabular text-sm text-muted-foreground">

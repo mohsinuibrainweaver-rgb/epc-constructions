@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type ElementType, type ReactNode } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Clock, ImagePlus, Loader2, Trash2, TriangleAlert } from 'lucide-react'
+import { Banknote, ClipboardList, Clock, ImagePlus, Loader2, Paperclip, ReceiptText, Store, Trash2, TriangleAlert, Wallet } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { Field, GroupField } from '@/components/common'
 import { useToast } from '@/components/Toast'
@@ -9,7 +9,8 @@ import { VendorDialog } from '@/components/VendorDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dropdown } from '@/components/ui/dropdown'
-import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
+import { ViewTabs } from '@/components/ui/tabs'
+import { IconTile } from '@/components/CardHeading'
 import { Textarea } from '@/components/ui/textarea'
 import { ApprovalNotice } from '@/components/ApprovalActions'
 import { db } from '@/db/db'
@@ -73,6 +74,42 @@ const rememberCategory = (c: Category) => {
   } catch {
     /* private mode: nothing to remember */
   }
+}
+
+/** One part of the form: a small icon and a heading, then its fields. Parts are divided by a line, so a long form reads as five short ones. */
+function FormSection({ icon, title, children }: { icon: ElementType; title: string; children: ReactNode }) {
+  const id = useId()
+  return (
+    <section aria-labelledby={id} className="grid gap-4 border-t pt-7">
+      <h2 id={id} className="flex items-center gap-2.5 text-base font-semibold">
+        <IconTile icon={icon} />
+        {title}
+      </h2>
+      {children}
+    </section>
+  )
+}
+
+/** What is being entered, as it will read: the amount large, the details under it. It follows the form as it is filled in. Only shown beside the form. */
+function PaymentSummary({ amount, rows }: { amount: number; rows: [string, string][] }) {
+  const { t } = useApp()
+  return (
+    <aside aria-labelledby="pay-summary" className="grid min-w-0 gap-3 rounded-xl border bg-card p-4">
+      <h2 id="pay-summary" className="flex items-center gap-2.5 text-base font-semibold">
+        <IconTile icon={ReceiptText} />
+        {t('pay.summary')}
+      </h2>
+      <p className="tabular text-3xl font-extrabold break-words">{money(amount)}</p>
+      <dl className="grid gap-2 border-t pt-3 text-sm">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-baseline justify-between gap-3">
+            <dt className="shrink-0 text-muted-foreground">{label}</dt>
+            <dd className="min-w-0 truncate text-end font-semibold">{value || '—'}</dd>
+          </div>
+        ))}
+      </dl>
+    </aside>
+  )
 }
 
 export function AddPayment() {
@@ -432,11 +469,14 @@ export function AddPayment() {
 
   const nonMisc = CATEGORIES.filter((c) => c !== 'misc')
 
+  const statusChoices = (existing?.status === 'skipped' ? ['paid', 'planned', 'advance', 'skipped'] : ['paid', 'planned', 'advance']) as PayStatus[]
+  const phaseLabel = (phaseId && phases.find((p) => p.id === phaseId) && phaseName(phases.find((p) => p.id === phaseId)!)) || ''
+
   return (
     <div className="@container w-full">
       <div className="mx-auto grid w-full max-w-2xl items-start gap-6 @4xl:max-w-[61.5rem] @4xl:grid-cols-[minmax(0,1fr)_18rem]">
     <form
-      className="grid w-full gap-5 rounded-xl border bg-card p-4 text-card-foreground sm:p-8"
+      className="grid w-full gap-7"
       onSubmit={(e) => {
         e.preventDefault()
         void submit()
@@ -463,330 +503,359 @@ export function AddPayment() {
       <GroupField label={t('pay.kind')}>
         {(labelId) => (
           <>
-            <PillRadioGroup aria-labelledby={labelId} value={misc ? 'misc' : 'standard'} onValueChange={(v) => setMisc(v === 'misc')}>
-              <PillRadioItem value="standard">{t('pay.standard')}</PillRadioItem>
-              <PillRadioItem value="misc">{t('pay.misc')}</PillRadioItem>
-            </PillRadioGroup>
+            <ViewTabs
+              fill
+              size="default"
+              labelledBy={labelId}
+              value={misc ? 'misc' : 'standard'}
+              onValueChange={(v) => setMisc(v === 'misc')}
+              tabs={[
+                { value: 'standard', label: t('pay.standard') },
+                { value: 'misc', label: t('pay.misc') },
+              ]}
+            />
             {misc && <p className="text-sm text-muted-foreground">{t('pay.miscHint')}</p>}
           </>
         )}
       </GroupField>
 
-      <Field label={t('pay.amount')} htmlFor="amount" error={errors.amount}>
-        <Input
-          className="tabular h-14 text-2xl font-extrabold"
-          inputMode="numeric"
-          autoComplete="off"
-          value={amount}
-          onChange={(e) => entry('amount', e.target.value)}
-        />
-      </Field>
-
-      <div className="grid items-start gap-4 sm:grid-cols-2">
-        <Field label={t('pay.date')} htmlFor="date" error={errors.date}>
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
-        <Field label={misc ? t('pay.purposeMisc') : isMaterial ? t('mat.item') : t('pay.purpose')} htmlFor="purpose" error={errors.purpose} hint={isMaterial ? t('mat.itemHint') : undefined}>
-          <Input value={purpose} onChange={(e) => typeItem(e.target.value)} autoComplete="off" list={isMaterial ? 'material-items' : undefined} />
-        </Field>
-        {isMaterial && (
-          <datalist id="material-items">
-            {items.map((i) => (
-              <option key={i.id} value={i.purpose} />
-            ))}
-          </datalist>
-        )}
-
-        {suggestedVendor && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-info-soft px-3 py-2 text-sm sm:col-span-2">
-            <span className="font-medium text-info">{t('pay.vendorNudge', { name: suggestedVendor.name })}</span>
-            <Button type="button" size="sm" variant="secondary" onClick={() => pickVendor(suggestedVendor.id)}>
-              {t('pay.vendorNudgeBtn', { name: suggestedVendor.name })}
-            </Button>
-          </div>
-        )}
-
-        {misc ? (
-          <Field label={t('pay.miscType')}>
-            <Dropdown value={miscType} onChange={(e) => setMiscType(e.target.value as MiscType)}>
-              {MISC_TYPES.map((m) => (
-                <option key={m} value={m}>
-                  {t(`misc.${m}` as Key)}
-                </option>
-              ))}
-            </Dropdown>
+      <FormSection icon={Banknote} title={t('pay.sec.amount')}>
+        <div className="grid items-start gap-4 sm:grid-cols-[minmax(0,1fr)_13rem]">
+          <Field label={t('pay.amount')} htmlFor="amount" error={errors.amount}>
+            <Input
+              className="tabular h-14 text-2xl font-extrabold"
+              inputMode="numeric"
+              autoComplete="off"
+              value={amount}
+              onChange={(e) => entry('amount', e.target.value)}
+            />
           </Field>
-        ) : (
-          <Field label={t('pay.category')}>
-            <Dropdown value={category} onChange={(e) => {
-                touched.current.add('category')
-                setCategory(e.target.value as Category)
-              }}>
-              {nonMisc.map((c) => (
-                <option key={c} value={c}>
-                  {t(`cat.${c}` as Key)}
-                </option>
-              ))}
-            </Dropdown>
+          <Field label={t('pay.date')} htmlFor="date" error={errors.date}>
+            <Input type="date" className="sm:h-14" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-        )}
+        </div>
+      </FormSection>
 
-        <Field label={`${t('pay.phase')} (${t('common.optional')})`}>
-          <Dropdown value={phaseId} onChange={(e) => setPhaseId(e.target.value)}>
-            <option value="">{t('pay.noPhase')}</option>
-            {phases.map((p) => (
-              <option key={p.id} value={p.id}>
-                {phaseName(p)}
-              </option>
-            ))}
-          </Dropdown>
-        </Field>
-
-        {phaseNote && (
-          <p
-            role="status"
-            className={cn(
-              'flex items-start gap-2 text-sm sm:col-span-2',
-              phaseNote.tone === 'danger' ? 'font-semibold text-danger' : phaseNote.tone === 'warning' ? 'font-semibold text-warning' : 'text-muted-foreground',
-            )}
+      <FormSection icon={ClipboardList} title={t('pay.sec.what')}>
+        <div className="grid items-start gap-4 sm:grid-cols-2">
+          <Field
+            label={misc ? t('pay.purposeMisc') : isMaterial ? t('mat.item') : t('pay.purpose')}
+            htmlFor="purpose"
+            error={errors.purpose}
+            hint={isMaterial ? t('mat.itemHint') : undefined}
+            className="sm:col-span-2"
           >
-            {(phaseNote.tone === 'warning' || phaseNote.tone === 'danger') && <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />}
-            <span>{phaseNote.text}</span>
-          </p>
-        )}
+            <Input value={purpose} onChange={(e) => typeItem(e.target.value)} autoComplete="off" list={isMaterial ? 'material-items' : undefined} />
+          </Field>
+          {isMaterial && (
+            <datalist id="material-items">
+              {items.map((i) => (
+                <option key={i.id} value={i.purpose} />
+              ))}
+            </datalist>
+          )}
 
-        {isMaterial && (
-          <div className="grid grid-cols-2 gap-4 sm:col-span-2 sm:grid-cols-3">
-            <Field label={t('mat.quantity')} htmlFor="quantity" error={errors.quantity}>
-              <Input className="tabular" inputMode="decimal" autoComplete="off" value={quantity} onChange={(e) => entry('quantity', e.target.value)} />
-            </Field>
-            <Field label={t('mat.unit')} htmlFor="unit">
-              <Dropdown
-                value={unit}
-                onChange={(e) => {
-                  setUnit(e.target.value as MaterialUnit)
-                  setUnitChosen(true)
-                }}
-              >
-                {MATERIAL_UNITS.map((u) => (
-                  <option key={u} value={u}>
-                    {t(`unit.${u}` as Key)}
+          {misc ? (
+            <Field label={t('pay.miscType')}>
+              <Dropdown value={miscType} onChange={(e) => setMiscType(e.target.value as MiscType)}>
+                {MISC_TYPES.map((m) => (
+                  <option key={m} value={m}>
+                    {t(`misc.${m}` as Key)}
                   </option>
                 ))}
               </Dropdown>
             </Field>
-            <Field label={t('mat.rate')} htmlFor="rate" hint={byRate ? t('mat.rateHintTyped') : rate ? t('mat.rateHint') : undefined} className="col-span-2 sm:col-span-1">
-              <Input className="tabular" inputMode="decimal" autoComplete="off" value={rate} onChange={(e) => entry('rate', e.target.value)} />
+          ) : (
+            <Field label={t('pay.category')}>
+              <Dropdown
+                value={category}
+                onChange={(e) => {
+                  touched.current.add('category')
+                  setCategory(e.target.value as Category)
+                }}
+              >
+                {nonMisc.map((c) => (
+                  <option key={c} value={c}>
+                    {t(`cat.${c}` as Key)}
+                  </option>
+                ))}
+              </Dropdown>
             </Field>
-            {lastBought && (
-              <p className="col-span-2 text-sm text-muted-foreground sm:col-span-3">
-                {(() => {
-                  const who = lastBought.vendorId ? vendorLabel.get(lastBought.vendorId) : lastBought.payeeName
-                  const args = { rate: moneyRate(rateOf(lastBought)), unit: t(`unit.${lastBought.unit}` as Key), date: formatDate(lastBought.date, lang), who: who ?? '' }
-                  return who ? t('mat.lastBoughtFrom', args) : t('mat.lastBought', args)
-                })()}
-              </p>
-            )}
-          </div>
-        )}
+          )}
 
-        <Field label={`${isMaterial ? t('mat.supplier') : t('pay.vendor')} (${t('common.optional')})`}>
-          <Dropdown
-            value={vendorId}
-            onChange={(e) => {
-              if (e.target.value === '__new') setVendorOpen(true)
-              else pickVendor(e.target.value)
-            }}
-          >
-            <option value="">{t('pay.noVendor')}</option>
-            {vendors.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-            <option value="__new">{t('pay.newVendor')}</option>
-          </Dropdown>
-        </Field>
-
-        {(choosable.length > 0 || contractId) && (
-          <Field label={`${t('pay.contract')} (${t('common.optional')})`} hint={t('pay.contractHint')}>
-            <Dropdown value={contractId} onChange={(e) => pickContract(e.target.value)}>
-              <option value="">{t('pay.noContract')}</option>
-              {choosable.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                  {c.vendorId && vendorLabel.get(c.vendorId) ? ` · ${vendorLabel.get(c.vendorId)}` : ''}
+          <Field label={`${t('pay.phase')} (${t('common.optional')})`}>
+            <Dropdown value={phaseId} onChange={(e) => setPhaseId(e.target.value)}>
+              <option value="">{t('pay.noPhase')}</option>
+              {phases.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {phaseName(p)}
                 </option>
               ))}
             </Dropdown>
           </Field>
-        )}
 
-        {contractObj && preview && (
-          <div role="group" aria-labelledby="contract-strip-title" className="grid gap-2.5 rounded-xl border bg-muted/40 p-3 sm:col-span-2">
-            <div className="flex items-baseline justify-between gap-3">
-              <span id="contract-strip-title" className="min-w-0 truncate text-sm font-semibold">
-                {contractObj.title}
-              </span>
-              {!edit && <span className="shrink-0 text-xs font-semibold text-muted-foreground">{t('pay.instalment', { n: preview.instalment })}</span>}
-            </div>
-            <ContractBar pct={preview.before.pct} state={preview.before.state} label={t('contract.paidPct', { pct: preview.before.pct })} />
-            <dl className="tabular grid grid-cols-3 gap-2 text-sm">
-              <div className="min-w-0">
-                <dt className="text-xs text-muted-foreground">{t('contract.agreed')}</dt>
-                <dd className="font-semibold">{money(preview.before.total)}</dd>
-              </div>
-              <div className="min-w-0">
-                <dt className="text-xs text-muted-foreground">{t('contract.paid')}</dt>
-                <dd className="font-semibold">{money(preview.before.paid)}</dd>
-              </div>
-              <div className="min-w-0">
-                <dt className="text-xs text-muted-foreground">{preview.before.remaining < 0 ? t('contract.overpaid') : t('contract.remaining')}</dt>
-                <dd className="font-semibold">{money(Math.abs(preview.before.remaining))}</dd>
-              </div>
-            </dl>
-            <div role="status" className="grid gap-1 text-sm">
-              {draftAmount > 0 && preview.counts && preview.over > 0 && (
-                <p className="flex items-start gap-2 font-semibold text-danger">
-                  <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-                  {t('pay.contractOver', { amount: money(preview.over) })}
+          {phaseNote && (
+            <p
+              role="status"
+              className={cn(
+                'flex items-start gap-2 text-sm sm:col-span-2',
+                phaseNote.tone === 'danger' ? 'font-semibold text-danger' : phaseNote.tone === 'warning' ? 'font-semibold text-warning' : 'text-muted-foreground',
+              )}
+            >
+              {(phaseNote.tone === 'warning' || phaseNote.tone === 'danger') && <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />}
+              <span>{phaseNote.text}</span>
+            </p>
+          )}
+
+          {isMaterial && (
+            <div className="grid grid-cols-2 gap-4 sm:col-span-2 sm:grid-cols-3">
+              <Field label={t('mat.quantity')} htmlFor="quantity" error={errors.quantity}>
+                <Input className="tabular" inputMode="decimal" autoComplete="off" value={quantity} onChange={(e) => entry('quantity', e.target.value)} />
+              </Field>
+              <Field label={t('mat.unit')} htmlFor="unit">
+                <Dropdown
+                  value={unit}
+                  onChange={(e) => {
+                    setUnit(e.target.value as MaterialUnit)
+                    setUnitChosen(true)
+                  }}
+                >
+                  {MATERIAL_UNITS.map((u) => (
+                    <option key={u} value={u}>
+                      {t(`unit.${u}` as Key)}
+                    </option>
+                  ))}
+                </Dropdown>
+              </Field>
+              <Field label={t('mat.rate')} htmlFor="rate" hint={byRate ? t('mat.rateHintTyped') : rate ? t('mat.rateHint') : undefined} className="col-span-2 sm:col-span-1">
+                <Input className="tabular" inputMode="decimal" autoComplete="off" value={rate} onChange={(e) => entry('rate', e.target.value)} />
+              </Field>
+              {lastBought && (
+                <p className="col-span-2 text-sm text-muted-foreground sm:col-span-3">
+                  {(() => {
+                    const who = lastBought.vendorId ? vendorLabel.get(lastBought.vendorId) : lastBought.payeeName
+                    const args = { rate: moneyRate(rateOf(lastBought)), unit: t(`unit.${lastBought.unit}` as Key), date: formatDate(lastBought.date, lang), who: who ?? '' }
+                    return who ? t('mat.lastBoughtFrom', args) : t('mat.lastBought', args)
+                  })()}
                 </p>
               )}
-              {draftAmount > 0 && preview.counts && preview.over === 0 && (
-                <p className="text-muted-foreground">{preview.after === 0 ? t('pay.contractDone') : t('pay.contractAfter', { amount: money(preview.after) })}</p>
-              )}
-              {draftAmount > 0 && !preview.counts && status === 'planned' && <p className="text-muted-foreground">{t('pay.contractPlanned')}</p>}
-              {draftAmount > 0 && !preview.counts && status !== 'planned' && <p className="text-muted-foreground">{t('pay.contractWaits')}</p>}
             </div>
-            {!edit && !purpose.trim() && (
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="h-auto w-fit max-w-full py-1.5 text-start whitespace-normal"
-                onClick={() => setPurpose(t('pay.instalmentName', { name: contractObj.title, n: preview.instalment }))}
-              >
-                {t('pay.useInstalment', { name: t('pay.instalmentName', { name: contractObj.title, n: preview.instalment }) })}
+          )}
+        </div>
+      </FormSection>
+
+      <FormSection icon={Store} title={t('pay.sec.who')}>
+        <div className="grid items-start gap-4 sm:grid-cols-2">
+          {suggestedVendor && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-info-soft px-3 py-2 text-sm sm:col-span-2">
+              <span className="font-medium text-info">{t('pay.vendorNudge', { name: suggestedVendor.name })}</span>
+              <Button type="button" size="sm" variant="secondary" onClick={() => pickVendor(suggestedVendor.id)}>
+                {t('pay.vendorNudgeBtn', { name: suggestedVendor.name })}
               </Button>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {vendorId && vendorLast && (
-          <div className="grid gap-2 text-sm sm:col-span-2">
-            <p className="text-muted-foreground">
-              {t('pay.lastTo', { name: vendorName ?? '', item: vendorLast.purpose, amount: money(vendorLast.amount), date: formatDate(vendorLast.date, lang) })}
-              {filled.length > 0 && !edit && <> {t('pay.filledFrom', { what: filled.join(' · ') })}</>}
-            </p>
-            {suggestedPhase && (
-              <Button type="button" size="sm" variant="secondary" className="h-auto w-fit max-w-full py-1.5 text-start whitespace-normal" onClick={() => setPhaseId(suggestedPhase.id)}>
-                {t('pay.usePhase', { name: phaseName(suggestedPhase) })}
-              </Button>
-            )}
-          </div>
-        )}
-        {double && (
-          <div role="status" className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 text-sm font-semibold text-warning sm:col-span-2">
-            <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-            <span>{t('pay.maybeDouble', { name: vendorName ?? '', amount: money(double.amount), item: double.purpose, date: formatDate(double.date, lang) })}</span>
-          </div>
-        )}
-
-        {!vendorId && (
-          <Field label={`${isMaterial ? t('mat.shopName') : t('pay.payee')} (${t('common.optional')})`}>
-            <Input value={payee} onChange={(e) => setPayee(e.target.value)} autoComplete="off" />
-          </Field>
-        )}
-      </div>
-
-      <GroupField label={t('pay.status')}>
-        {(labelId) => (
-          <PillRadioGroup aria-labelledby={labelId} value={status} onValueChange={(v) => setStatus(v as PayStatus)}>
-            {(existing?.status === 'skipped' ? (['paid', 'planned', 'advance', 'skipped'] as PayStatus[]) : (['paid', 'planned', 'advance'] as PayStatus[])).map((s) => (
-              <PillRadioItem key={s} value={s}>
-                {t(`status.${s}` as Key)}
-              </PillRadioItem>
-            ))}
-          </PillRadioGroup>
-        )}
-      </GroupField>
-
-      {needsApproval(settings.role, status) && (
-        <p className="flex items-start gap-2 rounded-xl bg-info-soft px-3 py-2 text-sm font-medium text-info">
-          <Clock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-          {t('pay.approvalHint')}
-        </p>
-      )}
-
-      <div className="grid gap-5 sm:grid-cols-2">
-        <GroupField label={t('pay.mode')}>
-          {(labelId) => (
-            <PillRadioGroup
-              aria-labelledby={labelId}
-              value={mode}
-              onValueChange={(v) => {
-                setMode(v as PayMode)
-                if (v === 'bank' && vendorId) fillBankFrom(vendorId)
+          <Field label={`${isMaterial ? t('mat.supplier') : t('pay.vendor')} (${t('common.optional')})`}>
+            <Dropdown
+              value={vendorId}
+              onChange={(e) => {
+                if (e.target.value === '__new') setVendorOpen(true)
+                else pickVendor(e.target.value)
               }}
             >
-              {(['cash', 'bank'] as PayMode[]).map((m) => (
-                <PillRadioItem key={m} value={m}>
-                  {t(`mode.${m}` as Key)}
-                </PillRadioItem>
+              <option value="">{t('pay.noVendor')}</option>
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
               ))}
-            </PillRadioGroup>
-          )}
-        </GroupField>
-        <GroupField label={t('pay.paidBy')}>
-          {(labelId) => (
-            <PillRadioGroup aria-labelledby={labelId} value={paidBy} onValueChange={(v) => {
-              touched.current.add('paidBy')
-              setPaidBy(v as Role)
-            }}>
-              {(['investor', 'builder'] as Role[]).map((r) => (
-                <PillRadioItem key={r} value={r}>
-                  {t(`paidBy.${r}` as Key)}
-                </PillRadioItem>
-              ))}
-            </PillRadioGroup>
-          )}
-        </GroupField>
-      </div>
-
-      {mode === 'bank' && (
-        <div role="group" aria-labelledby="bank-title" className="grid items-start gap-4 rounded-xl border bg-muted/40 p-3 sm:grid-cols-2">
-          <p id="bank-title" className="text-sm font-semibold sm:col-span-2">
-            {t('pay.bankTitle')}
-          </p>
-          <BankSelect id="bank-name" label={t('pay.bankName')} value={bankName} onChange={setBankName} />
-          <Field label={t('pay.bankAccount')} htmlFor="bank-account" hint={t('pay.bankAccountHint')}>
-            <Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+              <option value="__new">{t('pay.newVendor')}</option>
+            </Dropdown>
           </Field>
-          <Field label={t('pay.bankRef')} htmlFor="bank-ref" className="sm:col-span-2">
-            <Input value={bankRef} onChange={(e) => setBankRef(e.target.value)} autoComplete="off" spellCheck={false} />
-          </Field>
-        </div>
-      )}
 
-      <div className="grid gap-2">
-        <span className="text-sm font-semibold">{t('pay.receipts')}</span>
-        <FileDropzone accept="image/*,video/*" maxBytes={MAX_ATTACHMENT_BYTES} multiple icon={ImagePlus} browseLabel={t('pay.addReceipt')} instruction={t('drop.media')} hint={t('pay.attachHint')} onFiles={addFiles}>
-          {(visibleExisting.length > 0 || newFiles.length > 0) && (
-            <div className="flex flex-wrap gap-2">
-              {visibleExisting.map((a) => (
-                <StoredReceipt key={a.id} attachment={a} label={t('pay.removePhoto')} onRemove={() => setRemoved((r) => [...r, a.id])} />
-              ))}
-              {newFiles.map((f) => (
-                <FileThumb key={f.key} blob={f.blob} removeLabel={t('pay.removePhoto')} onRemove={() => setNewFiles((xs) => xs.filter((x) => x.key !== f.key))} />
-              ))}
+          {!vendorId && (
+            <Field label={`${isMaterial ? t('mat.shopName') : t('pay.payee')} (${t('common.optional')})`}>
+              <Input value={payee} onChange={(e) => setPayee(e.target.value)} autoComplete="off" />
+            </Field>
+          )}
+
+          {(choosable.length > 0 || contractId) && (
+            <Field label={`${t('pay.contract')} (${t('common.optional')})`} hint={t('pay.contractHint')}>
+              <Dropdown value={contractId} onChange={(e) => pickContract(e.target.value)}>
+                <option value="">{t('pay.noContract')}</option>
+                {choosable.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                    {c.vendorId && vendorLabel.get(c.vendorId) ? ` · ${vendorLabel.get(c.vendorId)}` : ''}
+                  </option>
+                ))}
+              </Dropdown>
+            </Field>
+          )}
+
+          {contractObj && preview && (
+            <div role="group" aria-labelledby="contract-strip-title" className="grid gap-2.5 rounded-xl border bg-muted/40 p-3 sm:col-span-2">
+              <div className="flex items-baseline justify-between gap-3">
+                <span id="contract-strip-title" className="min-w-0 truncate text-sm font-semibold">
+                  {contractObj.title}
+                </span>
+                {!edit && <span className="shrink-0 text-xs font-semibold text-muted-foreground">{t('pay.instalment', { n: preview.instalment })}</span>}
+              </div>
+              <ContractBar pct={preview.before.pct} state={preview.before.state} label={t('contract.paidPct', { pct: preview.before.pct })} />
+              <dl className="tabular grid grid-cols-3 gap-2 text-sm">
+                <div className="min-w-0">
+                  <dt className="text-xs text-muted-foreground">{t('contract.agreed')}</dt>
+                  <dd className="font-semibold">{money(preview.before.total)}</dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className="text-xs text-muted-foreground">{t('contract.paid')}</dt>
+                  <dd className="font-semibold">{money(preview.before.paid)}</dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className="text-xs text-muted-foreground">{preview.before.remaining < 0 ? t('contract.overpaid') : t('contract.remaining')}</dt>
+                  <dd className="font-semibold">{money(Math.abs(preview.before.remaining))}</dd>
+                </div>
+              </dl>
+              <div role="status" className="grid gap-1 text-sm">
+                {draftAmount > 0 && preview.counts && preview.over > 0 && (
+                  <p className="flex items-start gap-2 font-semibold text-danger">
+                    <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                    {t('pay.contractOver', { amount: money(preview.over) })}
+                  </p>
+                )}
+                {draftAmount > 0 && preview.counts && preview.over === 0 && (
+                  <p className="text-muted-foreground">{preview.after === 0 ? t('pay.contractDone') : t('pay.contractAfter', { amount: money(preview.after) })}</p>
+                )}
+                {draftAmount > 0 && !preview.counts && status === 'planned' && <p className="text-muted-foreground">{t('pay.contractPlanned')}</p>}
+                {draftAmount > 0 && !preview.counts && status !== 'planned' && <p className="text-muted-foreground">{t('pay.contractWaits')}</p>}
+              </div>
+              {!edit && !purpose.trim() && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="h-auto w-fit max-w-full py-1.5 text-start whitespace-normal"
+                  onClick={() => setPurpose(t('pay.instalmentName', { name: contractObj.title, n: preview.instalment }))}
+                >
+                  {t('pay.useInstalment', { name: t('pay.instalmentName', { name: contractObj.title, n: preview.instalment }) })}
+                </Button>
+              )}
             </div>
           )}
-        </FileDropzone>
-      </div>
 
-      <Field label={`${t('pay.note')} (${t('common.optional')})`}>
-        <Textarea value={note} onChange={(e) => setNote(e.target.value)} />
-      </Field>
+          {vendorId && vendorLast && (
+            <div className="grid gap-2 text-sm sm:col-span-2">
+              <p className="text-muted-foreground">
+                {t('pay.lastTo', { name: vendorName ?? '', item: vendorLast.purpose, amount: money(vendorLast.amount), date: formatDate(vendorLast.date, lang) })}
+                {filled.length > 0 && !edit && <> {t('pay.filledFrom', { what: filled.join(' · ') })}</>}
+              </p>
+              {suggestedPhase && (
+                <Button type="button" size="sm" variant="secondary" className="h-auto w-fit max-w-full py-1.5 text-start whitespace-normal" onClick={() => setPhaseId(suggestedPhase.id)}>
+                  {t('pay.usePhase', { name: phaseName(suggestedPhase) })}
+                </Button>
+              )}
+            </div>
+          )}
+          {double && (
+            <div role="status" className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 text-sm font-semibold text-warning sm:col-span-2">
+              <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+              <span>{t('pay.maybeDouble', { name: vendorName ?? '', amount: money(double.amount), item: double.purpose, date: formatDate(double.date, lang) })}</span>
+            </div>
+          )}
+        </div>
+      </FormSection>
+
+      <FormSection icon={Wallet} title={t('pay.sec.how')}>
+        <GroupField label={t('pay.status')}>
+          {(labelId) => (
+            <ViewTabs
+              fill
+              size="default"
+              labelledBy={labelId}
+              value={status}
+              onValueChange={(v) => setStatus(v as PayStatus)}
+              tabs={statusChoices.map((s) => ({ value: s, label: t(`status.${s}` as Key) }))}
+            />
+          )}
+        </GroupField>
+
+        {needsApproval(settings.role, status) && (
+          <p className="flex items-start gap-2 rounded-xl bg-info-soft px-3 py-2 text-sm font-medium text-info">
+            <Clock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            {t('pay.approvalHint')}
+          </p>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <GroupField label={t('pay.mode')}>
+            {(labelId) => (
+              <ViewTabs
+                fill
+                size="default"
+                labelledBy={labelId}
+                value={mode}
+                onValueChange={(v) => {
+                  setMode(v as PayMode)
+                  if (v === 'bank' && vendorId) fillBankFrom(vendorId)
+                }}
+                tabs={(['cash', 'bank'] as PayMode[]).map((m) => ({ value: m, label: t(`mode.${m}` as Key) }))}
+              />
+            )}
+          </GroupField>
+          <GroupField label={t('pay.paidBy')}>
+            {(labelId) => (
+              <ViewTabs
+                fill
+                size="default"
+                labelledBy={labelId}
+                value={paidBy}
+                onValueChange={(v) => {
+                  touched.current.add('paidBy')
+                  setPaidBy(v as Role)
+                }}
+                tabs={(['investor', 'builder'] as Role[]).map((r) => ({ value: r, label: t(`paidBy.${r}` as Key) }))}
+              />
+            )}
+          </GroupField>
+        </div>
+
+        {mode === 'bank' && (
+          <div role="group" aria-labelledby="bank-title" className="grid items-start gap-4 rounded-xl border bg-muted/40 p-3 sm:grid-cols-2">
+            <p id="bank-title" className="text-sm font-semibold sm:col-span-2">
+              {t('pay.bankTitle')}
+            </p>
+            <BankSelect id="bank-name" label={t('pay.bankName')} value={bankName} onChange={setBankName} />
+            <Field label={t('pay.bankAccount')} htmlFor="bank-account" hint={t('pay.bankAccountHint')}>
+              <Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+            </Field>
+            <Field label={t('pay.bankRef')} htmlFor="bank-ref" className="sm:col-span-2">
+              <Input value={bankRef} onChange={(e) => setBankRef(e.target.value)} autoComplete="off" spellCheck={false} />
+            </Field>
+          </div>
+        )}
+      </FormSection>
+
+      <FormSection icon={Paperclip} title={t('pay.sec.proof')}>
+        <div className="grid gap-2">
+          <span className="text-sm font-semibold">{t('pay.receipts')}</span>
+          <FileDropzone accept="image/*,video/*" maxBytes={MAX_ATTACHMENT_BYTES} multiple icon={ImagePlus} browseLabel={t('pay.addReceipt')} instruction={t('drop.media')} hint={t('pay.attachHint')} onFiles={addFiles}>
+            {(visibleExisting.length > 0 || newFiles.length > 0) && (
+              <div className="flex flex-wrap gap-2">
+                {visibleExisting.map((a) => (
+                  <StoredReceipt key={a.id} attachment={a} label={t('pay.removePhoto')} onRemove={() => setRemoved((r) => [...r, a.id])} />
+                ))}
+                {newFiles.map((f) => (
+                  <FileThumb key={f.key} blob={f.blob} removeLabel={t('pay.removePhoto')} onRemove={() => setNewFiles((xs) => xs.filter((x) => x.key !== f.key))} />
+                ))}
+              </div>
+            )}
+          </FileDropzone>
+        </div>
+
+        <Field label={`${t('pay.note')} (${t('common.optional')})`}>
+          <Textarea value={note} onChange={(e) => setNote(e.target.value)} />
+        </Field>
+      </FormSection>
 
       {dup && (
         <div role="alert" className="flex items-start gap-3 rounded-xl bg-warning-soft p-4 text-sm font-semibold text-warning">
@@ -812,7 +881,7 @@ export function AddPayment() {
         </Button>
       )}
 
-      <div className="sticky inset-x-0 bottom-0 -mx-4 -mb-4 flex justify-end gap-3 rounded-b-xl border-t bg-card px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:mb-0 sm:rounded-none sm:bg-transparent sm:px-0 sm:pt-5 sm:pb-0">
+      <div className="sticky inset-x-0 bottom-0 -mx-4 flex justify-end gap-3 border-t bg-background px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pt-6 sm:pb-0">
         <Button type="button" variant="outline" onClick={goBack}>
           {t('common.cancel')}
         </Button>
@@ -830,13 +899,22 @@ export function AddPayment() {
       <VendorDialog open={vendorOpen} onClose={() => setVendorOpen(false)} onSaved={(vid) => setVendorId(vid)} />
     </form>
         {/* Beside the form where there is room; hidden on a phone, where the page is one column and the form needs the space. */}
-        <RecentPayments
-          payments={payments}
-          vendorNames={vendorLabel}
-          excludeId={id}
-          vendorId={vendorId}
-          className="hidden @4xl:grid @4xl:sticky @4xl:top-[var(--page-gap)]"
-        />
+        <div className="hidden min-w-0 grid-cols-[minmax(0,1fr)] gap-4 @4xl:grid @4xl:sticky @4xl:top-[var(--page-gap)]">
+          <PaymentSummary
+            amount={draftAmount}
+            rows={[
+              [misc ? t('pay.purposeMisc') : isMaterial ? t('mat.item') : t('pay.purpose'), purpose.trim()],
+              [t('pay.phase'), phaseLabel],
+              [t('pay.vendor'), (vendorId && vendorName) || payee.trim()],
+              [t('pay.date'), date ? formatDate(date, lang) : ''],
+              [t('pay.status'), t(`status.${status}` as Key)],
+              [t('pay.mode'), t(`mode.${mode}` as Key)],
+              [t('pay.paidBy'), t(`paidBy.${paidBy}` as Key)],
+              [t('pay.summary.files'), String(visibleExisting.length + newFiles.length)],
+            ]}
+          />
+          <RecentPayments payments={payments} vendorNames={vendorLabel} excludeId={id} vendorId={vendorId} />
+        </div>
       </div>
     </div>
   )

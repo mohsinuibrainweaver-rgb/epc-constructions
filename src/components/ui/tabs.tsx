@@ -65,8 +65,14 @@ function ViewTabs({
   value,
   onValueChange,
   className,
+  size = 'xs',
+  fill,
 }: {
   tabs: ViewTab[]
+  /** `xs` is compact (settings, filters); `default` is the roomy one for a form choice. */
+  size?: 'default' | 'xs'
+  /** Stretch across the width and share it between the tabs equally (a segmented control). */
+  fill?: boolean
   /** The name of the group, as text; or `labelledBy`, the id of a visible label (a settings row). */
   label?: string
   labelledBy?: string
@@ -77,9 +83,9 @@ function ViewTabs({
 }) {
   return (
     <Tabs value={value} onValueChange={onValueChange} className={cn('gap-0', className)}>
-      <TabsList size="xs" aria-label={label} aria-labelledby={labelledBy} aria-describedby={describedBy} className="flex-wrap">
+      <TabsList size={size} aria-label={label} aria-labelledby={labelledBy} aria-describedby={describedBy} className={cn(!fill && 'flex-wrap', fill && 'w-full')}>
         {tabs.map((tab) => (
-          <TabsTrigger key={tab.value} value={tab.value} disabled={tab.disabled} lang={tab.lang} aria-controls={undefined}>
+          <TabsTrigger key={tab.value} value={tab.value} disabled={tab.disabled} lang={tab.lang} aria-controls={undefined} className={fill ? 'flex-1' : undefined}>
             {tab.label}
           </TabsTrigger>
         ))}
