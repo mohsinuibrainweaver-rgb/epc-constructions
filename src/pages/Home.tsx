@@ -116,7 +116,7 @@ export function Home() {
     )
 
   const dueCard = (
-    <Card className={cn('gap-0 overflow-hidden py-0 md:order-none md:col-span-4 md:col-start-9 md:row-start-1', urgent ? 'max-md:order-3' : 'max-md:order-7')} aria-labelledby="due-title">
+    <Card className={cn('gap-0 overflow-hidden py-0 md:order-none md:col-span-6 md:col-start-1 md:row-start-2', urgent ? 'max-md:order-3' : 'max-md:order-7')} aria-labelledby="due-title">
       <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
         <h2 id="due-title" className="text-lg font-semibold">
           {t('home.due')}
@@ -198,7 +198,7 @@ export function Home() {
         {/* On a phone a payment that is due or overdue comes before the recent payments; on a wide screen the places below hold. */}
         {urgent && dueCard}
 
-        <Card className="gap-0 overflow-hidden py-0 max-md:order-6 md:col-span-8 md:col-start-1 md:row-span-2 md:row-start-1" aria-labelledby="recent-title">
+        <Card className="gap-0 overflow-hidden py-0 max-md:order-6 md:col-span-12 md:col-start-1 md:row-start-1" aria-labelledby="recent-title">
           <div className="flex items-center justify-between gap-3 p-4">
             <h2 id="recent-title" className="text-lg font-semibold">
               {t('home.recent')}
@@ -212,7 +212,7 @@ export function Home() {
 
         {!urgent && dueCard}
 
-        <Card className="gap-0 overflow-hidden py-0 max-md:order-8 md:col-span-4 md:col-start-9 md:row-start-2" aria-labelledby="ph-title">
+        <Card className="gap-0 overflow-hidden py-0 max-md:order-8 md:col-span-6 md:col-start-7 md:row-start-2" aria-labelledby="ph-title">
           <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
             <h2 id="ph-title" className="text-lg font-semibold">
               {t('home.phaseProgress')}
