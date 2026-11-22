@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ChevronRight, Copy, FileText, Pencil, Phone, Plus, ReceiptText, Search, SearchX, Share2, Users } from 'lucide-react'
+import { CalendarCheck, CalendarClock, ChevronRight, CircleCheck, Copy, FileText, HandCoins, Pencil, Phone, Plus, ReceiptText, Search, SearchX, Share2, Users, X } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { BackLink, EmptyState, PageHeader } from '@/components/common'
 import { PaymentsTable } from '@/components/PaymentsTable'
@@ -9,6 +9,9 @@ import { VendorDialog } from '@/components/VendorDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { StatCard } from '@/components/StatCard'
+import { VendorAvatar } from '@/components/VendorAvatar'
+import { assignColours } from '@/lib/avatarColours'
 import { Input } from '@/components/ui/input'
 import { Dropdown } from '@/components/ui/dropdown'
 import { ContractBar, ContractPill } from '@/components/ContractParts'
@@ -16,7 +19,7 @@ import { useContracts, usePayments, useVendors } from '@/db/hooks'
 import type { Key } from '@/i18n/en'
 import { summarizeContract } from '@/lib/contracts'
 import { formatDate, money } from '@/lib/format'
-import { isSpent, sum } from '@/lib/stats'
+import { isPlanned, isSpent, sum } from '@/lib/stats'
 import { sortVendors, vendorFigures, vendorMatches, VENDOR_SORTS, type VendorSort } from '@/lib/vendors'
 
 export function Vendors() {
@@ -39,6 +42,8 @@ export function Vendors() {
     [vendors, payments, contracts, q, sort, t],
   )
   const totalPaid = rows.reduce((n, r) => n + r.f.paid, 0)
+  // Colours are worked out for the list as shown, so no two neighbours (and no two greens) look alike.
+  const colours = useMemo(() => assignColours(rows.map((r) => r.v.id)), [rows])
 
   return (
     <>
@@ -100,9 +105,10 @@ export function Vendors() {
       ) : (
         <Card className="gap-0 overflow-hidden py-0">
           <ul className="divide-y">
-            {rows.map(({ v, f }) => (
-              <li key={v.id}>
-                <Link to={`/vendors/${v.id}`} className="flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-accent">
+            {rows.map(({ v, f }, i) => (
+              <li key={v.id} className="group flex items-stretch transition-colors hover:bg-accent focus-within:bg-accent/60">
+                <Link to={`/vendors/${v.id}`} className="flex min-h-16 min-w-0 flex-1 items-center gap-3 py-3 ps-4 pe-2 outline-offset-[-2px]">
+                  <VendorAvatar colour={colours[i]} role={v.role} className="group-hover:scale-105 group-focus-within:scale-105" />
                   <span className="min-w-0 flex-1">
                     <span className="block font-semibold [overflow-wrap:anywhere]">{v.name}</span>
                     <span className="block text-sm text-muted-foreground">
@@ -113,8 +119,21 @@ export function Vendors() {
                     <strong className="tabular">{money(f.paid)}</strong>
                     {f.owed > 0 && <span className="tabular text-sm text-muted-foreground">{t('vendors.owed', { amount: money(f.owed) })}</span>}
                   </span>
-                  <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground rtl:rotate-180" />
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="size-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none max-sm:hidden rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+                  />
                 </Link>
+                {v.phone ? (
+                  <Button asChild variant="ghost" size="icon" className="my-auto me-2 shrink-0 text-muted-foreground hover:bg-background hover:text-foreground">
+                    <a href={`tel:${v.phone}`} aria-label={`${t('common.call')}: ${v.name}`}>
+                      <Phone aria-hidden="true" />
+                    </a>
+                  </Button>
+                ) : (
+                  // Keeps the amount and arrow in the same place on rows with no phone number.
+                  <span aria-hidden="true" className="me-2 size-9 shrink-0 max-sm:hidden" />
+                )}
               </li>
             ))}
           </ul>
@@ -135,11 +154,19 @@ export function VendorDetail() {
   const allContracts = useContracts(project?.id)
   const payments = everyPayment.filter((p) => !p.deletedAt && p.vendorId === id)
   const [editing, setEditing] = useState(false)
+  // The Paid and Planned cards double as filters for the payments table below.
+  const [view, setView] = useState<'all' | 'paid' | 'planned'>('all')
   if (!vendor) return null
 
   const paid = sum(payments.filter(isSpent))
   const fig = vendorFigures(vendor.id, everyPayment, allContracts)
   const contracts = allContracts.filter((c) => !c.deletedAt && c.vendorId === vendor.id)
+  const paidList = payments.filter(isSpent)
+  const plannedList = payments.filter(isPlanned)
+  const shown = view === 'paid' ? paidList : view === 'planned' ? plannedList : payments
+  const lastPayment = [...paidList].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)[0]
+  const activeContracts = contracts.filter((c) => c.status === 'active')
+  const toggle = (v: 'paid' | 'planned') => setView((cur) => (cur === v ? 'all' : v))
 
   const copyAccount = async () => {
     if (!vendor.bankAccount) return
@@ -221,31 +248,55 @@ export function VendorDetail() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:max-w-3xl md:grid-cols-4 md:gap-6">
-        <Card className="gap-1 p-4">
-          <p className="text-sm font-medium text-muted-foreground">{t('vendors.paid')}</p>
-          <p className="tabular text-xl font-extrabold whitespace-nowrap xl:text-2xl">{money(paid)}</p>
-        </Card>
-        <Card className="gap-1 p-4">
-          <p className="text-sm font-medium text-muted-foreground">{t('vendors.planned')}</p>
-          <p className="tabular text-xl font-extrabold whitespace-nowrap xl:text-2xl">{money(fig.planned)}</p>
-        </Card>
-        <Card className="gap-1 p-4">
-          <p className="text-sm font-medium text-muted-foreground">{t('vendors.lastPaidStat')}</p>
-          <p className="text-xl font-extrabold xl:text-2xl">{fig.lastPaid ? formatDate(fig.lastPaid, lang) : '—'}</p>
-        </Card>
-        {contracts.some((c) => c.status === 'active') && (
-          <Card className="gap-1 p-4">
-            <p className="text-sm font-medium text-muted-foreground">{t('vendors.owedStat')}</p>
-            <p className="tabular text-xl font-extrabold whitespace-nowrap xl:text-2xl">{money(fig.owed)}</p>
-          </Card>
+      <div className="grid grid-cols-2 gap-3 max-lg:[&>:last-child:nth-child(odd)]:col-span-2 lg:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] lg:gap-4">
+        <StatCard
+          icon={CircleCheck}
+          tone="success"
+          label={t('vendors.paid')}
+          value={money(paid)}
+          sub={t('vendors.stat.count', { n: paidList.length })}
+          pressed={view === 'paid'}
+          onPress={() => toggle('paid')}
+          controls="vendor-payments"
+        />
+        <StatCard
+          icon={CalendarClock}
+          tone="warning"
+          label={t('vendors.planned')}
+          value={money(fig.planned)}
+          sub={plannedList.length > 0 ? t('vendors.stat.count', { n: plannedList.length }) : t('vendors.stat.nonePlanned')}
+          pressed={view === 'planned'}
+          onPress={() => toggle('planned')}
+          controls="vendor-payments"
+        />
+        {lastPayment ? (
+          <StatCard
+            icon={CalendarCheck}
+            tone="info"
+            label={t('vendors.lastPaidStat')}
+            value={formatDate(lastPayment.date, lang)}
+            sub={money(lastPayment.amount)}
+            to={`/payments/${lastPayment.id}`}
+          />
+        ) : (
+          <StatCard icon={CalendarCheck} tone="info" label={t('vendors.lastPaidStat')} value="—" sub={t('vendors.stat.noneYet')} />
+        )}
+        {activeContracts.length > 0 && (
+          <StatCard
+            icon={HandCoins}
+            tone="primary"
+            label={t('vendors.owedStat')}
+            value={money(fig.owed)}
+            sub={t('vendors.stat.contracts', { n: activeContracts.length })}
+            onGo={() => document.getElementById('vendor-contracts')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })}
+          />
         )}
       </div>
 
       {vendor.notes && <Card className="p-4">{vendor.notes}</Card>}
 
       {contracts.length > 0 && (
-        <Card className="gap-3 p-4">
+        <Card id="vendor-contracts" className="scroll-mt-24 gap-3 p-4">
           <h2 className="text-lg font-semibold">{t('vendors.contracts')}</h2>
           <ul className="grid gap-4">
             {contracts.map((c) => {
@@ -277,7 +328,7 @@ export function VendorDetail() {
         </Card>
       )}
 
-      <Card className="gap-0 overflow-hidden py-0">
+      <Card id="vendor-payments" className="scroll-mt-24 gap-0 overflow-hidden py-0">
         <div className="flex items-center justify-between gap-3 p-4">
           <h2 className="text-lg font-semibold">{t('vendors.payments')}</h2>
           <Button variant="secondary" asChild size="sm">
@@ -287,7 +338,24 @@ export function VendorDetail() {
             </Link>
           </Button>
         </div>
-        {payments.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('home.recentEmpty')} /> : <PaymentsTable payments={payments} />}
+        {view !== 'all' && (
+          <div className="flex items-center justify-between gap-3 border-t bg-secondary/40 px-4 py-2">
+            <p role="status" className="text-sm font-semibold">
+              {t(`vendors.filter.${view}` as Key)} ({shown.length})
+            </p>
+            <Button variant="ghost" size="sm" onClick={() => setView('all')}>
+              <X aria-hidden="true" />
+              {t('vendors.filter.clear')}
+            </Button>
+          </div>
+        )}
+        {payments.length === 0 ? (
+          <EmptyState compact icon={ReceiptText} title={t('home.recentEmpty')} />
+        ) : shown.length === 0 ? (
+          <EmptyState compact icon={ReceiptText} title={t('vendors.filter.empty')} />
+        ) : (
+          <PaymentsTable payments={shown} />
+        )}
       </Card>
 
       <VendorDialog open={editing} vendor={vendor} onClose={() => setEditing(false)} />

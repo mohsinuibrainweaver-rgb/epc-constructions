@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { BellRing, ListChecks, Zap } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { SettingRow, SettingsSection } from '@/components/settings'
 import { useToast } from '@/components/Toast'
@@ -25,7 +26,7 @@ export function PushPrefsSections() {
   if (!dev) return null
   if (dev.state !== 'ok') {
     return (
-      <SettingsSection title={t('push.prefs.title')}>
+      <SettingsSection title={t('push.prefs.title')} icon={BellRing}>
         <SettingRow
           label={t('push.prefs.unavailable')}
           help={t(dev.state === 'oldSchema' ? 'push.prefs.oldSchema' : 'push.prefs.error')}
@@ -57,7 +58,7 @@ export function PushPrefsSections() {
 
   return (
     <>
-      <SettingsSection title={t('push.quick.title')} description={t('push.quick.desc')}>
+      <SettingsSection title={t('push.quick.title')} icon={Zap} description={t('push.quick.desc')}>
         <SettingRow
           label={t('push.quick.label')}
           help={t(`push.preset.${preset}.help` as Key)}
@@ -91,7 +92,7 @@ export function PushPrefsSections() {
         />
       </SettingsSection>
 
-      <SettingsSection title={t('push.types.title')} description={t('push.types.desc', { on: countOn(prefs), total: PUSH_TYPES.length })}>
+      <SettingsSection title={t('push.types.title')} icon={ListChecks} description={t('push.types.desc', { on: countOn(prefs), total: PUSH_TYPES.length })}>
         {PUSH_TYPES.map((type) => (
           <TypeRow key={type} type={type} on={prefs[type]} onChange={(v) => void apply({ prefs: { ...prefs, [type]: v } })} />
         ))}

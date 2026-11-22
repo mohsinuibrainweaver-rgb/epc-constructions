@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react'
+import { useId, type ElementType, type ReactNode } from 'react'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
@@ -9,11 +9,14 @@ import { cn } from '@/lib/utils'
  */
 export function SettingsSection({
   title,
+  icon: Icon,
   description,
   tone,
   children,
 }: {
   title: string
+  /** A small picture beside the heading. It is decoration: the heading says what the section is. */
+  icon?: ElementType
   description?: string
   tone?: 'danger'
   children: ReactNode
@@ -22,7 +25,12 @@ export function SettingsSection({
   return (
     <section aria-labelledby={id} className="grid gap-2">
       <div className="grid gap-0.5">
-        <h2 id={id} className="text-lg font-semibold">
+        <h2 id={id} className="flex items-center gap-2.5 text-lg font-semibold">
+          {Icon && (
+            <span aria-hidden="true" className={cn('grid size-8 shrink-0 place-items-center rounded-lg', tone === 'danger' ? 'bg-danger/10 text-danger' : 'bg-secondary text-primary')}>
+              <Icon className="size-[18px]" />
+            </span>
+          )}
           {title}
         </h2>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}

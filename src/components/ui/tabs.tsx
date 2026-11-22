@@ -9,11 +9,17 @@ function Tabs({ className, dir, ...props }: React.ComponentProps<typeof TabsPrim
   return <TabsPrimitive.Root data-slot="tabs" dir={dir ?? (lang === 'ur' ? 'rtl' : 'ltr')} className={cn('flex flex-col gap-5', className)} {...props} />
 }
 
-function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
+/** `size="xs"` is the compact one for settings rows and filters: 28 px tall from tablet up, still 44 px on phones where fingers need the room. */
+function TabsList({ className, size = 'default', ...props }: React.ComponentProps<typeof TabsPrimitive.List> & { size?: 'default' | 'xs' }) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
-      className={cn('inline-flex w-fit items-center justify-center gap-1 rounded-control bg-muted p-1 text-muted-foreground', className)}
+      data-size={size}
+      className={cn(
+        'group/tabs-list inline-flex w-fit items-center justify-center gap-1 rounded-control bg-muted p-1 text-muted-foreground',
+        'data-[size=xs]:gap-0.5 data-[size=xs]:p-0.5',
+        className,
+      )}
       {...props}
     />
   )
@@ -25,6 +31,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
       data-slot="tabs-trigger"
       className={cn(
         'inline-flex h-11 items-center justify-center gap-1.5 rounded-[calc(var(--radius-control)-2px)] px-4 text-sm font-semibold whitespace-nowrap transition-[color,background-color,box-shadow] duration-150 sm:h-9',
+        'group-data-[size=xs]/tabs-list:gap-1 group-data-[size=xs]/tabs-list:px-3 group-data-[size=xs]/tabs-list:text-[13px] sm:group-data-[size=xs]/tabs-list:h-7',
         'hover:text-foreground disabled:pointer-events-none disabled:opacity-50',
         'data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
         '[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4',
@@ -70,7 +77,7 @@ function ViewTabs({
 }) {
   return (
     <Tabs value={value} onValueChange={onValueChange} className={cn('gap-0', className)}>
-      <TabsList aria-label={label} aria-labelledby={labelledBy} aria-describedby={describedBy} className="flex-wrap">
+      <TabsList size="xs" aria-label={label} aria-labelledby={labelledBy} aria-describedby={describedBy} className="flex-wrap">
         {tabs.map((tab) => (
           <TabsTrigger key={tab.value} value={tab.value} disabled={tab.disabled} lang={tab.lang} aria-controls={undefined}>
             {tab.label}

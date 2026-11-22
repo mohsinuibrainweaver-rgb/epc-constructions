@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Link, NavLink, Navigate, Outlet, useParams } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
+import { Building2, ChevronRight, DatabaseBackup, Globe, Info, KeyRound, LogOut, MonitorSmartphone, Palette, RefreshCw, ShieldCheck, Trash2, TriangleAlert, UserRound } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { BackLink, PageHeader } from '@/components/common'
 import { PasswordDialog, SignOutEverywhereDialog } from '@/components/AccountDialogs'
@@ -151,7 +151,7 @@ function AccountSection() {
   }
   return (
     <>
-      <SettingsSection title={t('set.you')}>
+      <SettingsSection title={t('set.you')} icon={UserRound}>
         <SettingRow
           label={t('set.name')}
           help={t('set.nameHelp')}
@@ -188,7 +188,7 @@ function AccountSection() {
         />
       </SettingsSection>
 
-      <SettingsSection title={t('set.signIn')}>
+      <SettingsSection title={t('set.signIn')} icon={ShieldCheck}>
         {sync.configured && sync.session ? (
           <>
             <SettingRow label={t('set.email')} control={<span className="break-all">{email}</span>} />
@@ -197,6 +197,7 @@ function AccountSection() {
               help={t('set.passwordHelp')}
               control={
                 <Button variant="outline" onClick={() => setPw(true)}>
+                  <KeyRound aria-hidden="true" />
                   {t('set.pw.title')}
                 </Button>
               }
@@ -206,6 +207,7 @@ function AccountSection() {
               help={t('set.signOutHelp')}
               control={
                 <Button variant="outline" onClick={() => void sync.signOut()}>
+                  <LogOut aria-hidden="true" className="rtl:-scale-x-100" />
                   {t('sync.signOut')}
                 </Button>
               }
@@ -215,6 +217,7 @@ function AccountSection() {
               help={t('set.out.help')}
               control={
                 <Button variant="outline" onClick={() => setEverywhere(true)}>
+                  <MonitorSmartphone aria-hidden="true" />
                   {t('set.out.title')}
                 </Button>
               }
@@ -241,7 +244,7 @@ function PreferencesSection() {
   const { t } = useApp()
   return (
     <>
-      <SettingsSection title={t('set.langRegion')}>
+      <SettingsSection title={t('set.langRegion')} icon={Globe}>
         <SettingRow
           label={t('set.language')}
           help={t('set.langHelp')}
@@ -251,8 +254,8 @@ function PreferencesSection() {
         />
       </SettingsSection>
       <RegionSettings />
-      <SettingsSection title={t('set.appearance')}>
-        <SettingRow label={t('set.themeLabel')} help={t('set.themeHint')} below={(a) => <AppearanceCards aria={a} />} />
+      <SettingsSection title={t('set.appearance')} icon={Palette}>
+        <SettingRow label={t('set.themeLabel')} below={(a) => <AppearanceCards aria={a} />} />
       </SettingsSection>
     </>
   )
@@ -267,7 +270,7 @@ function ProjectSection() {
   if (!project) return <p className="text-muted-foreground">{t('set.noProject')}</p>
   return (
     <>
-      <SettingsSection title={t('set.projectDetails')}>
+      <SettingsSection title={t('set.projectDetails')} icon={Building2}>
         <SettingRow
           label={project.name}
           help={t('set.projectDetailsHelp')}
@@ -295,7 +298,7 @@ function ProjectSection() {
       {sync.configured && sync.session && <People />}
 
       {can('deleteProject') && (
-        <SettingsSection title={t('set.danger')} tone="danger">
+        <SettingsSection title={t('set.danger')} icon={TriangleAlert} tone="danger">
           <SettingRow
             label={t('set.deleteProject')}
             help={t('set.deleteHelp')}
@@ -362,7 +365,7 @@ function DataSection() {
 
   return (
     <>
-      <SettingsSection title={t('sync.title')}>
+      <SettingsSection title={t('sync.title')} icon={RefreshCw}>
         {!sync.configured ? (
           <SettingRow label={t('sync.notConfigured')} help={t('sync.notConfiguredBody')} />
         ) : (
@@ -398,7 +401,7 @@ function DataSection() {
         )}
       </SettingsSection>
 
-      <SettingsSection title={t('set.backup')} description={t('set.backupNote')}>
+      <SettingsSection title={t('set.backup')} icon={DatabaseBackup} description={t('set.backupNote')}>
         <SettingRow
           label={t('set.exportJson')}
           help={t('set.exportHelp')}
@@ -423,7 +426,7 @@ function DataSection() {
         />
       </SettingsSection>
 
-      <SettingsSection title={t('set.bin')}>
+      <SettingsSection title={t('set.bin')} icon={Trash2}>
         {bin.length === 0 ? (
           <SettingRow label={t('set.binEmpty')} />
         ) : (
@@ -457,7 +460,7 @@ function AboutSection() {
   const install = useInstall()
   return (
     <>
-      <SettingsSection title={t('set.thisApp')}>
+      <SettingsSection title={t('set.thisApp')} icon={Info}>
         {install.installed ? (
           <SettingRow label={t('set.install')} help={t('set.installed')} />
         ) : install.canPrompt ? (

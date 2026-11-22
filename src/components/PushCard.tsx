@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Smartphone } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { PushPrefsSections } from '@/components/PushPrefs'
 import { SettingRow, SettingsSection } from '@/components/settings'
@@ -99,7 +100,7 @@ export function PushSettings() {
 
   return (
     <>
-      <SettingsSection title={t('push.thisDevice')} description={t('push.intro')}>
+      <SettingsSection title={t('push.thisDevice')} icon={Smartphone} description={t('push.intro')}>
         {rows}
       </SettingsSection>
       {active && <PushPrefsSections />}

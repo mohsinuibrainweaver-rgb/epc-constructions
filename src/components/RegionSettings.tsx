@@ -1,4 +1,5 @@
 import { useApp } from '@/app/AppContext'
+import { Banknote, CalendarClock } from 'lucide-react'
 import { SettingRow, SettingsSection } from '@/components/settings'
 import { ViewTabs } from '@/components/ui/tabs'
 import { setSetting } from '@/db/actions'
@@ -29,7 +30,7 @@ export function RegionSettings() {
 
   return (
     <>
-      <SettingsSection title={t('set.region.dt.title')} description={t('set.region.dt.desc')}>
+      <SettingsSection title={t('set.region.dt.title')} icon={CalendarClock}>
         <SettingRow
           label={t('set.region.week')}
           help={t('set.region.weekHelp')}
@@ -76,7 +77,7 @@ export function RegionSettings() {
         />
       </SettingsSection>
 
-      <SettingsSection title={t('set.region.num.title')} description={t('set.region.num.desc')}>
+      <SettingsSection title={t('set.region.num.title')} icon={Banknote}>
         <SettingRow
           label={t('set.region.grouping')}
           help={t('set.region.groupingHelp')}
@@ -104,7 +105,6 @@ export function RegionSettings() {
           )}
         />
       </SettingsSection>
-      <p className="text-sm text-muted-foreground">{t('set.region.note')}</p>
     </>
   )
 }

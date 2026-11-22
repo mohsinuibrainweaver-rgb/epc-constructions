@@ -76,6 +76,12 @@ What was tested (axe-core WCAG 2.0 to 2.2 A and AA, plus manual checks on the fa
 
 Not covered: a real screen-reader pass (VoiceOver, TalkBack) and password-manager behaviour on real phones.
 
+## Compact tabs (added 2026-11-22)
+
+`ViewTabs` (settings rows, filters, view switches) use the `xs` size of Tabs: 28 px tall buttons in a 32 px group, 13 px text, from 640 px up.
+That is above the 24 px minimum of WCAG 2.2 (2.5.8). On phones they stay 44 px tall, as every other target does. The main Sign in /
+Create account tabs keep the default size. Axe was clean in light, dark and at 375 px.
+
 ## Not covered, and worth doing with real people
 
 - A screen reader pass (VoiceOver on iPhone, TalkBack on Android) of the main flows: add a payment, approve an entry, read a statement.

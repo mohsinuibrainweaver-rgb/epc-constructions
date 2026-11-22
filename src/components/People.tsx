@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Copy, MessageCircle, Trash2, UserMinus } from 'lucide-react'
+import { Copy, MessageCircle, Trash2, UserMinus, Users } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
@@ -110,7 +110,12 @@ export function People() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">{t('people.title')}</CardTitle>
+        <CardTitle className="flex items-center gap-2.5 text-lg">
+          <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-primary">
+            <Users className="size-[18px]" />
+          </span>
+          {t('people.title')}
+        </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4">
         <ul className="divide-y rounded-xl border">
