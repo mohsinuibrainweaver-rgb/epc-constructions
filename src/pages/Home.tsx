@@ -130,10 +130,12 @@ export function Home() {
         <ul className="divide-y border-t">
           {planned.slice(0, dueAll ? 8 : 3).map((p) => (
             <li key={p.id} className="grid gap-3 p-4">
-              <Link to={`/payments/${p.id}`} className="grid min-w-0 gap-1">
-                <span className="truncate font-semibold">{p.purpose}</span>
-                <span className="text-sm text-muted-foreground">
-                  {formatDate(p.date, lang)} · <span className="tabular">{money(p.amount)}</span>
+              <Link to={`/payments/${p.id}`} className="flex min-w-0 items-start justify-between gap-3">
+                <span className="grid min-w-0 gap-0.5">
+                  <span className="truncate font-semibold">{p.purpose}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {formatDate(p.date, lang)} · <span className="tabular whitespace-nowrap">{money(p.amount)}</span>
+                  </span>
                 </span>
                 <StatusPill payment={p} />
               </Link>
@@ -167,7 +169,7 @@ export function Home() {
 
   return (
     <>
-      <PageHeader title={project.name} subtitle={project.location || undefined} />
+      <PageHeader title={project.name} subtitle={project.location || undefined} phoneTitleHidden />
 
       <section aria-label={t('home.budget')} className={cn('order-1 grid grid-cols-2 gap-3 md:order-none md:gap-6', showPlanned ? 'md:grid-cols-4' : 'md:grid-cols-3')}>
         <Kpi label={t('home.spent')} value={money(spent)} icon={HandCoins} mesh={0} to="/ledger">

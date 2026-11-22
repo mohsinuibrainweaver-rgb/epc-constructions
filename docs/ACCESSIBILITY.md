@@ -143,3 +143,11 @@ npx vite-node scripts/contrast-test.ts       # tokens, both themes (also part of
 npm run dev                                  # then, in the browser, run axe on each route in light, dark, Urdu and at 375 px
 ```
 New screens: use the `SettingRow`, `EmptyState` and `Dialog` components, keep help text on `muted-foreground`, and keep interactive controls at 44 px on phones.
+
+## Phone experience (bottom sheets, screen transitions, keyboard)
+
+- On a phone (under 640 px) every dialog is a bottom sheet: full width, rounded top, a grab handle, slides up, scrolls inside (92 dvh at most) and clears the home indicator (`env(safe-area-inset-bottom)`). From 640 px up it is the centred dialog it always was. The close button is a 44 px target on phones.
+- The page content has 16 px gaps on a phone (24 px from `sm`), and its bottom padding is the tab bar height plus the safe area.
+- A screen eases in (200 ms fade and 6 px rise) when you move to it. Off for `prefers-reduced-motion`.
+- The tab bar steps aside while a text field or an open drop-down has focus on a phone, so it never covers the field above the keyboard.
+- Checked at 375 px: no horizontal overflow on 16 screens, no axe violations on 8.

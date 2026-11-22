@@ -267,11 +267,11 @@ export function BackLink({ to, label }: { to: string; label: string }) {
   )
 }
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+export function PageHeader({ title, subtitle, actions, phoneTitleHidden }: { title: string; subtitle?: string; actions?: ReactNode; /** On a phone the app bar already shows this name, so the big heading is kept for screen readers only. */ phoneTitleHidden?: boolean }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className={cn('flex flex-wrap items-center justify-between gap-3', phoneTitleHidden && !subtitle && !actions && 'max-sm:contents')}>
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{title}</h1>
+        <h1 className={cn('text-2xl font-semibold tracking-tight text-balance sm:text-3xl', phoneTitleHidden && 'max-sm:sr-only')}>{title}</h1>
         {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

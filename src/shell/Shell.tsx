@@ -313,7 +313,7 @@ export function Shell() {
         </Link>
       </aside>
 
-      <div className="flex min-h-[calc(100dvh-2*var(--page-gap))] min-w-0 flex-col overflow-clip rounded-2xl border bg-card shadow-sm print:overflow-visible print:rounded-none print:border-0 print:bg-white print:shadow-none">
+      <div className="flex min-h-[calc(100dvh-2*var(--page-gap))] min-w-0 flex-col overflow-clip bg-card sm:rounded-2xl sm:border sm:shadow-sm print:overflow-visible print:rounded-none print:border-0 print:bg-white print:shadow-none">
         <header className={cn('sticky top-0 z-20 border-b bg-card pt-[env(safe-area-inset-top)] sm:hidden print:hidden', fullscreen && 'hidden')}>
           <div className="container-page flex min-h-14 items-center gap-3">
             <BrandMark width={18} />
@@ -357,7 +357,7 @@ export function Shell() {
           ref={mainRef}
           id="main"
           tabIndex={-1}
-          className={cn('container-page grid flex-1 content-start gap-6 py-5 outline-none sm:pb-8', fullscreen ? 'pb-28' : 'pb-28')}
+          className={cn('container-page grid flex-1 content-start gap-4 py-4 outline-none sm:gap-6 sm:py-5 sm:pb-8', 'pb-[calc(5.75rem+env(safe-area-inset-bottom))]')}
         >
           {needRefresh && (
             <div role="status" className="flex items-start gap-3 rounded-xl bg-info-soft p-4 text-sm font-semibold text-info">
@@ -370,13 +370,16 @@ export function Shell() {
               </div>
             </div>
           )}
-          <Outlet />
+          <div key={loc.pathname} className="page-in grid min-w-0 content-start gap-4 sm:gap-6">
+            <Outlet />
+          </div>
         </main>
       </div>
 
       <nav
+        data-mobile-nav
         aria-label={t('app.name')}
-        className={cn('fixed inset-x-[var(--page-gap)] bottom-[max(var(--page-gap),env(safe-area-inset-bottom))] z-30 rounded-2xl border bg-background shadow-lg sm:hidden print:hidden', fullscreen && 'hidden')}
+        className={cn('fixed inset-x-0 bottom-0 z-30 border-t bg-background pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden', fullscreen && 'hidden')}
       >
         <div className="mx-auto grid h-[4.25rem] max-w-lg grid-cols-5 items-center">
           {(
@@ -390,7 +393,7 @@ export function Shell() {
           <Link
             to={addPaymentPath(loc.pathname)}
             aria-label={t('pay.add')}
-            className="-mt-5 grid size-14 place-items-center justify-self-center rounded-control border-4 border-background bg-primary text-primary-foreground shadow-lg transition-transform duration-150 active:scale-95"
+            className="fab-orbit -mt-5 grid size-14 place-items-center justify-self-center rounded-full border-4 border-background transition-transform duration-150 active:scale-95"
           >
             <Plus className="size-7" aria-hidden="true" />
           </Link>

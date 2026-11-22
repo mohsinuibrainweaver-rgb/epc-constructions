@@ -51,12 +51,14 @@ export function ApprovalsCard({ payments }: { payments: Payment[] }) {
       <ul className="divide-y border-t">
         {[...waiting, ...turnedDown].map((p) => (
           <li key={p.id} className="grid gap-3 p-4">
-            <Link to={`/payments/${p.id}`} className="grid min-w-0 gap-1">
-              <span className="truncate font-semibold">{p.purpose}</span>
-              <span className="text-sm text-muted-foreground">
-                {formatDate(p.date, lang)} · <span className="tabular">{money(p.amount)}</span> · {t('approval.addedBy', { name: p.addedBy || '—' })}
+            <Link to={`/payments/${p.id}`} className="flex min-w-0 items-start justify-between gap-3">
+              <span className="grid min-w-0 gap-0.5">
+                <span className="truncate font-semibold">{p.purpose}</span>
+                <span className="text-sm text-muted-foreground">
+                  {formatDate(p.date, lang)} · <span className="tabular whitespace-nowrap">{money(p.amount)}</span> · {t('approval.addedBy', { name: p.addedBy || '—' })}
+                </span>
+                {p.approval === 'rejected' && p.rejectReason && <span className="text-sm text-danger">{p.rejectReason}</span>}
               </span>
-              {p.approval === 'rejected' && p.rejectReason && <span className="text-sm text-danger">{p.rejectReason}</span>}
               <StatusPill payment={p} />
             </Link>
             {investor && p.approval === 'pending' && <ApprovalActions payment={p} />}

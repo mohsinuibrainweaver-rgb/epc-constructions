@@ -160,7 +160,7 @@ function PhaseRow({
         onPointerDown={onGrab}
         onContextMenu={(e) => e.preventDefault()}
         className={cn(
-          'grid size-9 shrink-0 touch-none place-items-center rounded-md max-sm:size-11 text-muted-foreground outline-none select-none hover:bg-secondary hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50',
+          'grid size-9 shrink-0 touch-none place-items-center rounded-md max-sm:col-start-2 max-sm:row-start-2 max-sm:size-11 text-muted-foreground outline-none select-none hover:bg-secondary hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50',
           floating ? 'cursor-grabbing' : 'cursor-grab',
         )}
       >
@@ -169,24 +169,27 @@ function PhaseRow({
   )
   return (
     // One phase per row: a drag handle, then the details, then two icon buttons (under the details on a phone).
-    <Card className={cn('flex-row items-center gap-2 p-3 transition-colors hover:border-foreground/30 sm:gap-3', floating && 'border-primary shadow-xl ring-2 ring-primary/30')}>
+    <Card className={cn('flex-row items-center gap-2 p-3 transition-colors hover:border-foreground/30 max-sm:grid max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:items-start max-sm:gap-x-1 max-sm:gap-y-0 max-sm:py-3 sm:gap-3', floating && 'border-primary shadow-xl ring-2 ring-primary/30')}>
       {canDrag && (floating ? grip : <Tip label={`${t('phases.drag')} (↑ ↓)`}>{grip}</Tip>)}
-      <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-        <Link to={`/phases/${ph.id}`} className="grid min-w-0 flex-1 gap-2 rounded-md md:grid-cols-[minmax(0,1fr)_minmax(12rem,22rem)] md:items-center md:gap-8">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 max-sm:contents sm:flex-row sm:items-center sm:gap-4">
+        <Link to={`/phases/${ph.id}`} className="grid min-w-0 flex-1 gap-2 rounded-md max-sm:col-start-1 max-sm:row-span-2 max-sm:row-start-1 md:grid-cols-[minmax(0,1fr)_minmax(12rem,22rem)] md:items-center md:gap-8">
           <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
             <span aria-hidden="true" className={cn('grid size-9 shrink-0 place-items-center rounded-control', colour)}>
               <Icon className="size-[1.125rem]" strokeWidth={1.75} />
             </span>
-            <span className="text-base leading-snug font-bold">
+            <span className="min-w-0 flex-1 text-base leading-snug font-bold max-sm:[overflow-wrap:anywhere] sm:flex-none">
               {num}. {name}
             </span>
-            {done && (
-              <Badge variant="success">
-                <CircleCheck aria-hidden="true" data-solid="" />
-                {t('phases.done')}
-              </Badge>
-            )}
-            <BudgetChip state={state} spent={spent} estimate={ph.budget} />
+            {/* On a phone the status chips sit on their own line under the name, lined up with it (past the 36 px icon and the gap). */}
+            <span className="flex flex-wrap items-center gap-1.5 max-sm:basis-full max-sm:ps-12 sm:contents">
+              {done && (
+                <Badge variant="success">
+                  <CircleCheck aria-hidden="true" data-solid="" />
+                  {t('phases.done')}
+                </Badge>
+              )}
+              <BudgetChip state={state} spent={spent} estimate={ph.budget} />
+            </span>
           </span>
           <span className="grid gap-1.5">
             {/* A finished phase shows what it cost; a bar only makes sense while there is an estimate to measure against. */}
@@ -207,13 +210,13 @@ function PhaseRow({
           </span>
         </Link>
         {editable && (
-          <div className="flex shrink-0 justify-end gap-2">
+          <div className="flex shrink-0 justify-end gap-2 max-sm:col-start-2 max-sm:row-start-1">
             <Tip label={done ? t('phases.reopen') : t('phases.markDone')}>
               <Button
                 size="icon-sm"
                 variant="outline"
                 aria-label={done ? t('phases.reopenNamed', { name }) : t('phases.markDoneNamed', { name })}
-                className={cn(done && 'border-success/40 text-success')}
+                className={cn('max-sm:hidden', done && 'border-success/40 text-success')}
                 // Safari does not focus a button when it is clicked; focus it so the box gives the focus back here when it closes.
                 onClick={(e) => {
                   e.currentTarget.focus()
@@ -240,6 +243,11 @@ function PhaseRow({
                   }
                 }}
               >
+                {/* On a phone the tick button is not on the row (room is tight), so completing a phase lives in this menu. */}
+                <DropdownMenuItem className="sm:hidden" onSelect={() => launch(onToggleDone)}>
+                  {done ? <RotateCcw aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
+                  {done ? t('phases.reopen') : t('phases.markDone')}
+                </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => launch(onEdit)}>
                   <Pencil aria-hidden="true" />
                   {t('common.edit')}

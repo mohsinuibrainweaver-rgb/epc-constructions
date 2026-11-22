@@ -39,7 +39,7 @@ export function DeviceOwner({ projects, pending }: { projects: number; pending: 
   }
 
   return (
-    <main className="grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center rounded-2xl border bg-card px-4 py-8">
+    <main className="grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center bg-card sm:rounded-2xl sm:border px-4 py-8">
       <div className="grid w-full max-w-md justify-items-start gap-5">
         <BrandLogo className="h-auto w-[min(70%,14rem)]" alt={t('app.full')} />
         <h1 className="text-3xl font-semibold tracking-tight text-balance">{t('dev.title')}</h1>

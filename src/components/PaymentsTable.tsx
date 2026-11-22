@@ -34,7 +34,7 @@ function ModeIcon({ mode }: { mode: Payment['mode'] }) {
 }
 
 /** Who paid: the investor (a wallet) or the builder (a hard hat). Words always come with it. */
-function PaidBy({ role, label }: { role: Payment['paidBy']; label: string }) {
+function PaidBy({ role, label }: { role: Payment['paidBy']; label: React.ReactNode }) {
   const Icon = role === 'builder' ? HardHat : Wallet
   return (
     <span className="inline-flex items-center gap-2">
@@ -171,33 +171,48 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
         </Table>
       </div>
 
+      {/* Narrow screens: one roomy card per payment. Top: phase icon, then phase name, purpose and vendor, with the amount and status at
+          the end. Underneath, one quiet line of facts (date, mode, who paid). Everything is at least 14px and the whole row is the tap target. */}
       <ul className="hidden divide-y @max-[40rem]:block">
-        {rows.map((p) => (
-          <li key={p.id}>
-            <Link to={`/payments/${p.id}`} className="grid gap-1.5 px-4 py-3 transition-colors hover:bg-accent">
-              <div className="flex items-start justify-between gap-3">
-                <span className="font-semibold">{p.purpose}</span>
-                <span className="tabular font-bold whitespace-nowrap">{money(p.amount)}</span>
-              </div>
-              {(who(p) || sub(p)) && <div className="text-sm text-muted-foreground">{[who(p), sub(p)].filter(Boolean).join(' · ')}</div>}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                <span className="tabular">{formatDate(p.date, lang)}</span>
-                {showPhase && p.phaseId && phaseMap.get(p.phaseId) && (
+        {rows.map((p) => {
+          const phase = showPhase && p.phaseId ? phaseById.get(p.phaseId) : undefined
+          const phaseName = phase && p.phaseId ? phaseMap.get(p.phaseId) : undefined
+          const line = [who(p), sub(p)].filter(Boolean).join(' · ')
+          return (
+            <li key={p.id}>
+              <Link to={`/payments/${p.id}`} className="grid gap-3 px-4 py-4 transition-colors hover:bg-accent active:bg-accent">
+                <div className="flex items-start gap-3">
+                  {phase && <PhaseIcon phase={phase} colour={phaseColour.get(p.phaseId!)} className="size-10 rounded-xl [&>svg]:size-5" />}
+                  <div className="grid min-w-0 flex-1 gap-0.5">
+                    {phaseName && <span className="text-xs font-medium tracking-wide text-muted-foreground">{phaseName}</span>}
+                    <span className="leading-snug font-semibold [overflow-wrap:anywhere]">{p.purpose}</span>
+                    {line && <span className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{line}</span>}
+                  </div>
+                  <div className="grid shrink-0 justify-items-end gap-2">
+                    <span className="tabular leading-snug font-bold whitespace-nowrap">{money(p.amount)}</span>
+                    <StatusPill payment={p} />
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t border-dashed pt-3 text-sm text-muted-foreground">
+                  <span className="tabular">{formatDate(p.date, lang)}</span>
                   <span className="inline-flex items-center gap-1.5">
-                    <PhaseIcon phase={phaseById.get(p.phaseId)!} colour={phaseColour.get(p.phaseId)} className="size-6" />
-                    {phaseMap.get(p.phaseId)}
+                    <ModeIcon mode={p.mode} />
+                    {[t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank'), p.mode === 'bank' ? bankLine(p) : ''].filter(Boolean).join(' · ')}
                   </span>
-                )}
-                <span className="inline-flex items-center gap-1.5">
-                  <ModeIcon mode={p.mode} />
-                  {[t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank'), p.mode === 'bank' ? bankLine(p) : ''].filter(Boolean).join(' · ')}
-                </span>
-                <PaidBy role={p.paidBy} label={`${t('pay.paidBy')}: ${t(`paidBy.${p.paidBy}` as Key)}`} />
-                <StatusPill payment={p} />
-              </div>
-            </Link>
-          </li>
-        ))}
+                  <PaidBy
+                    role={p.paidBy}
+                    label={
+                      <>
+                        <span className="sr-only">{`${t('pay.paidBy')}: `}</span>
+                        {t(`paidBy.${p.paidBy}` as Key)}
+                      </>
+                    }
+                  />
+                </div>
+              </Link>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

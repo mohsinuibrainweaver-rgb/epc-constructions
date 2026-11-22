@@ -10,7 +10,7 @@ export function Welcome() {
   const sync = useSync()
   if (projects.length > 0) return <Navigate to="/" replace />
   return (
-    <main className="relative grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center rounded-2xl border auth-bg px-4 py-8 max-sm:pt-20">
+    <main className="relative grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center auth-bg sm:rounded-2xl sm:border px-4 py-8 max-sm:pt-20">
       <LanguageSwitcher />
       <div className="grid w-full max-w-md justify-items-start gap-5 rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
         <BrandLogo className="h-auto w-[min(70%,14rem)]" alt={t('app.full')} />

@@ -68,6 +68,13 @@
   --content-max: 1280px; /* the fixed content grid: never stretches beyond this */
 }
 
+/* On a phone the app runs edge to edge: no gap round it. The page card also drops its border, corners and shadow there. */
+@media (max-width: 39.999rem) {
+  :root {
+    --page-gap: 0px;
+  }
+}
+
 /* Dark theme. Every text and border pair below is checked by scripts/contrast-test.ts for WCAG AA (4.5:1 for text,
    3:1 for field borders and focus rings). It lives under @media screen so printing and "Save as PDF" always stay on
    white paper. Greys are neutral. Indigo is lightened on dark: #4338CA is too dark to read as text or a link there, so
@@ -511,6 +518,81 @@
   }
   .btn-primary:hover {
     filter: brightness(1.12);
+  }
+}
+
+/* The round Add payment button in the phone tab bar: the violet mesh turns slowly inside the circle and a soft ring breathes out from it.
+   Both stop for people who ask for less motion. */
+@layer components {
+  .fab-orbit {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    color: #fff;
+    background: #3920a0;
+    box-shadow: 0 0 0 0 rgb(121 82 237 / 0.5), 0 8px 18px -6px rgb(57 32 160 / 0.6);
+    animation: fab-ring 2.4s ease-out infinite;
+  }
+  .fab-orbit::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse at 0% 0%, #4939d2 0%, transparent 65%),
+      radial-gradient(ellipse at 100% 0%, #9c65fa 0%, transparent 65%),
+      radial-gradient(ellipse at 0% 100%, #7952ed 0%, transparent 70%),
+      radial-gradient(ellipse at 100% 100%, #3920a0 0%, transparent 70%),
+      #3920a0;
+    animation: fab-spin 8s linear infinite;
+  }
+  @keyframes fab-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes fab-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgb(121 82 237 / 0.5), 0 8px 18px -6px rgb(57 32 160 / 0.6);
+    }
+    70%,
+    100% {
+      box-shadow: 0 0 0 14px rgb(121 82 237 / 0), 0 8px 18px -6px rgb(57 32 160 / 0.6);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fab-orbit,
+    .fab-orbit::before {
+      animation: none;
+    }
+  }
+}
+
+/* Phone polish. A screen eases in when you move to it; the tab bar steps aside while a field has the keyboard, so it never sits on top of what
+   you are typing; and tappable rows give a pressed state because there is no hover on a touch screen. */
+@layer components {
+  .page-in {
+    animation: page-in 200ms ease-out both;
+  }
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @media (max-width: 39.999rem) {
+    body:has(input:focus, textarea:focus, [role='combobox'][aria-expanded='true']) [data-mobile-nav] {
+      display: none;
+    }
+    a[href].grid:active,
+    li > a:active {
+      background-color: var(--accent);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .page-in {
+      animation: none;
+    }
   }
 }
 

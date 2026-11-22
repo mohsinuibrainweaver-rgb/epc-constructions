@@ -148,7 +148,31 @@ export function BudgetOutlookCard({ phases, payments }: { phases: Phase[]; payme
             ))}
             {pastBudget && o.budget && <span aria-hidden="true" className="absolute inset-y-0 w-0.5 bg-foreground" style={{ insetInlineStart: pct(o.budget) }} />}
           </div>
-          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fit,minmax(10.5rem,1fr))]">
+          {/* Phone: a plain legend (a dot in the bar's colour, the name, the share and the amount) in place of the four glass cards: it tells the same
+              story in a third of the height. The cards below are for wider screens. */}
+          <ul className="grid divide-y rounded-xl border sm:hidden">
+            {segments.map((s) => (
+              <li key={s.key} className="flex min-h-11 items-center gap-3 px-3 py-2 text-sm">
+                <span aria-hidden="true" className={cn('size-3 shrink-0 rounded-full', s.className)} />
+                <span className="min-w-0 flex-1">{s.label}</span>
+                {share(s.amount) && (
+                  <span className="tabular text-xs text-muted-foreground">
+                    <span aria-hidden="true">{share(s.amount)}</span>
+                    <span className="sr-only">{t('outlook.share', { pct: share(s.amount) ?? '' })}</span>
+                  </span>
+                )}
+                <span className="tabular font-bold whitespace-nowrap">{money(s.amount)}</span>
+              </li>
+            ))}
+            {pastBudget && o.budget && (
+              <li className="flex min-h-11 items-center gap-3 bg-danger-soft px-3 py-2 text-sm text-danger">
+                <TriangleAlert aria-hidden="true" className="size-3.5 shrink-0" />
+                <span className="min-w-0 flex-1">{t('outlook.over')}</span>
+                <span className="tabular font-bold whitespace-nowrap">{money(o.projectedLow - o.budget)}</span>
+              </li>
+            )}
+          </ul>
+          <ul className="max-sm:hidden grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fit,minmax(10.5rem,1fr))]">
             {segments.map((s, i) => (
               <li
                 key={s.key}
