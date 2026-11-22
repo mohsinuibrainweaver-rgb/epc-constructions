@@ -9,6 +9,7 @@ import type { ProjectFile } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { fileSize, formatDate } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
+import { isVideoType } from '@/lib/media'
 import { ensureFileBlob } from '@/sync/engine'
 
 /** The file's blob: from this device, or downloaded the first time another person's upload is shown. */
@@ -55,7 +56,8 @@ export function FileViewer({
   const toast = useToast()
   const { blob, failed } = useFileBlob(file, fetchBlob)
   const url = useObjectUrl(blob)
-  const isImage = !!file && (file.kind === 'photo' || file.mime.startsWith('image/'))
+  const isVideo = !!file && (isVideoType(blob?.type) || isVideoType(file.mime))
+  const isImage = !!file && !isVideo && (file.kind === 'photo' || file.mime.startsWith('image/'))
 
   useEffect(() => {
     if (failed) toast.show({ kind: 'error', message: t('files.fetchFail') })
@@ -110,7 +112,14 @@ export function FileViewer({
         </>
       }
     >
-      {isImage ? (
+      {isVideo ? (
+        url ? (
+          // Native controls: play, pause, seek, volume and full screen all work with a keyboard and a screen reader.
+          <video src={url} controls playsInline preload="metadata" aria-label={file.title} className="max-h-[55dvh] w-full rounded-lg bg-black object-contain" />
+        ) : (
+          <Loading label={t('files.loading')} />
+        )
+      ) : isImage ? (
         url ? (
           <img src={url} alt={file.title} className="max-h-[55dvh] w-full rounded-lg bg-muted object-contain" />
         ) : (

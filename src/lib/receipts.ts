@@ -1,4 +1,5 @@
 import type { Attachment, Payment, ProjectFile } from '../db/types'
+import { mimeForPath } from './media'
 
 /*
  * Everything with a picture on it, in one list for the Files page: the photos and documents uploaded there, and the receipt photos
@@ -36,7 +37,7 @@ export function receiptAsFile(a: Attachment, p: Payment): ProjectFile {
     phaseId: p.phaseId,
     date: p.date,
     name: a.name,
-    mime: a.blob?.type || 'image/jpeg',
+    mime: a.blob?.type || mimeForPath(a.path ?? a.name) || 'image/jpeg',
     size: a.blob?.size ?? 0,
     blob: a.blob,
     path: a.path,

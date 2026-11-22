@@ -1,9 +1,30 @@
-import { FileText, Loader2, X } from 'lucide-react'
+import { FileText, Loader2, Play, X } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { fileSize } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
+import { isVideoType } from '@/lib/media'
+import { cn } from '@/lib/utils'
 
-/** A small picture of a photo that was just added or is already stored, with a button to take it away. */
+/**
+ * What fills a tile: the picture for a photo, or the first frame of a video with a play badge on it. Decoration only: the name and the
+ * button around it say what it is. `url` is an object URL of `blob`.
+ */
+export function MediaPreview({ url, blob, className, playSize = 'md' }: { url: string; blob?: Blob; className?: string; playSize?: 'sm' | 'md' }) {
+  if (!isVideoType(blob?.type)) return <img src={url} alt="" loading="lazy" className={cn('size-full object-cover', className)} />
+  return (
+    <>
+      {/* #t=0.1 asks for a frame just after the start, so the tile is not black while the video loads */}
+      <video src={`${url}#t=0.1`} muted playsInline preload="metadata" aria-hidden="true" tabIndex={-1} className={cn('size-full object-cover', className)} />
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 grid place-items-center">
+        <span className={cn('grid place-items-center rounded-full bg-black/65 text-white shadow-sm', playSize === 'sm' ? 'size-8' : 'size-10')}>
+          <Play className="size-4 translate-x-px fill-current" />
+        </span>
+      </span>
+    </>
+  )
+}
+
+/** A small picture (or video frame) of a file that was just added or is already stored, with a button to take it away. */
 export function FileThumb({
   blob,
   name,
@@ -23,7 +44,7 @@ export function FileThumb({
   return (
     <div title={name} className="relative size-20 overflow-hidden rounded-lg border bg-muted">
       {url ? (
-        <img src={url} alt="" className="size-full object-cover" />
+        <MediaPreview url={url} blob={blob} playSize="sm" />
       ) : (
         loading !== false && <Loader2 aria-hidden="true" className="absolute inset-0 m-auto size-5 animate-spin text-muted-foreground" />
       )}

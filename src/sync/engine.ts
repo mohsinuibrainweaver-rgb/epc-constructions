@@ -5,6 +5,7 @@ import { BUCKET, supabase } from './supabase'
 import { TABLES, type TableDef } from './mapping'
 import { recordConflicts, staleIds } from './conflicts'
 import { fillDefaults } from './payload'
+import { extForMime, mimeForPath } from '../lib/media'
 
 export type SyncState = 'off' | 'signedOut' | 'idle' | 'syncing' | 'offline' | 'error'
 
@@ -105,8 +106,8 @@ async function push(): Promise<void> {
     if (def.name === 'attachments') {
       for (const a of rows as Attachment[]) {
         if (a.blob && !a.path && !a.deletedAt) {
-          const path = `${a.projectId}/${a.id}.jpg`
-          await upload(path, a.blob)
+          const path = `${a.projectId}/${a.id}.${extForMime(a.blob.type)}`
+          await upload(path, a.blob, mimeForPath(path))
           a.path = path
           await remoteTx([db.attachments], () => db.attachments.update(a.id, { path }).then(() => undefined))
         }
@@ -300,8 +301,11 @@ export async function ensureAttachmentBlob(a: Attachment): Promise<Blob | undefi
   if (!supabase || !a.path) return undefined
   const { data } = await supabase.storage.from(BUCKET).download(a.path)
   if (!data) return undefined
-  await remoteTx([db.attachments], () => db.attachments.update(a.id, { blob: data }).then(() => undefined))
-  return data
+  // A video must keep its type or the player will not take it.
+  const type = mimeForPath(a.path)
+  const blob = data.type || !type ? data : new Blob([data], { type })
+  await remoteTx([db.attachments], () => db.attachments.update(a.id, { blob }).then(() => undefined))
+  return blob
 }
 
 /** Downloads a document or photo another person uploaded, the first time it is needed here. */

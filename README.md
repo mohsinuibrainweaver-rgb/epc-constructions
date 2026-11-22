@@ -48,7 +48,7 @@ Install and push need `https` (or `localhost`). To try it on a phone, deploy the
 - Projects from zero: name, location, thumbnail, plot, budget, dates; standard 12-phase template or blank.
 - Phases with budgets, progress and 80 / 100 percent warnings; reorder, rename, delete.
 - Payments: standard and Miscellaneous (no vendor needed), status Paid / Planned / Advance, cash or bank,
-  who paid, receipt photos (compressed on the device), duplicate warning, 30-day bin with Undo.
+  who paid, receipt photos (compressed on the device) and short videos (up to 40 MB, kept as recorded), duplicate warning, 30-day bin with Undo.
 - Vendors with phone, bank account, per-vendor payments and a shareable statement.
 - Ledger with filters and CSV export; reports by phase, vendor, category, month and cash versus bank.
 - Alerts (bell): budgets reaching 80 / 100 percent, overdue and due-soon planned payments.

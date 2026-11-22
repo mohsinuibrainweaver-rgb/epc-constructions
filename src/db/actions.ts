@@ -1,5 +1,6 @@
 import { db, now, uid } from './db'
 import type { Attachment, Category, Contract, ContractVariation, FeeBasis, PhaseFeeKind, PayMode, Payment, ProjectFile, PaymentPlan, Phase, Project, Role, Settings, Transfer, Vendor } from './types'
+import { extForMime, isVideoType } from '../lib/media'
 import { addDays, todayISO } from '../lib/format'
 import { approvalFields } from '../lib/approval'
 import { foldMaterials } from '../lib/materials'
@@ -157,7 +158,7 @@ export async function savePayment(
         paymentId: id,
         projectId: input.projectId,
         blob,
-        name: `receipt-${t}-${i + 1}.jpg`,
+        name: `${isVideoType(blob.type) ? 'video' : 'receipt'}-${t}-${i + 1}.${extForMime(blob.type)}`,
         createdAt: t,
         updatedAt: t,
       }))

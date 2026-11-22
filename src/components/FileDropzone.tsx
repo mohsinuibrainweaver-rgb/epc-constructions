@@ -3,6 +3,7 @@ import { CircleCheck, CloudUpload, Loader2, TriangleAlert, type LucideIcon } fro
 import { useApp } from '@/app/AppContext'
 import { Button } from '@/components/ui/button'
 import { filesFromTransfer, isTextField, nameClipboardFile, sortFiles, type Rejected } from '@/lib/files'
+import { fileSize } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 /**
@@ -82,7 +83,7 @@ export function FileDropzone({
         if (isZone) {
           setNote({
             kind: 'error',
-            text: rejected.map((r) => (r.reason === 'size' ? t('files.tooBig', { name: r.file.name }) : t('drop.badType', { name: r.file.name }))).join(' '),
+            text: rejected.map((r) => (r.reason === 'size' ? t('files.tooBigMax', { name: r.file.name, max: fileSize(maxBytes ?? 0) }) : t('drop.badType', { name: r.file.name }))).join(' '),
           })
         }
       } else setNote(null)

@@ -17,6 +17,7 @@ import type { Key } from '@/i18n/en'
 import { fileSize, formatDate, money } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
 import { itemPhaseId, photoItems, receiptAsFile } from '@/lib/receipts'
+import { MediaPreview } from '@/components/FilePreview'
 import { ensureAttachmentBlob } from '@/sync/engine'
 
 function PhotoTile({ file, onOpen }: { file: ProjectFile; onOpen: () => void }) {
@@ -30,7 +31,7 @@ function PhotoTile({ file, onOpen }: { file: ProjectFile; onOpen: () => void }) 
     >
       <span className="relative block aspect-square overflow-hidden rounded-xl border bg-muted">
         {url ? (
-          <img src={url} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />
+          <MediaPreview url={url} blob={blob} className="transition-transform group-hover:scale-105" />
         ) : (
           <Loader2 aria-hidden="true" className="absolute inset-0 m-auto size-5 animate-spin text-muted-foreground" />
         )}
@@ -48,7 +49,8 @@ function ReceiptTile({ attachment, payment, onOpen }: { attachment: Attachment; 
   useEffect(() => {
     if (!attachment.blob) void ensureAttachmentBlob(attachment).then(setFetched)
   }, [attachment])
-  const url = useObjectUrl(attachment.blob ?? fetched)
+  const blob = attachment.blob ?? fetched
+  const url = useObjectUrl(blob)
   return (
     <button
       type="button"
@@ -57,7 +59,7 @@ function ReceiptTile({ attachment, payment, onOpen }: { attachment: Attachment; 
     >
       <span className="relative block aspect-square overflow-hidden rounded-xl border bg-muted">
         {url ? (
-          <img src={url} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />
+          <MediaPreview url={url} blob={blob} className="transition-transform group-hover:scale-105" />
         ) : (
           <Loader2 aria-hidden="true" className="absolute inset-0 m-auto size-5 animate-spin text-muted-foreground" />
         )}

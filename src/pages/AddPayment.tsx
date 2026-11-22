@@ -34,6 +34,7 @@ import { approvalFields, needsApproval } from '@/lib/approval'
 import { openContracts, previewPayment } from '@/lib/contracts'
 import { formatDate, groupDigits, money, moneyRate, parseAmount, todayISO } from '@/lib/format'
 import { compressImage } from '@/lib/image'
+import { isVideoType, MAX_ATTACHMENT_BYTES, mimeForPath } from '@/lib/media'
 import { itemKey, knownItems, parseDecimal, rateOf, solveEntry } from '@/lib/materials'
 import { lastPaymentTo, possibleDouble, vendorDefaults } from '@/lib/recent'
 import { BankSelect } from '@/components/BankSelect'
@@ -292,7 +293,12 @@ export function AddPayment() {
 
   const addFiles = async (list: File[]) => {
     const out: { key: number; blob: Blob }[] = []
-    for (const f of list) out.push({ key: Date.now() + out.length, blob: await compressImage(f) })
+    for (const f of list) {
+      // A video is kept as it is (it cannot be shrunk on the phone); give it its type when the system left it out. A photo is shrunk.
+      const type = f.type || mimeForPath(f.name) || ''
+      const blob = isVideoType(type) ? (f.type ? f : new Blob([f], { type })) : await compressImage(f)
+      out.push({ key: Date.now() + out.length, blob })
+    }
     setNewFiles((xs) => [...xs, ...out])
   }
 
@@ -764,7 +770,7 @@ export function AddPayment() {
 
       <div className="grid gap-2">
         <span className="text-sm font-semibold">{t('pay.receipts')}</span>
-        <FileDropzone accept="image/*" multiple icon={ImagePlus} browseLabel={t('pay.addReceipt')} onFiles={addFiles}>
+        <FileDropzone accept="image/*,video/*" maxBytes={MAX_ATTACHMENT_BYTES} multiple icon={ImagePlus} browseLabel={t('pay.addReceipt')} instruction={t('drop.media')} hint={t('pay.attachHint')} onFiles={addFiles}>
           {(visibleExisting.length > 0 || newFiles.length > 0) && (
             <div className="flex flex-wrap gap-2">
               {visibleExisting.map((a) => (
