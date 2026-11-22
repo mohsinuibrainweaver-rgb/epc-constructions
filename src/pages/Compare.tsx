@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Layers3, Package, Plus, Scale, Tags, Timer, TrendingDown, TrendingUp } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { meshCard } from '@/lib/mesh'
+import { cn } from '@/lib/utils'
 import { CardHeading } from '@/components/CardHeading'
 import { CompareBars, KeyChip, Legend, PaceChart, RateChangeBars, StatTile, type BarRow, type RateRow } from '@/components/CompareParts'
 import { EmptyState, PageHeader } from '@/components/common'
@@ -289,7 +291,7 @@ function CompareBody({
       {/* The key numbers, two values each. */}
       <Legend />
       <section aria-label={t('compare.summary')} className="-mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label={t('compare.spent')} a={money(sumA.spent)} b={money(sumB.spent)} d={spentDelta} format={money} soFar={anyUnfinished} />
+        <StatTile label={t('compare.spent')} a={money(sumA.spent)} b={money(sumB.spent)} d={spentDelta} format={money} soFar={anyUnfinished} mesh={0} />
         {sumA.perArea !== undefined && sumB.perArea !== undefined && (
           <StatTile
             label={t('compare.perArea')}
@@ -298,11 +300,12 @@ function CompareBody({
             d={delta(sumA.perArea, sumB.perArea)}
             format={moneyRate}
             soFar={anyUnfinished}
+            mesh={1}
           />
         )}
-        {usedA !== undefined && usedB !== undefined && <StatTile label={t('compare.budgetUsed')} a={`${usedA}%`} b={`${usedB}%`} format={money} note={t('compare.budgetUsedNote')} />}
+        {usedA !== undefined && usedB !== undefined && <StatTile label={t('compare.budgetUsed')} a={`${usedA}%`} b={`${usedB}%`} format={money} note={t('compare.budgetUsedNote')} mesh={2} />}
         {rateChange !== undefined && (
-          <Card className="gap-3 p-4">
+          <div className={cn('flex flex-col gap-3 rounded-xl border p-4', meshCard(3))}>
             <p className="text-sm font-medium text-muted-foreground">{t('compare.matChange')}</p>
             <p className="flex items-center gap-2 text-3xl leading-none font-extrabold">
               {rateChange > 0 ? <TrendingUp aria-hidden="true" className="size-6 text-warning" /> : rateChange < 0 ? <TrendingDown aria-hidden="true" className="size-6 text-success" /> : null}
@@ -310,7 +313,7 @@ function CompareBody({
             </p>
             <p className="text-sm font-semibold">{rateChange > 0 ? t('compare.more') : rateChange < 0 ? t('compare.less') : t('compare.same')}</p>
             <p className="text-sm text-muted-foreground">{t('compare.matChangeNote', { count: materials.length })}</p>
-          </Card>
+          </div>
         )}
       </section>
 

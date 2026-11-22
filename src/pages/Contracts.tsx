@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Ban, CalendarClock, CalendarPlus, CircleCheck, FilePlus2, FileSignature, FileText, HandCoins, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { CardHeading, IconTile } from '@/components/CardHeading'
+import { meshCard } from '@/lib/mesh'
+import { cn } from '@/lib/utils'
 import { BackLink, EmptyState, PageHeader, StatusPill } from '@/components/common'
 import { ContractBar, ContractPill } from '@/components/ContractParts'
 import { ContractDialog, VariationDialog } from '@/components/ContractDialog'
@@ -81,11 +83,11 @@ export function Contracts() {
               [t('contract.paid'), sumOf((s) => s.paid)],
               [t('contract.remaining'), sumOf((s) => Math.max(0, s.remaining))],
               [t('contract.awaiting'), sumOf((s) => s.awaiting)],
-            ].map(([label, v]) => (
-              <Card key={label as string} className="gap-1 p-3 sm:p-4">
+            ].map(([label, v], i) => (
+              <div key={label as string} className={cn('flex flex-col gap-1 rounded-xl border p-3 sm:p-4', meshCard(i))}>
                 <p className="text-sm font-medium text-muted-foreground">{label}</p>
                 <p className="tabular text-[1.0625rem] font-extrabold whitespace-nowrap sm:text-2xl">{money(v as number)}</p>
-              </Card>
+              </div>
             ))}
           </section>
           <p className="-mt-3 text-sm text-muted-foreground">{t('contract.summaryNote')}</p>

@@ -18,33 +18,26 @@ import { attentionItems } from '@/lib/attention'
 import { contractAlerts } from '@/lib/contracts'
 import { addDays, formatDate, money, todayISO } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { MESH_TILE, meshCard } from '@/lib/mesh'
 import { budgetState, budgetTone, buildAlerts, fullPhases, isAwaitingApproval, isPlanned, isSpent, percent, phaseProgress, sum } from '@/lib/stats'
-
-// A 48 px tile per figure: a light background and the 500 shade of the same colour for the icon (400 on dark). The icon is decoration; the label and the
-// figure carry the meaning.
-const TONES = {
-  orange: 'bg-orange-100 text-orange-500 dark:bg-orange-500/15 dark:text-orange-400',
-  violet: 'bg-violet-100 text-violet-500 dark:bg-violet-500/15 dark:text-violet-400',
-  emerald: 'bg-emerald-100 text-emerald-500 dark:bg-emerald-500/15 dark:text-emerald-400',
-  sky: 'bg-sky-100 text-sky-500 dark:bg-sky-500/15 dark:text-sky-400',
-} as const
 
 /**
  * One headline figure. The whole card is a link to the screen that explains it.
  * On a phone the icon is small and sits beside the label, so a tile is about a third shorter; from the `sm` breakpoint up it is the
  * 48 px tile above the text, as before. (The label is written twice, once for each layout; only one is displayed.)
  */
-function Kpi({ label, value, icon: Icon, tone, to, children, corner, className }: { label: string; value: string; icon: LucideIcon; tone: keyof typeof TONES; to: string; children?: React.ReactNode; /** Shown in the top right corner from `sm` up (it replaces the hover arrow there); on a phone put the same thing in `children`. */ corner?: React.ReactNode; className?: string }) {
+function Kpi({ label, value, icon: Icon, mesh, to, children, corner, className }: { label: string; value: string; icon: LucideIcon; /** Position in the row: picks the card's mesh gradient (lib/mesh.ts). */ mesh: number; to: string; children?: React.ReactNode; /** Shown in the top right corner from `sm` up (it replaces the hover arrow there); on a phone put the same thing in `children`. */ corner?: React.ReactNode; className?: string }) {
   return (
     <Link
       to={to}
       className={cn(
-        'group relative flex flex-col gap-2 rounded-xl border bg-card p-3 text-card-foreground transition-colors duration-150 hover:border-foreground/30 hover:bg-muted/50 sm:gap-3 sm:p-4',
+        'group relative flex flex-col gap-2 rounded-xl border p-3 transition-shadow duration-150 hover:shadow-md sm:gap-3 sm:p-4',
+        meshCard(mesh),
         className,
       )}
     >
       <span className="flex items-center gap-2 sm:contents">
-        <span aria-hidden="true" className={cn('grid size-8 shrink-0 place-items-center rounded-lg sm:size-12 sm:rounded-xl', TONES[tone])}>
+        <span aria-hidden="true" className={cn('grid size-8 shrink-0 place-items-center rounded-lg sm:size-12 sm:rounded-xl', MESH_TILE)}>
           <Icon className="size-[1.125rem] sm:size-6" strokeWidth={1.75} />
         </span>
         <span className="min-w-0 truncate text-sm font-medium text-muted-foreground sm:hidden">{label}</span>
@@ -177,13 +170,13 @@ export function Home() {
       <PageHeader title={project.name} subtitle={project.location || undefined} />
 
       <section aria-label={t('home.budget')} className={cn('order-1 grid grid-cols-2 gap-3 md:order-none md:gap-6', showPlanned ? 'md:grid-cols-4' : 'md:grid-cols-3')}>
-        <Kpi label={t('home.spent')} value={money(spent)} icon={HandCoins} tone="orange" to="/ledger">
+        <Kpi label={t('home.spent')} value={money(spent)} icon={HandCoins} mesh={0} to="/ledger">
           {awaiting > 0 && <span className="text-sm text-muted-foreground">{t('home.awaiting', { amount: money(awaiting) })}</span>}
         </Kpi>
-        <Kpi label={t('home.budget')} value={budget ? money(budget) : '—'} icon={Target} tone="violet" to={budget || !can('editProject') ? '/phases' : `/projects/${project.id}/edit`}>
+        <Kpi label={t('home.budget')} value={budget ? money(budget) : '—'} icon={Target} mesh={1} to={budget || !can('editProject') ? '/phases' : `/projects/${project.id}/edit`}>
           {!budget && <span className="text-sm text-primary underline underline-offset-4">{t('home.noBudget')}</span>}
         </Kpi>
-        <Kpi label={t('home.left')} value={left === undefined ? '—' : money(left)} icon={Wallet} tone="emerald" to="/phases" className={showPlanned ? undefined : 'max-sm:col-span-2'} corner={budget ? usedNote : undefined}>
+        <Kpi label={t('home.left')} value={left === undefined ? '—' : money(left)} icon={Wallet} mesh={2} to="/phases" className={showPlanned ? undefined : 'max-sm:col-span-2'} corner={budget ? usedNote : undefined}>
           {budget ? (
             <>
               <BudgetBar spent={spent} budget={budget} label={t('home.budgetUsed', { pct: percent(spent, budget) })} />
@@ -192,7 +185,7 @@ export function Home() {
             </>
           ) : null}
         </Kpi>
-        {showPlanned && <Kpi label={t('home.planned')} value={money(sum(planned))} icon={CalendarClock} tone="sky" to="/ledger?status=planned" />}
+        {showPlanned && <Kpi label={t('home.planned')} value={money(sum(planned))} icon={CalendarClock} mesh={3} to="/ledger?status=planned" />}
       </section>
 
       <div className="order-2 empty:hidden md:order-none">

@@ -11,6 +11,7 @@ import { updateProject } from '@/db/actions'
 import type { Payment, Phase } from '@/db/types'
 import { groupDigits, money, parseAmount } from '@/lib/format'
 import { budgetOutlook, percent, type BudgetOutlook as Outlook } from '@/lib/stats'
+import { MESH_TILE, meshCard } from '@/lib/mesh'
 import { cn } from '@/lib/utils'
 
 /** The sentence about the phases nobody has priced yet: how much room the budget leaves for them. */
@@ -148,19 +149,19 @@ export function BudgetOutlookCard({ phases, payments }: { phases: Phase[]; payme
             {pastBudget && o.budget && <span aria-hidden="true" className="absolute inset-y-0 w-0.5 bg-foreground" style={{ insetInlineStart: pct(o.budget) }} />}
           </div>
           <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fit,minmax(10.5rem,1fr))]">
-            {segments.map((s) => (
+            {segments.map((s, i) => (
               <li
                 key={s.key}
                 onMouseEnter={() => setHot(s.key)}
                 onMouseLeave={() => setHot(null)}
-                className={cn('grid content-between gap-3 rounded-xl border bg-card p-2.5 transition-shadow sm:p-3', hot === s.key && 'shadow-sm ring-2 ring-primary/25')}
+                className={cn('grid content-between gap-3 rounded-xl border p-2.5 transition-shadow sm:p-3', meshCard(i), hot === s.key && 'shadow-sm ring-2 ring-primary/40')}
               >
                 <span className="flex items-start justify-between gap-2">
-                  <span aria-hidden="true" className={cn('grid size-9 shrink-0 place-items-center rounded-lg', s.tint)}>
+                  <span aria-hidden="true" className={cn('grid size-9 shrink-0 place-items-center rounded-lg', MESH_TILE)}>
                     <s.Icon className="size-[1.125rem]" />
                   </span>
                   {share(s.amount) && (
-                    <span className="tabular rounded-full bg-muted px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-muted-foreground">
+                    <span className="tabular rounded-full bg-white/60 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-muted-foreground dark:bg-white/10">
                       <span aria-hidden="true">{share(s.amount)}</span>
                       <span className="sr-only">{t('outlook.share', { pct: share(s.amount) ?? '' })}</span>
                     </span>

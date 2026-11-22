@@ -82,6 +82,35 @@ Not covered: a real screen-reader pass (VoiceOver, TalkBack) and password-manage
 That is above the 24 px minimum of WCAG 2.2 (2.5.8). On phones they stay 44 px tall, as every other target does. The main Sign in /
 Create account tabs keep the default size. Axe was clean in light, dark and at 375 px.
 
+## Sortable table columns (added 2026-11-22)
+
+The payments table (Ledger, Home, Vendors, Contracts, Phase detail) and the Statements table sort by any column in the browser. Each
+heading holds a real `<button>` that fills the cell (40 px tall) and the cell carries `aria-sort` (ascending, descending or none), so a
+screen reader says "Amount, sorted ascending". Click once to sort up, again to sort down, a third time to return to the order the
+page came in. The arrow shows the state to the eye and the words stay. Keyboard: Tab to a heading, Enter or Space to sort, and focus
+stays on it with the usual focus ring. Rows with nothing in a column (no phase) always come last. On the phone the table becomes a
+list of cards, which has no headings, so it follows the same order as the table without controls. Statements print what is on screen;
+the CSV and the shared text keep date order. Axe was clean in light and dark on Ledger, Home, Phase detail, Vendors and Statements.
+
+Not sortable on purpose: the Forecast and Compare "details" grids, which are two or three row comparisons whose row order carries meaning.
+
+## Statistics cards: mesh gradients (added 2026-11-22)
+
+Figure and KPI cards (Home, vendor detail, Contracts summary, Compare tiles, Budget outlook tiles) use six four-colour mesh gradients
+(`.mesh-amethyst`, `-arctic`, `-champagne`, `-rose`, `-sage`, `-periwinkle` in `src/index.css`, picked by position with `src/lib/mesh.ts`).
+They are never used on general cards, forms, tables or navigation.
+
+* Text inside a mesh card uses ink `#172033` (at least 7.2:1) and labels `#2a354b` (at least 5.4:1), measured on the darkest stop of every
+  palette. A blend of stops is never darker than its darkest stop, so that covers the whole card. Links and status text inside a card
+  use deeper shades (primary `#2e2a86`, success `#0d4a22`, warning `#5f2108`, danger `#7a1313`, info `#172554`), all 4.6:1 or better.
+* Axe cannot judge text over a gradient (it lists those nodes as "needs review"), so `scripts/mesh-contrast-test.ts` reads the palettes and
+  text colours from the stylesheet and checks every palette x colour x theme; it fails if a colour is changed to something below 4.5:1.
+* In light mode the palettes are mixed toward white (`--mesh-strength: 55%` in `.mesh-card`; raise it for stronger colour, lower it for paler cards), which only makes the text contrast higher; the test reads that value. Dark mode uses the same palettes mixed 26% into near-black, with light text (also checked by the test).
+* Icons sit in a liquid-glass tile (frosted translucent surface with blur, a bright rim and a soft shadow) with dark ink, so they read on all six. The tile is decoration; the label and figure carry the meaning. With the system setting "reduce transparency" the tile becomes solid with no blur.
+* Status and trend colours stay meaningful: the white pills (Over by, On estimate) and the red "past the budget" alert tile keep their own
+  styling and are not given a gradient.
+* The cards have no visible border (the 1 px is kept, transparent, so sizes do not change). A card you press (the vendor Paid and Planned filters) still gets a dark outline, because that outline is how its on/off state is shown. Printing: a mesh card prints on white with black text.
+
 ## Not covered, and worth doing with real people
 
 - A screen reader pass (VoiceOver on iPhone, TalkBack on Android) of the main flows: add a payment, approve an entry, read a statement.

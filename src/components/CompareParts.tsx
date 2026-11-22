@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
 import { useElementWidth } from '@/components/useElementWidth'
 import type { Delta } from '@/lib/compare'
 import { axisTicks, compact, noBreak } from '@/lib/chart'
+import { meshCard } from '@/lib/mesh'
 import { cn } from '@/lib/utils'
 
 /** "+17%" / "-5%" for a percent. */
@@ -68,10 +68,10 @@ export function DeltaBadge({ d, format, showAmount = false, soFar = false }: { d
 }
 
 /** One headline number with both projects' values under it: a label, the two values with their colour keys, and how they differ. */
-export function StatTile({ label, a, b, d, format, soFar, note }: { label: string; a: string; b: string; d?: Delta; format: (n: number) => string; soFar?: boolean; note?: string }) {
+export function StatTile({ label, a, b, d, format, soFar, note, mesh }: { label: string; a: string; b: string; d?: Delta; format: (n: number) => string; soFar?: boolean; note?: string; /** Position in the row: picks the tile's mesh gradient (lib/mesh.ts). */ mesh: number }) {
   const { t } = useApp()
   return (
-    <Card className="gap-3 p-4">
+    <div className={cn('flex flex-col gap-3 rounded-xl border p-4', meshCard(mesh))}>
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <dl className="grid gap-1.5">
         {([['a', a], ['b', b]] as const).map(([side, v]) => (
@@ -86,7 +86,7 @@ export function StatTile({ label, a, b, d, format, soFar, note }: { label: strin
       </dl>
       {d && <DeltaBadge d={d} format={format} soFar={soFar} />}
       {note && <p className="text-sm text-muted-foreground">{note}</p>}
-    </Card>
+    </div>
   )
 }
 

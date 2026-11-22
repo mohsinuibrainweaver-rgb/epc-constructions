@@ -15,6 +15,8 @@ import { useContracts, usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Payment } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { summarizeContract } from '@/lib/contracts'
+import { ariaSort, SortButton } from '@/components/SortButton'
+import { nextSort, sortRows, type SortState } from '@/lib/sort'
 import { csvEscape, download, formatDate, money, todayISO } from '@/lib/format'
 import { buildStatement, type StatementScope } from '@/lib/statements'
 import { isAwaitingApproval, isPlanned } from '@/lib/stats'
@@ -25,6 +27,8 @@ function initialScope(sp: URLSearchParams): StatementScope {
   if (sp.get('contract')) return 'contract'
   return 'all'
 }
+
+type StmtCol = 'date' | 'purpose' | 'payee' | 'phase' | 'mode' | 'paidBy' | 'status' | 'amount'
 
 export function Statements() {
   const { t, lang, project, settings, phaseName } = useApp()
@@ -67,6 +71,41 @@ export function Statements() {
   const who = (p: Payment) => (p.vendorId && vendorName.get(p.vendorId)) || p.payeeName || '—'
   const stateLabel = (p: Payment): string =>
     isAwaitingApproval(p) ? t('approval.pending') : isPlanned(p) ? t('status.planned') : p.status === 'advance' ? t('status.advance') : t('status.paid')
+
+  // Click a column heading to sort the statement on the screen (and on paper, which prints what the screen shows). The CSV and the text to share keep the date order.
+  const [sort, setSort] = useState<SortState<StmtCol>>(null)
+  const onSort = (k: StmtCol) => setSort((cur) => nextSort(cur, k))
+  const rows = useMemo(
+    () =>
+      sortRows(
+        result.rows,
+        sort,
+        (p, k) => {
+          switch (k) {
+            case 'date':
+              return p.date
+            case 'purpose':
+              return p.purpose
+            case 'payee':
+              return who(p) === '—' ? '' : who(p)
+            case 'phase':
+              return (p.phaseId && phaseLabel.get(p.phaseId)) || ''
+            case 'mode':
+              return t(`mode.${p.mode}` as Key)
+            case 'paidBy':
+              return t(`paidBy.${p.paidBy}` as Key)
+            case 'status':
+              return stateLabel(p)
+            case 'amount':
+              return p.amount
+          }
+        },
+        lang,
+      ),
+    // who and stateLabel only read the maps and the language that are listed here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [result.rows, sort, vendorName, phaseLabel, lang, t],
+  )
 
   if (!project) return null
 
@@ -247,7 +286,7 @@ export function Statements() {
             <>
               {/* Narrow screens: a list. Wide screens and paper: a table. */}
               <ul className="divide-y rounded-xl border md:hidden print:hidden">
-                {result.rows.map((p) => (
+                {rows.map((p) => (
                   <li key={p.id} className="flex items-start justify-between gap-3 p-3">
                     <span className="grid min-w-0 gap-0.5">
                       <span className="font-semibold break-words">{p.purpose}</span>
@@ -265,17 +304,23 @@ export function Statements() {
                 <thead>
                   <tr className="border-b-2 text-start">
                     {(['date', 'purpose', 'payee', 'phase', 'mode', 'paidBy', 'status'] as const).map((c) => (
-                      <th key={c} scope="col" className="px-2 py-2 text-start font-bold">
-                        {t(`stmt.col.${c}` as Key)}
+                      <th key={c} scope="col" aria-sort={ariaSort(sort, c)} className="px-2 py-0 text-start font-bold print:py-2">
+                        <SortButton k={c} sort={sort} onSort={onSort} className="print:hidden">
+                          {t(`stmt.col.${c}` as Key)}
+                        </SortButton>
+                        <span className="hidden print:inline">{t(`stmt.col.${c}` as Key)}</span>
                       </th>
                     ))}
-                    <th scope="col" className="px-2 py-2 text-end font-bold">
-                      {t('stmt.col.amount')}
+                    <th scope="col" aria-sort={ariaSort(sort, 'amount')} className="px-2 py-0 text-end font-bold print:py-2">
+                      <SortButton k="amount" sort={sort} onSort={onSort} end className="print:hidden">
+                        {t('stmt.col.amount')}
+                      </SortButton>
+                      <span className="hidden print:inline">{t('stmt.col.amount')}</span>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {result.rows.map((p) => (
+                  {rows.map((p) => (
                     <tr key={p.id} className="border-b break-inside-avoid">
                       <td className="px-2 py-2 whitespace-nowrap">{formatDate(p.date, lang)}</td>
                       <td className="px-2 py-2">{p.purpose}</td>

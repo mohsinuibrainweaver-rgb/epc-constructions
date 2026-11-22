@@ -252,7 +252,7 @@ export function VendorDetail() {
       <div className="grid grid-cols-2 gap-3 max-lg:[&>:last-child:nth-child(odd)]:col-span-2 lg:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] lg:gap-4">
         <StatCard
           icon={CircleCheck}
-          tone="success"
+          mesh={0}
           label={t('vendors.paid')}
           value={money(paid)}
           sub={t('vendors.stat.count', { n: paidList.length })}
@@ -262,7 +262,7 @@ export function VendorDetail() {
         />
         <StatCard
           icon={CalendarClock}
-          tone="warning"
+          mesh={1}
           label={t('vendors.planned')}
           value={money(fig.planned)}
           sub={plannedList.length > 0 ? t('vendors.stat.count', { n: plannedList.length }) : t('vendors.stat.nonePlanned')}
@@ -273,19 +273,19 @@ export function VendorDetail() {
         {lastPayment ? (
           <StatCard
             icon={CalendarCheck}
-            tone="info"
+            mesh={2}
             label={t('vendors.lastPaidStat')}
             value={formatDate(lastPayment.date, lang)}
             sub={money(lastPayment.amount)}
             to={`/payments/${lastPayment.id}`}
           />
         ) : (
-          <StatCard icon={CalendarCheck} tone="info" label={t('vendors.lastPaidStat')} value="—" sub={t('vendors.stat.noneYet')} />
+          <StatCard icon={CalendarCheck} mesh={2} label={t('vendors.lastPaidStat')} value="—" sub={t('vendors.stat.noneYet')} />
         )}
         {activeContracts.length > 0 && (
           <StatCard
             icon={HandCoins}
-            tone="primary"
+            mesh={3}
             label={t('vendors.owedStat')}
             value={money(fig.owed)}
             sub={t('vendors.stat.contracts', { n: activeContracts.length })}
