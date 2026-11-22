@@ -160,7 +160,12 @@ thresholds are `ON_TOLERANCE` (0.5%) and `SLIGHT_OVER` (5%, the usual contingenc
   Phases are reordered by dragging the handle on the left (with the keyboard: focus the handle and press the up or down arrow). The
   **⋮ menu** holds **Edit** and **Delete**; Delete opens a confirmation ("Delete Grey structure? Its payments stay, but they will no
   longer belong to a phase. This cannot be undone.") with focus on Cancel, and focus goes back to the ⋮ button afterwards
-  (`ConfirmDelete`, `ui/dropdown-menu.tsx`).
+  (`ConfirmDialog`, `ui/dropdown-menu.tsx`).
+  **Mark complete** and **Reopen** (on a row and on the phase page) ask first, saying what changes ("Its cost is final at Rs 3,500, and it
+  no longer raises budget alerts"; "It goes back to the unfinished phases ..."), with focus on Cancel.
+  The icon-only buttons on a row (drag handle, Mark complete / Reopen, ⋮) show a styled **tooltip** when a mouse rests on them or
+  when they get the keyboard focus, never on a tap (`Tip` in `src/components/Tip.tsx`, instead of the slow, unstyled `title`
+  attribute); each keeps its `aria-label` for screen readers.
 - **Needs your attention**: only unfinished phases that are over or near their estimate, and the project passing its budget. Phases at
   exactly their estimate are one quiet row ("4 phases have used their whole estimate. Mark them complete if the work is finished.").
 - **Add payment** says what has been paid so far on a phase with no estimate, and that a finished phase is complete.

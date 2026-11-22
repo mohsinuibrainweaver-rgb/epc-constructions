@@ -29,7 +29,8 @@ import {
 import { useApp } from '@/app/AppContext'
 import { BackLink, BudgetBar, Dialog, EmptyState, Field, PageHeader } from '@/components/common'
 import { BudgetChip } from '@/components/BudgetChip'
-import { ConfirmDelete } from '@/components/ConfirmDelete'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Tip } from '@/components/Tip'
 import { BudgetOutlookCard } from '@/components/BudgetOutlook'
 import { PaymentsTable } from '@/components/PaymentsTable'
 import { useToast } from '@/components/Toast'
@@ -142,6 +143,7 @@ function PhaseRow({
   floating,
   onEdit,
   onDelete,
+  onToggleDone,
   onGrab,
 }: {
   ph: Phase
@@ -152,12 +154,13 @@ function PhaseRow({
   floating?: boolean
   onEdit: () => void
   onDelete: () => void
+  /** Asks first: marking a phase complete or reopening it changes how it is counted. */
+  onToggleDone: () => void
   onGrab: (e: ReactPointerEvent<HTMLButtonElement>) => void
 }) {
   const { t, project, phaseName } = useApp()
   const spent = sum(payments.filter((p) => p.phaseId === ph.id && isSpent(p)))
   const planned = sum(payments.filter((p) => p.phaseId === ph.id && isPlanned(p)))
-  const toast = useToast()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const launching = useRef(false)
   /** Open a dialog from a menu item: the menu is gone first, the focus goes back to its button, and the dialog (which returns focus there when it closes) opens. */
@@ -172,38 +175,38 @@ function PhaseRow({
   const state = budgetState(spent, ph.budget, done)
   const name = phaseName(ph)
   const Icon = phaseIcon(ph)
+  const grip = (
+      <button
+        type="button"
+        aria-label={`${t('phases.drag')}: ${name}`}
+        tabIndex={floating ? -1 : 0}
+        data-grip={ph.id}
+        aria-keyshortcuts="ArrowUp ArrowDown"
+        // Without a mouse or a finger: the arrow keys move the phase one place, and the focus stays on its handle.
+        onKeyDown={(e) => {
+          const dir = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0
+          if (!dir || !project || floating) return
+          e.preventDefault()
+          void movePhase(project.id, ph.id, dir).then(() =>
+            setTimeout(() => {
+              if (document.activeElement === document.body || !document.activeElement?.isConnected) document.querySelector<HTMLElement>(`[data-grip="${CSS.escape(ph.id)}"]`)?.focus()
+            }, 80),
+          )
+        }}
+        onPointerDown={onGrab}
+        onContextMenu={(e) => e.preventDefault()}
+        className={cn(
+          'grid size-9 shrink-0 touch-none place-items-center rounded-md max-sm:size-11 text-muted-foreground outline-none select-none hover:bg-secondary hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50',
+          floating ? 'cursor-grabbing' : 'cursor-grab',
+        )}
+      >
+        <GripVertical aria-hidden="true" className="size-5" />
+      </button>
+  )
   return (
     // One phase per row: a drag handle, then the details, then two icon buttons (under the details on a phone).
     <Card className={cn('flex-row items-center gap-2 p-3 transition-colors hover:border-foreground/30 sm:gap-3', floating && 'border-primary shadow-xl ring-2 ring-primary/30')}>
-      {canDrag && (
-        <button
-          type="button"
-          aria-label={`${t('phases.drag')}: ${name}`}
-          title={`${t('phases.drag')} (↑ ↓)`}
-          tabIndex={floating ? -1 : 0}
-          data-grip={ph.id}
-          aria-keyshortcuts="ArrowUp ArrowDown"
-          // Without a mouse or a finger: the arrow keys move the phase one place, and the focus stays on its handle.
-          onKeyDown={(e) => {
-            const dir = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0
-            if (!dir || !project || floating) return
-            e.preventDefault()
-            void movePhase(project.id, ph.id, dir).then(() =>
-              setTimeout(() => {
-                if (document.activeElement === document.body || !document.activeElement?.isConnected) document.querySelector<HTMLElement>(`[data-grip="${CSS.escape(ph.id)}"]`)?.focus()
-              }, 80),
-            )
-          }}
-          onPointerDown={onGrab}
-          onContextMenu={(e) => e.preventDefault()}
-          className={cn(
-            'grid size-9 shrink-0 touch-none place-items-center rounded-md max-sm:size-11 text-muted-foreground outline-none select-none hover:bg-secondary hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50',
-            floating ? 'cursor-grabbing' : 'cursor-grab',
-          )}
-        >
-          <GripVertical aria-hidden="true" className="size-5" />
-        </button>
-      )}
+      {canDrag && (floating ? grip : <Tip label={`${t('phases.drag')} (↑ ↓)`}>{grip}</Tip>)}
       <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
         <Link to={`/phases/${ph.id}`} className="grid min-w-0 flex-1 gap-2 rounded-md md:grid-cols-[minmax(0,1fr)_minmax(12rem,22rem)] md:items-center md:gap-8">
           <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
@@ -241,26 +244,30 @@ function PhaseRow({
         </Link>
         {editable && (
           <div className="flex shrink-0 justify-end gap-2">
-            <Button
-              size="icon-sm"
-              variant="outline"
-              aria-label={done ? t('phases.reopenNamed', { name }) : t('phases.markDoneNamed', { name })}
-              title={done ? t('phases.reopen') : t('phases.markDone')}
-              className={cn(done && 'border-success/40 text-success')}
-              onClick={() => {
-                void setPhaseDone(ph.id, !done)
-                if (!done) toast.show({ kind: 'info', message: `${name}: ${t('phases.done')}`, actionLabel: t('common.undo'), onAction: () => void setPhaseDone(ph.id, false) })
-              }}
-            >
-              {done ? <RotateCcw aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
-            </Button>
-            {/* More actions: edit and delete. Delete asks first (see ConfirmDelete). */}
+            <Tip label={done ? t('phases.reopen') : t('phases.markDone')}>
+              <Button
+                size="icon-sm"
+                variant="outline"
+                aria-label={done ? t('phases.reopenNamed', { name }) : t('phases.markDoneNamed', { name })}
+                className={cn(done && 'border-success/40 text-success')}
+                // Safari does not focus a button when it is clicked; focus it so the box gives the focus back here when it closes.
+                onClick={(e) => {
+                  e.currentTarget.focus()
+                  onToggleDone()
+                }}
+              >
+                {done ? <RotateCcw aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
+              </Button>
+            </Tip>
+            {/* More actions: edit and delete. Delete asks first (see ConfirmDialog). */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button ref={triggerRef} size="icon-sm" variant="outline" aria-label={t('phases.moreNamed', { name })} title={t('phases.more')}>
-                  <EllipsisVertical aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
+              <Tip label={t('phases.more')}>
+                <DropdownMenuTrigger asChild>
+                  <Button ref={triggerRef} size="icon-sm" variant="outline" aria-label={t('phases.moreNamed', { name })}>
+                    <EllipsisVertical aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </Tip>
               <DropdownMenuContent
                 onCloseAutoFocus={(e) => {
                   if (launching.current) {
@@ -286,6 +293,36 @@ function PhaseRow({
   )
 }
 
+/**
+ * Asks before a phase is marked complete or reopened, because it changes how the phase is counted: a finished phase shows its final cost
+ * and never alerts; an unfinished one is measured against its estimate again. Open while `phase` is set.
+ */
+function ConfirmPhaseDone({ phase, spent, onClose }: { phase?: Phase; spent: number; onClose: () => void }) {
+  const { t, phaseName } = useApp()
+  const toast = useToast()
+  // Keep the wording of the phase that was asked about while the box fades out.
+  const last = useRef<{ phase: Phase; spent: number }>(undefined)
+  if (phase) last.current = { phase, spent }
+  const shown = phase ?? last.current?.phase
+  const done = Boolean(shown?.done)
+  const name = shown ? phaseName(shown) : ''
+  return (
+    <ConfirmDialog
+      open={Boolean(phase)}
+      title={t(done ? 'phases.reopenTitle' : 'phases.doneTitle', { name })}
+      description={t(done ? 'phases.reopenBody' : 'phases.doneBody', { amount: money(last.current?.spent ?? 0) })}
+      confirmLabel={t(done ? 'phases.reopen' : 'phases.markDone')}
+      onClose={onClose}
+      onConfirm={() => {
+        if (!phase) return
+        void setPhaseDone(phase.id, !phase.done)
+        toast.show({ kind: 'success', message: t(phase.done ? 'phases.reopenedToast' : 'phases.doneToast', { name }) })
+        onClose()
+      }}
+    />
+  )
+}
+
 /** What is being dragged right now: which phase, which slot it would drop into, and where the pointer is. */
 type Drag = { id: string; to: number; y: number }
 /** Facts about the drag that do not change while it lasts. */
@@ -299,6 +336,7 @@ export function Phases() {
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<Phase>()
   const [deleting, setDeleting] = useState<Phase>()
+  const [toggling, setToggling] = useState<Phase>()
   const toast = useToast()
 
   // The order just dropped, shown straight away until the saved order catches up (so the list never flickers back).
@@ -451,6 +489,7 @@ export function Phases() {
                     canDrag={canDrag}
                     onEdit={() => setEditing(s.ph)}
                     onDelete={() => setDeleting(s.ph)}
+                    onToggleDone={() => setToggling(s.ph)}
                     onGrab={(e) => grab(e, s.ph)}
                   />
                 </li>
@@ -472,6 +511,7 @@ export function Phases() {
                 canDrag
                 onEdit={() => {}}
                 onDelete={() => {}}
+                onToggleDone={() => {}}
                 onGrab={() => {}}
               />
             </div>
@@ -481,7 +521,9 @@ export function Phases() {
 
       <PhaseDialog open={adding} onClose={() => setAdding(false)} />
       <PhaseDialog open={Boolean(editing)} phase={editing} onClose={() => setEditing(undefined)} />
-      <ConfirmDelete
+      <ConfirmPhaseDone phase={toggling} spent={toggling ? sum(payments.filter((p) => p.phaseId === toggling.id && isSpent(p))) : 0} onClose={() => setToggling(undefined)} />
+      <ConfirmDialog
+        destructive
         open={Boolean(deleting)}
         title={t('phases.deleteTitle', { name: deleting ? phaseName(deleting) : '' })}
         description={t('phases.deleteBody')}
@@ -508,6 +550,7 @@ export function PhaseDetail() {
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt && p.phaseId === id)
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmDone, setConfirmDone] = useState(false)
   const phase = phases.find((p) => p.id === id)
   if (!phase) return null
   const fig = phaseFigures(payments, phase.budget)
@@ -532,7 +575,13 @@ export function PhaseDetail() {
                   {t('pay.add')}
                 </Link>
               </Button>
-              <Button variant="outline" onClick={() => void setPhaseDone(phase.id, !phase.done)}>
+              <Button
+                variant="outline"
+                onClick={(e) => {
+                  e.currentTarget.focus()
+                  setConfirmDone(true)
+                }}
+              >
                 {phase.done ? <RotateCcw aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
                 {phase.done ? t('phases.reopen') : t('phases.markDone')}
               </Button>
@@ -647,6 +696,7 @@ export function PhaseDetail() {
       </Card>
 
       <PhaseDialog open={editing} phase={phase} onClose={() => setEditing(false)} />
+      <ConfirmPhaseDone phase={confirmDone ? phase : undefined} spent={spent} onClose={() => setConfirmDone(false)} />
       <Dialog
         open={confirmDelete}
         title={t('common.delete')}

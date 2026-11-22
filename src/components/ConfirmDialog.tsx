@@ -4,14 +4,16 @@ import { useApp } from '@/app/AppContext'
 import { Button } from '@/components/ui/button'
 
 /**
- * "Are you sure?" before something is removed. It is an alert dialog, so a screen reader announces it as one and the focus starts on
+ * "Are you sure?" before something that is hard to take back (removing a phase) or that changes how it is counted (marking it complete,
+ * reopening it). `destructive` makes the confirming button red. It is an alert dialog, so a screen reader announces it as one and the focus starts on
  * Cancel (the safe choice); Escape or a tap outside cancels.
  */
-export function ConfirmDelete({
+export function ConfirmDialog({
   open,
   title,
   description,
   confirmLabel,
+  destructive = false,
   onConfirm,
   onClose,
 }: {
@@ -19,6 +21,7 @@ export function ConfirmDelete({
   title: string
   description: string
   confirmLabel: string
+  destructive?: boolean
   onConfirm: () => void
   onClose: () => void
 }) {
@@ -51,7 +54,7 @@ export function ConfirmDelete({
               </Button>
             </AlertDialog.Cancel>
             <AlertDialog.Action asChild>
-              <Button type="button" variant="destructive" onClick={onConfirm}>
+              <Button type="button" variant={destructive ? 'destructive' : 'default'} onClick={onConfirm}>
                 {confirmLabel}
               </Button>
             </AlertDialog.Action>
