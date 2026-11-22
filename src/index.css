@@ -478,10 +478,10 @@
    white card (bg-card) on top of it, so no text is ever set directly on the gradient. */
 @layer components {
   .auth-bg {
-    --auth-1: #c6dfff;
-    --auth-2: #daebfc;
-    --auth-3: #ddf3f7;
-    --auth-4: #f0f2ff;
+    --auth-1: #e5ddff;
+    --auth-2: #eee7ff;
+    --auth-3: #e8ebff;
+    --auth-4: #f9f6ff;
     background:
       radial-gradient(ellipse at 0% 0%, var(--auth-1) 0%, transparent 65%),
       radial-gradient(ellipse at 100% 0%, var(--auth-2) 0%, transparent 65%),
@@ -492,10 +492,10 @@
     background-clip: border-box;
   }
   .dark .auth-bg {
-    --auth-1: color-mix(in oklab, #c6dfff 24%, #0b0b0f);
-    --auth-2: color-mix(in oklab, #daebfc 24%, #0b0b0f);
-    --auth-3: color-mix(in oklab, #ddf3f7 24%, #0b0b0f);
-    --auth-4: color-mix(in oklab, #f0f2ff 24%, #0b0b0f);
+    --auth-1: color-mix(in oklab, #e5ddff 24%, #0b0b0f);
+    --auth-2: color-mix(in oklab, #eee7ff 24%, #0b0b0f);
+    --auth-3: color-mix(in oklab, #e8ebff 24%, #0b0b0f);
+    --auth-4: color-mix(in oklab, #f9f6ff 24%, #0b0b0f);
   }
 }
 
