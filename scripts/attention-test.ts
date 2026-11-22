@@ -57,10 +57,10 @@ assert.equal(isMissing('bank', pay({ mode: 'bank' }), none), true)
 
 // The list on Home: alerts first (danger, then warning), then tidy-up items; nothing when all is well.
 const alerts: Alert[] = [
-  { id: 'ph-80-1', kind: 'warning', key: 'notif.budget80', vars: { name: 'Grey', pct: 85 }, to: '/phases/1' },
+  { id: 'ph-80-1', kind: 'warning', key: 'notif.estimate80', vars: { name: 'Grey', pct: 85 }, to: '/phases/1' },
   { id: 'od-1', kind: 'error', key: 'notif.overdue', vars: { what: 'Foreman' }, to: '/payments/x' },
   { id: 'approvals', kind: 'warning', key: 'notif.pending', vars: { count: 2 }, to: '/ledger?approval=pending' },
-  { id: 'ph-over-2', kind: 'error', key: 'notif.budget100', vars: { name: 'Plumber' }, to: '/phases/2' },
+  { id: 'ph-over-2', kind: 'error', key: 'notif.phaseOver', vars: { name: 'Plumber', amount: 'Rs 9,000' }, to: '/phases/2' },
   { id: 'co-c1', kind: 'error', key: 'notif.contractOver', vars: { name: 'Wood', amount: 'Rs 5,000' }, to: '/contracts/c1' },
 ]
 const mixed = [pay({ id: 'm1' }), pay({ id: 'm2', vendorId: undefined }), pay({ id: 'm3', mode: 'bank' }), pay({ id: 'm4', status: 'planned' })]
@@ -70,6 +70,16 @@ assert.deepEqual(items.map((i) => i.tone), ['danger', 'danger', 'warning', 'info
 assert.deepEqual(items.find((i) => i.id === 'missing-receipt')!.vars, { count: 2 }, 'm2 and m3: m1 has a photo and m4 is only planned')
 assert.equal(items.find((i) => i.id === 'missing-vendor')!.to, '/ledger?missing=vendor')
 assert.equal(items.find((i) => i.id === 'missing-bank')!.vars.count, 1)
+
+// A slight overspend is amber, a clear one red; and phases at exactly their estimate are one quiet row, not an alarm each.
+const slight: Alert[] = [{ id: 'ph-over-3', kind: 'warning', key: 'notif.phaseOver', vars: { name: 'Tiles', amount: 'Rs 2,000' }, to: '/phases/3' }, { id: 'proj-over', kind: 'error', key: 'notif.projectOver', vars: { name: 'House', amount: 'Rs 900,000' }, to: '/phases' }]
+assert.deepEqual(attentionItems(slight, [], none).map((i) => [i.id, i.tone]), [['proj-over', 'danger'], ['ph-over-3', 'warning']])
+const full1 = attentionItems([], [], none, ['Site preparation'])
+assert.deepEqual(full1.map((i) => [i.id, i.tone, i.key, i.to]), [['phases-full', 'info', 'attn.phaseFull', '/phases']])
+assert.deepEqual(full1[0].vars, { name: 'Site preparation' })
+const full4 = attentionItems([], [], none, ['A', 'B', 'C', 'D'])
+assert.deepEqual([full4.length, full4[0].key, full4[0].vars], [1, 'attn.phasesFull', { count: 4 }], 'four phases at their estimate make one row')
+assert.equal(attentionItems([], [], none, []).length, 0)
 
 // Receipts not read yet: never claim "no receipt".
 assert.equal(attentionItems([], mixed, undefined).some((i) => i.id === 'missing-receipt'), false)

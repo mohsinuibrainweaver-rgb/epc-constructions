@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, CalendarClock, HandCoins, ReceiptText, Target, TriangleAlert, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowUpRight, CalendarClock, HandCoins, ReceiptText, Target, Wallet, type LucideIcon } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useApp } from '@/app/AppContext'
 import { BudgetBar, CardSkeleton, EmptyState, PageHeader, StatusPill } from '@/components/common'
@@ -9,6 +9,7 @@ import { AttentionCard } from '@/components/AttentionCard'
 import { DueActions } from '@/components/DueActions'
 import { PaymentsTable } from '@/components/PaymentsTable'
 import { Badge } from '@/components/ui/badge'
+import { BudgetChip } from '@/components/BudgetChip'
 import { Card } from '@/components/ui/card'
 import { db } from '@/db/db'
 import { useContracts, usePayments, usePhases, useReceiptIds } from '@/db/hooks'
@@ -16,7 +17,7 @@ import { attentionItems } from '@/lib/attention'
 import { contractAlerts } from '@/lib/contracts'
 import { addDays, formatDate, money, todayISO } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { budgetLevel, buildAlerts, isAwaitingApproval, isPlanned, isSpent, percent, phaseProgress, sum } from '@/lib/stats'
+import { budgetState, budgetTone, buildAlerts, fullPhases, isAwaitingApproval, isPlanned, isSpent, percent, phaseProgress, sum } from '@/lib/stats'
 
 // A 48 px tile per figure: a light background and the 500 shade of the same colour for the icon (400 on dark). The icon is decoration; the label and the
 // figure carry the meaning.
@@ -81,7 +82,7 @@ export function Home() {
   const recent = live.filter((p) => !isPlanned(p))
   const budget = project?.budget
   const left = budget ? budget - spent : undefined
-  const lvl = budgetLevel(spent, budget)
+  const tone = budgetTone(budgetState(spent, budget))
 
   // The phases worth a line (spending or a budget; over budget first); the empty ones are only counted.
   const progress = phaseProgress(phases, payments)
@@ -91,6 +92,7 @@ export function Home() {
     [...buildAlerts(project, phases, payments, phaseName, todayISO(), settings.role), ...contractAlerts(contracts, payments)],
     payments,
     receiptIds,
+    fullPhases(phases, payments).map((ph) => phaseName(ph)),
   ).slice(0, 8)
   // The Planned figure is shown only when something is planned; otherwise it is an empty tile that takes room.
   const showPlanned = planned.length > 0
@@ -170,8 +172,8 @@ export function Home() {
           {budget ? (
             <>
               <BudgetBar spent={spent} budget={budget} label={t('home.budgetUsed', { pct: percent(spent, budget) })} />
-              {lvl === 'error' || lvl === 'warning' ? (
-                <Badge variant={lvl === 'error' ? 'danger' : 'warning'} className="w-fit">
+              {tone === 'danger' || tone === 'warning' ? (
+                <Badge variant={tone === 'danger' ? 'danger' : 'warning'} className="w-fit">
                   {t('home.budgetUsed', { pct: percent(spent, budget) })}
                 </Badge>
               ) : (
@@ -220,38 +222,27 @@ export function Home() {
             </Link>
           </div>
           <div className="grid gap-4 border-t p-4">
-            {progress.rows.map(({ phase: ph, spent: s, budget: b, pct, level }) => (
+            {progress.rows.map(({ phase: ph, spent: s, budget: b, pct, done, state }) => (
               <Link key={ph.id} to={`/phases/${ph.id}`} className="grid gap-1.5 rounded-md">
                 <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-sm">
                   <span className="font-semibold">{phaseName(ph)}</span>
-                  <span className="tabular ms-auto whitespace-nowrap text-muted-foreground">{b ? t('home.phaseOf', { spent: money(s), budget: money(b) }) : money(s)}</span>
+                  <span className="tabular ms-auto whitespace-nowrap text-muted-foreground">
+                    {done ? `${t('phases.finalCost')}: ${money(s)}` : b ? t('home.phaseOf', { spent: money(s), budget: money(b) }) : money(s)}
+                  </span>
                 </span>
+                {/* A bar only while an estimate is being measured against; a finished phase shows how it ended. */}
+                {!done && b ? <BudgetBar spent={s} budget={b} label={phaseName(ph)} /> : null}
                 {b ? (
-                  <>
-                    <BudgetBar spent={s} budget={b} label={phaseName(ph)} />
-                    {level === 'error' || level === 'warning' ? (
-                      <Badge variant={level === 'error' ? 'danger' : 'warning'} className="w-fit">
-                        <TriangleAlert aria-hidden="true" />
-                        {level === 'error' ? t(s > b ? 'home.phaseOver' : 'home.phaseReached') : t('phases.used', { pct })}
-                      </Badge>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">{t('phases.used', { pct })}</span>
-                    )}
-                  </>
+                  <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    {!done && state === 'ok' && <span>{t('phases.used', { pct })}</span>}
+                    <BudgetChip state={state} spent={s} estimate={b} />
+                  </span>
                 ) : (
-                  <span className="text-sm text-muted-foreground">{t('home.phaseNoBudget')}</span>
+                  <span className="text-sm text-muted-foreground">{done ? t('phases.done') : t('home.phaseNoBudget')}</span>
                 )}
               </Link>
             ))}
             {progress.notStarted > 0 && <p className="text-sm text-muted-foreground">{t('home.phasesNotStarted', { count: progress.notStarted })}</p>}
-            {progress.total > 0 && progress.budgeted * 2 < progress.total && (
-              <p className="flex flex-wrap items-center gap-x-3 text-sm text-muted-foreground">
-                <span>{t('home.phasesBudgeted', { budgeted: progress.budgeted, total: progress.total })}</span>
-                <Link to="/phases" className="inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 hover:underline">
-                  {t('home.phasesSetBudgets')}
-                </Link>
-              </p>
-            )}
           </div>
         </Card>
       </div>

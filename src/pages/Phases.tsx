@@ -25,11 +25,12 @@ import {
   RotateCcw,
   Shovel,
   Trash2,
-  TriangleAlert,
   type LucideIcon,
 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { BackLink, BudgetBar, Dialog, EmptyState, Field, PageHeader } from '@/components/common'
+import { BudgetChip } from '@/components/BudgetChip'
+import { BudgetOutlookCard } from '@/components/BudgetOutlook'
 import { PaymentsTable } from '@/components/PaymentsTable'
 import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
@@ -43,7 +44,7 @@ import type { Payment, Phase } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { groupDigits, money, moneyRate, parseAmount } from '@/lib/format'
 import { num, priceRows } from '@/lib/materials'
-import { budgetLevel, budgetPlan, isPlanned, isSpent, percent, phaseFigures, spentBy, sum } from '@/lib/stats'
+import { budgetState, isPlanned, isSpent, percent, phaseFigures, spentBy, sum } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 
 function PhaseDialog({ open, phase, onClose }: { open: boolean; phase?: Phase; onClose: () => void }) {
@@ -104,7 +105,7 @@ function PhaseDialog({ open, phase, onClose }: { open: boolean; phase?: Phase; o
         <Field label={t('phases.name')} error={error}>
           <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
         </Field>
-        <Field label={t('phases.budget')}>
+        <Field label={t('phases.budget')} hint={t('phases.estimateHint')}>
           <Input className="tabular" inputMode="numeric" value={budget} onChange={(e) => setBudget(groupDigits(e.target.value))} />
         </Field>
         <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
@@ -129,65 +130,6 @@ const PHASE_ICONS: Record<string, LucideIcon> = {
   handover: KeyRound,
 }
 const phaseIcon = (ph: Phase): LucideIcon => (ph.key && PHASE_ICONS[ph.key]) || HardHat
-
-/** How the project budget is split across phases, what is left to give out, and money that sits outside every phase. */
-function BudgetPlanCard({ phases, payments }: { phases: Phase[]; payments: Payment[] }) {
-  const { t, project, can } = useApp()
-  const plan = budgetPlan(phases, payments, project?.budget)
-  const pb = plan.projectBudget
-  const noBudget = plan.total - plan.withBudget
-  const pct = pb ? Math.min(100, Math.round((plan.allocated / pb) * 100)) : 0
-  return (
-    <Card className="gap-3 p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-lg font-semibold">{t('phases.plan')}</h2>
-        <span className="text-sm text-muted-foreground">{t('phases.planDone', { done: plan.done, total: plan.total })}</span>
-      </div>
-
-      {pb ? (
-        <>
-          <p>
-            {t('phases.planGiven', { given: money(plan.allocated), total: money(pb) })}
-          </p>
-          <Progress
-            value={pct}
-            aria-label={t('phases.plan')}
-            className={cn('h-2 bg-muted', plan.overAllocated > 0 && '[&>[data-slot=progress-indicator]]:bg-warning')}
-          />
-          {plan.overAllocated > 0 ? (
-            <Badge variant="warning" className="h-auto w-fit whitespace-normal">
-              <TriangleAlert aria-hidden="true" />
-              {t('phases.planOver', { amount: money(plan.overAllocated) })}
-            </Badge>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {plan.unallocated > 0 ? t('phases.planLeft', { amount: money(plan.unallocated) }) : t('phases.planAll')}
-            </p>
-          )}
-        </>
-      ) : (
-        <>
-          <p>{t('phases.planGivenOnly', { given: money(plan.allocated) })}</p>
-          {project && can('editProject') && (
-            <p className="text-sm text-muted-foreground">
-              {t('phases.planNoProject')}{' '}
-              <Link className="font-semibold text-primary underline-offset-2 hover:underline" to={`/projects/${project.id}/edit`}>
-                {t('phases.planSetBudget')}
-              </Link>
-            </p>
-          )}
-        </>
-      )}
-
-      {(noBudget > 0 || plan.outsideSpent > 0) && (
-        <ul className="grid gap-1 text-sm text-muted-foreground">
-          {noBudget > 0 && <li>{t('phases.planNoBudget', { count: noBudget })}</li>}
-          {plan.outsideSpent > 0 && <li>{t('phases.planOutside', { amount: money(plan.outsideSpent) })}</li>}
-        </ul>
-      )}
-    </Card>
-  )
-}
 
 /** One phase row. Also drawn as the floating copy that follows the pointer while it is dragged. */
 function PhaseRow({
@@ -216,7 +158,9 @@ function PhaseRow({
   const { t, project, phaseName } = useApp()
   const spent = sum(payments.filter((p) => p.phaseId === ph.id && isSpent(p)))
   const planned = sum(payments.filter((p) => p.phaseId === ph.id && isPlanned(p)))
-  const lvl = budgetLevel(spent, ph.budget)
+  const toast = useToast()
+  const done = Boolean(ph.done)
+  const state = budgetState(spent, ph.budget, done)
   const name = phaseName(ph)
   const Icon = phaseIcon(ph)
   return (
@@ -247,22 +191,24 @@ function PhaseRow({
             <span className="text-base leading-snug font-bold">
               {num}. {name}
             </span>
-            {ph.done && (
+            {done && (
               <Badge variant="success">
                 <CircleCheck aria-hidden="true" />
                 {t('phases.done')}
               </Badge>
             )}
-            {lvl === 'error' && <Badge variant="danger">{percent(spent, ph.budget)}%</Badge>}
-            {lvl === 'warning' && <Badge variant="warning">{percent(spent, ph.budget)}%</Badge>}
+            <BudgetChip state={state} spent={spent} estimate={ph.budget} />
           </span>
           <span className="grid gap-1.5">
-            <BudgetBar spent={spent} budget={ph.budget} label={name} />
+            {/* A finished phase shows what it cost; a bar only makes sense while there is an estimate to measure against. */}
+            {!done && ph.budget ? <BudgetBar spent={spent} budget={ph.budget} label={name} /> : null}
             <span className="flex items-center justify-between gap-2 text-sm">
               <span>
-                {t('phases.spent')}: <strong className="tabular">{money(spent)}</strong>
+                {done ? t('phases.finalCost') : t('phases.spent')}: <strong className="tabular">{money(spent)}</strong>
               </span>
-              <span className="tabular text-muted-foreground">{ph.budget ? money(ph.budget) : t('phases.setBudget')}</span>
+              <span className="tabular text-muted-foreground">
+                {done ? (ph.budget ? `${t('phases.budget').replace(/\s*\(.*\)/, '')}: ${money(ph.budget)}` : '') : ph.budget ? money(ph.budget) : spent > 0 || planned > 0 ? t('phases.noEstimate') : t('phases.notStarted')}
+              </span>
             </span>
             {planned > 0 && (
               <span className="text-sm text-muted-foreground">
@@ -292,6 +238,19 @@ function PhaseRow({
               onClick={() => project && void movePhase(project.id, ph.id, 1)}
             >
               <ChevronDown aria-hidden="true" />
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="outline"
+              aria-label={done ? t('phases.reopenNamed', { name }) : t('phases.markDoneNamed', { name })}
+              title={done ? t('phases.reopen') : t('phases.markDone')}
+              className={cn(done && 'border-success/40 text-success')}
+              onClick={() => {
+                void setPhaseDone(ph.id, !done)
+                if (!done) toast.show({ kind: 'info', message: `${name}: ${t('phases.done')}`, actionLabel: t('common.undo'), onAction: () => void setPhaseDone(ph.id, false) })
+              }}
+            >
+              {done ? <RotateCcw aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
             </Button>
             <Button size="icon-sm" variant="outline" aria-label={`${t('common.edit')}: ${name}`} title={t('common.edit')} onClick={onEdit}>
               <Pencil aria-hidden="true" />
@@ -440,7 +399,7 @@ export function Phases() {
         <EmptyState icon={Layers3} title={t('phases.empty')} body={t('phases.emptyBody')} />
       ) : (
         <>
-          <BudgetPlanCard phases={phases} payments={payments} />
+          <BudgetOutlookCard phases={phases} payments={payments} />
           <ul className="grid gap-3">
             {slots.map((s, i) =>
               s === 'slot' ? (
@@ -516,6 +475,8 @@ export function PhaseDetail() {
   if (!phase) return null
   const fig = phaseFigures(payments, phase.budget)
   const spent = fig.spent
+  const done = Boolean(phase.done)
+  const state = budgetState(spent, phase.budget, done)
   const vendorName = new Map(vendors.map((v) => [v.id, v.name]))
   const bought = priceRows(payments)
   const where = spentBy(payments, (p) => (p.vendorId && vendorName.get(p.vendorId)) || p.payeeName || t('reports.noVendor'))
@@ -569,19 +530,25 @@ export function PhaseDetail() {
       )}
 
       <Card className="gap-3 p-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <span>
-            {t('phases.spent')}: <strong className="tabular">{money(spent)}</strong>
+            {done ? t('phases.finalCost') : t('phases.spent')}: <strong className="tabular">{money(spent)}</strong>
           </span>
-          <span className="tabular text-muted-foreground">{phase.budget ? money(phase.budget) : '—'}</span>
+          <span className="tabular text-muted-foreground">{phase.budget ? `${t('phases.budget').replace(/\s*\(.*\)/, '')}: ${money(phase.budget)}` : t('phases.noEstimate')}</span>
         </div>
-        <BudgetBar spent={spent} budget={phase.budget} label={phaseName(phase)} />
-        {phase.budget ? <span className="text-sm text-muted-foreground">{t('phases.used', { pct: percent(spent, phase.budget) })}</span> : null}
+        {/* While the work goes on, a bar against the estimate (if there is one). Once it is finished, only the verdict on the cost. */}
+        {!done && phase.budget ? <BudgetBar spent={spent} budget={phase.budget} label={phaseName(phase)} /> : null}
+        {phase.budget ? (
+          <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {!done && <span>{t('phases.used', { pct: percent(spent, phase.budget) })}</span>}
+            <BudgetChip state={state} spent={spent} estimate={phase.budget} />
+          </span>
+        ) : null}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3 sm:grid-cols-4">
-          {phase.budget ? (
+          {phase.budget && !done ? (
             <div>
               <dt className="text-sm text-muted-foreground">{fig.over > 0 ? t('phases.overBy') : t('phases.left')}</dt>
-              <dd className={cn('tabular font-semibold', fig.over > 0 && 'text-danger')}>{money(fig.over > 0 ? fig.over : fig.left)}</dd>
+              <dd className={cn('tabular font-semibold', state === 'over' && 'text-danger', state === 'overSlight' && 'text-warning')}>{money(fig.over > 0 ? fig.over : fig.left)}</dd>
             </div>
           ) : null}
           <div>

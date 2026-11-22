@@ -41,7 +41,7 @@ import { FileDropzone } from '@/components/FileDropzone'
 import { FileThumb } from '@/components/FilePreview'
 import { RecentPayments } from '@/components/RecentPayments'
 import { bankFromVendor } from '@/lib/bank'
-import { previewPhaseBudget } from '@/lib/stats'
+import { budgetTone, isSpent, previewPhaseBudget, sum } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 import { matchVendor } from '@/lib/vendorMatch'
 import { ensureAttachmentBlob } from '@/sync/engine'
@@ -249,14 +249,19 @@ export function AddPayment() {
     () => (phaseObj ? previewPhaseBudget(phaseObj, payments, { id, amount: draftAmount, status, waitsForApproval: needsApproval(settings.role, status) }) : undefined),
     [phaseObj, payments, id, draftAmount, status, settings.role],
   )
-  let phaseText = ''
-  if (phaseObj && phaseBudget) {
+  // The line under the phase. With an estimate: how far it is, and what this payment does to it (red only for a clear overspend). Without
+  // one, what has been paid so far, which is what matters when prices are only known afterwards. A finished phase says so.
+  let phaseNote: { text: string; tone: ReturnType<typeof budgetTone> } | undefined
+  if (phaseObj) {
     const name = phaseName(phaseObj)
-    const base = t('pay.phaseBudget', { name, spent: money(phaseBudget.spent), budget: money(phaseBudget.budget), pct: phaseBudget.pct })
-    let extra = ''
-    if (draftAmount > 0 && phaseBudget.counts) extra = phaseBudget.over > 0 ? t('pay.phaseOver', { name, amount: money(phaseBudget.over) }) : t('pay.phaseAfter', { pct: phaseBudget.afterPct })
-    else if (phaseBudget.level === 'error') extra = t('notif.budget100', { name })
-    phaseText = `${base} ${extra}`.trim()
+    const paidSoFar = sum(payments.filter((p) => p.phaseId === phaseObj.id && p.id !== id && isSpent(p)))
+    if (phaseObj.done) phaseNote = { text: t('pay.phaseDoneNote', { name, spent: money(paidSoFar) }), tone: 'neutral' }
+    else if (phaseBudget) {
+      const base = t('pay.phaseBudget', { name, spent: money(phaseBudget.spent), budget: money(phaseBudget.budget), pct: phaseBudget.pct })
+      const adding = draftAmount > 0 && phaseBudget.counts
+      const extra = adding ? (phaseBudget.over > 0 ? t('pay.phaseOver', { name, amount: money(phaseBudget.over) }) : t('pay.phaseAfter', { pct: phaseBudget.afterPct })) : ''
+      phaseNote = { text: `${base} ${extra}`.trim(), tone: budgetTone(phaseBudget.state) }
+    } else if (paidSoFar > 0) phaseNote = { text: t('pay.phaseSpent', { name, spent: money(paidSoFar) }), tone: 'none' }
   }
 
   // Arriving from a contract ("Add payment" on its page) fills the form once.
@@ -531,16 +536,16 @@ export function AddPayment() {
           </Dropdown>
         </Field>
 
-        {phaseBudget && phaseText && (
+        {phaseNote && (
           <p
             role="status"
             className={cn(
               'flex items-start gap-2 text-sm sm:col-span-2',
-              phaseBudget.level === 'error' ? 'font-semibold text-danger' : phaseBudget.level === 'warning' ? 'font-semibold text-warning' : 'text-muted-foreground',
+              phaseNote.tone === 'danger' ? 'font-semibold text-danger' : phaseNote.tone === 'warning' ? 'font-semibold text-warning' : 'text-muted-foreground',
             )}
           >
-            {(phaseBudget.level === 'warning' || phaseBudget.level === 'error') && <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />}
-            <span>{phaseText}</span>
+            {(phaseNote.tone === 'warning' || phaseNote.tone === 'danger') && <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />}
+            <span>{phaseNote.text}</span>
           </p>
         )}
 

@@ -31,17 +31,27 @@ export interface AttentionItem {
 const RANK = { danger: 0, warning: 1, info: 2 } as const
 
 /**
- * What Home lists under "Needs your attention": budgets over or near the limit and contracts paid beyond what was agreed
+ * What Home lists under "Needs your attention": estimates that are clearly passed or nearly used up and contracts paid beyond what was agreed
  * (from the alerts the bell already has), then the tidy-up items: payments without a vendor, bank transfers without bank
  * details, and paid payments without a receipt photo. Approvals and due payments have their own cards on Home.
  * `receiptIds` is undefined until the receipts have been read, so "no receipt" is never claimed too early.
  */
-export function attentionItems(alerts: Alert[], payments: Payment[], receiptIds: ReadonlySet<string> | undefined): AttentionItem[] {
+export function attentionItems(
+  alerts: Alert[],
+  payments: Payment[],
+  receiptIds: ReadonlySet<string> | undefined,
+  /** Names of unfinished phases that have used their whole estimate (see fullPhases): one quiet row, not a row each. */
+  fullPhaseNames: string[] = [],
+): AttentionItem[] {
   const out: AttentionItem[] = []
   for (const a of alerts) {
-    if (a.key === 'notif.budget100' || a.key === 'notif.contractOver') out.push({ id: a.id, tone: 'danger', key: a.key, vars: a.vars, to: a.to })
-    else if (a.key === 'notif.budget80') out.push({ id: a.id, tone: 'warning', key: a.key, vars: a.vars, to: a.to })
+    if (a.key === 'notif.contractOver') out.push({ id: a.id, tone: 'danger', key: a.key, vars: a.vars, to: a.to })
+    else if (a.key === 'notif.phaseOver' || a.key === 'notif.projectOver') out.push({ id: a.id, tone: a.kind === 'error' ? 'danger' : 'warning', key: a.key, vars: a.vars, to: a.to })
+    else if (a.key === 'notif.budget80' || a.key === 'notif.estimate80') out.push({ id: a.id, tone: 'warning', key: a.key, vars: a.vars, to: a.to })
   }
+  // A phase at exactly its estimate is no alarm. If the work is done it only needs marking complete, which turns it green.
+  if (fullPhaseNames.length === 1) out.push({ id: 'phases-full', tone: 'info', key: 'attn.phaseFull', vars: { name: fullPhaseNames[0] }, to: '/phases' })
+  else if (fullPhaseNames.length > 1) out.push({ id: 'phases-full', tone: 'info', key: 'attn.phasesFull', vars: { count: fullPhaseNames.length }, to: '/phases' })
   const live = payments.filter((p) => !p.deletedAt)
   const noVendor = live.filter(missingVendor).length
   if (noVendor > 0) out.push({ id: 'missing-vendor', tone: 'info', key: 'attn.noVendor', vars: { count: noVendor }, to: '/ledger?missing=vendor' })

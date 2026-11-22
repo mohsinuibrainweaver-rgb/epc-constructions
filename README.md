@@ -123,36 +123,46 @@ never the same. What does repeat is the vendor, so the form learns from that (`s
 - **Due and upcoming** moves above Recent payments on a phone when a planned payment is overdue or due within three days; on a wide
   screen the layout is unchanged (Recent on the left, Due and Phase progress on the right).
 - Check: `npx vite-node scripts/attention-test.ts`.
-- **Phase progress** lists the phases that matter, not all twelve: those with spending or a budget, over-budget first, then nearest the
-  limit, then by spending, at most five (`phaseProgress` in `src/lib/stats.ts`). A row shows "spent of budget", the bar, and a badge with
-  an icon and words ("84% used", "Budget reached" when spending equals the budget, "Over budget" when it is more); a phase without a
-  budget shows "No budget set". Below the rows: "Phases not started: n" and, when fewer than half the phases have a budget, "Phases with
-  a budget: x of y" with a "Set budgets" link. Check: `npx vite-node scripts/phase-progress-test.ts`.
-- The wording "is over budget" in the alerts is now "has used its whole budget", because the alert starts at 100%, which is reaching the
-  budget as well as passing it. The Ledger count says "1 payment" for one.
-
-## Ledger sort and summary, and "Spending over time" (Reports)
-
-- **Ledger** shows, above the list and for the rows that match the filters: the count and the **paid** total (as before), plus
-  **Planned** and **Awaiting approval** totals when there are any (they are not counted as spent). A **Sort by** drop-down orders the
-  list: Newest first (as before, the default), Oldest first, Largest amount, Smallest amount; equal entries keep a stable order (later
-  date, then added later). The sort is only a view, it is not saved. Rules in `src/lib/ledger.ts`.
-- **Reports → Spending over time** is a line chart of the total paid and approved, month by month (months with nothing stay on the line).
-  Planned payments continue it as a dashed line ("If planned payments are made"); a planned payment dated this month or earlier shows as a
-  hollow dot at the end. The project budget appears as a dotted reference line only when it is at most 2.5 times the highest figure, so
-  a huge budget never flattens the line (the phase bars on Home show budgets). Plain SVG, no chart library, always left to right; a
-  hidden table gives screen readers the same figures. Rules in `src/lib/trend.ts`, drawing in `src/components/TrendChart.tsx`.
+- **Phase progress** lists the phases that matter, not all twelve: those with spending or an estimate, unfinished ones over, near or at
+  their estimate first, then by spending, finished ones last, at most five (`phaseProgress` in `src/lib/stats.ts`). A row shows the
+  spending (or "Final cost" once the phase is complete), a bar while there is an estimate to measure against, and a badge from
+  `BudgetChip`. There is no nudge to add estimates: they are optional. Check: `npx vite-node scripts/phase-progress-test.ts`.
+- The budget alerts are described under **Budgets are estimates** below. The Ledger count says "1 payment" for one.
 - Check: `npx vite-node scripts/ledger-test.ts`.
 
-## Budget plan (top of Phases)
+## Budgets are estimates (Phases, Home, Add payment)
 
-- A **Budget plan** card above the phase list: "x of y given to phases" with a bar (the phase budgets added together against the project
-  budget), then either "Still to give out: z", "The whole project budget is given to phases", or, when the phase budgets add up to more
-  than the project budget, a warning badge ("Phase budgets are z more than the project budget"). Without a project budget it says so and
-  links to the project form to set one. It also shows "n of m phases complete", "n without a budget", and "x paid is not in any phase"
-  (paid and approved money with no phase, which no phase bar shows).
-- Rules in `budgetPlan` (`src/lib/stats.ts`); removed phases are ignored and a budget of 0 counts as none. Check:
-  `npx vite-node scripts/budget-plan-test.ts`. Nothing is stored; it is worked out from the phases and payments.
+Prices are found out when things are bought, so a phase may have no estimate, or one that was only written down after paying (in the
+first project, 4 of 5 phase budgets equalled what was paid to the rupee). The model is therefore bottom-up and nothing has to be
+estimated in advance. `budgetState` in `src/lib/stats.ts` is the one rule behind every bar, badge, alert and note:
+
+| State | When | Shown as |
+|---|---|---|
+| `ok` / `none` | under 80% of the estimate, or no estimate | nothing |
+| `near` | 80% up to the whole estimate, work not finished | amber, "92% used" |
+| `full` | the whole estimate (within 0.5%), work not finished | calm blue "Whole estimate used": no room left, no sign yet that it is wrong |
+| `overSlight` | over, by up to 5% (ordinary estimating error) | amber, "Over by Rs x" |
+| `over` | more than 5% over | red, "Over by Rs x" |
+| `onEstimate` / `under` | a **finished** phase that cost the estimate, or less | green, "On estimate" / "Rs x under the estimate" |
+
+A finished phase (marked complete) is never near or full, and is not listed in alerts: there is nothing left to do about it. The
+thresholds are `ON_TOLERANCE` (0.5%) and `SLIGHT_OVER` (5%, the usual contingency allowance).
+
+- **Budget outlook** (top of Phases, `budgetOutlook` and `BudgetOutlookCard`): spent so far against the project budget, a bar split into
+  finished phases, unfinished phases, money in no phase, what the estimates still expect, and the room left; and the sentence that
+  matters: "7 phases have no estimate yet. The budget leaves Rs 9,881,500 for them, about Rs 1,411,643 each." (budget minus spent minus
+  what unfinished phases' estimates still expect, shared among the unfinished phases with no estimate). "The project will cost at least
+  ..." is a lower bound: an unpriced phase adds nothing until it is paid or given an estimate.
+- **Change budget** (investors only) opens a dialog that shows what the new figure would mean as it is typed, since the project budget is
+  a starting figure that moves up and down. Passing it is an amber alert (red only when clearly over) with the same action, not an alarm.
+- **Phase rows**: spending (or "Final cost"), the estimate if there is one, and a one-tap **Mark complete** (with Undo) so a phase whose
+  price came after paying can be closed without opening it. A phase with no estimate shows no bar and no prompt.
+- **Needs your attention**: only unfinished phases that are over or near their estimate, and the project passing its budget. Phases at
+  exactly their estimate are one quiet row ("4 phases have used their whole estimate. Mark them complete if the work is finished.").
+- **Add payment** says what has been paid so far on a phase with no estimate, and that a finished phase is complete.
+- Not changed: the "Budget reached" push notification (a separate Supabase function; its wording was already neutral).
+- Checks: `npx vite-node scripts/budget-outlook-test.ts` (states, outlook, alerts), `budget-test.ts`, `phase-progress-test.ts`,
+  `attention-test.ts`. Nothing is stored; it is worked out from the phases and payments.
 
 ## Cash forecast (`/forecast`)
 

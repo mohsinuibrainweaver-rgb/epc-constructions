@@ -13,7 +13,7 @@ import { setSetting } from '@/db/actions'
 import type { Project } from '@/db/types'
 import { money } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
-import { budgetLevel, isSpent, percent, sum } from '@/lib/stats'
+import { budgetState, budgetTone, isSpent, percent, sum } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 
 /**
@@ -25,7 +25,7 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
   const { t, can, roleOf } = useApp()
   const mine = can('editProject', project.id)
   const url = useObjectUrl(project.thumbnail)
-  const level = budgetLevel(spent, project.budget)
+  const tone = budgetTone(budgetState(spent, project.budget))
   const pct = percent(spent, project.budget)
   const role = roleOf(project.id)
   return (
@@ -50,7 +50,7 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
         <div className="grid gap-1.5">
           <div className="flex h-6 items-center justify-between gap-2">
             <span className="text-sm text-muted-foreground">{t('projects.spent')}</span>
-            {project.budget ? <Badge variant={level === 'error' ? 'danger' : level === 'warning' ? 'warning' : 'neutral'}>{pct}%</Badge> : null}
+            {project.budget ? <Badge variant={tone === 'danger' ? 'danger' : tone === 'warning' ? 'warning' : 'neutral'}>{pct}%</Badge> : null}
           </div>
           <p className="tabular text-xl leading-tight font-bold whitespace-nowrap">{money(spent)}</p>
           <BudgetBar spent={spent} budget={project.budget} label={`${project.name}: ${pct}%`} />

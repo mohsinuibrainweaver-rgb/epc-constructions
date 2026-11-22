@@ -22,7 +22,7 @@ const p = phaseProgress(phases, payments)
 
 // Over budget first, then near the limit, then the rest by what was spent.
 assert.deepEqual(p.rows.map((r) => r.phase.id), ['a', 'b', 'c', 'd'])
-assert.deepEqual(p.rows.map((r) => r.level), ['error', 'warning', 'none', 'ok'])
+assert.deepEqual(p.rows.map((r) => r.state), ['over', 'near', 'none', 'ok'])
 assert.deepEqual(p.rows.map((r) => r.spent), [120_000, 210_000, 30_000, 1_000], 'only paid and approved payments count')
 assert.deepEqual(p.rows.map((r) => r.pct), [120, 84, 0, 2])
 assert.equal(p.rows[2].budget, undefined, 'a phase with no budget has none, not 0')
@@ -31,6 +31,13 @@ assert.equal(p.rows[2].budget, undefined, 'a phase with no budget has none, not 
 assert.equal(p.notStarted, 2, 'e and f')
 assert.equal(p.total, 6)
 assert.equal(p.budgeted, 3, 'a, b and d have a budget')
+
+// A finished phase is listed after the unfinished ones, with how it ended, and is never over, near or "full".
+const fin = (id: string, budget: number | undefined): Phase => ({ ...phase(id, budget), done: true }) as Phase
+const r = phaseProgress([fin('f1', 100_000), phase('o1', 100_000), fin('f2', 100_000), fin('f3', undefined)], [pay('f1', 100_000), pay('o1', 90_000), pay('f2', 80_000), pay('f3', 500_000)])
+assert.deepEqual(r.rows.map((x) => x.phase.id), ['o1', 'f3', 'f1', 'f2'], 'unfinished first (near its limit), then finished ones by what they cost')
+assert.deepEqual(r.rows.map((x) => x.state), ['near', 'none', 'onEstimate', 'under'])
+assert.deepEqual(r.rows.map((x) => x.done), [false, true, true, true])
 
 // A phase with a budget and nothing spent is listed (it is planned work), and a budget of 0 is no budget.
 const q = phaseProgress([phase('x', 500_000), phase('y', 0), phase('z')], [])

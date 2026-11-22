@@ -4,7 +4,7 @@ import { ArrowLeft, Ban, Bell, CircleArrowRight, CircleCheck, CircleX, Clock, Ho
 import { useApp } from '@/app/AppContext'
 import type { Payment } from '@/db/types'
 import { addDays, todayISO } from '@/lib/format'
-import { budgetLevel, percent } from '@/lib/stats'
+import { budgetState, budgetTone, percent } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -83,7 +83,7 @@ export function StatusPill({ payment }: { payment: Pick<Payment, 'status' | 'dat
 
 /** Progress bar; neutral under 80 percent, amber from 80, red from 100. The percentage is also printed by callers. */
 export function BudgetBar({ spent, budget, label }: { spent: number; budget?: number; label?: string }) {
-  const lvl = budgetLevel(spent, budget)
+  const tone = budgetTone(budgetState(spent, budget))
   const pct = Math.min(percent(spent, budget), 100)
   return (
     <Progress
@@ -91,8 +91,8 @@ export function BudgetBar({ spent, budget, label }: { spent: number; budget?: nu
       aria-label={label ?? `${percent(spent, budget)}%`}
       className={cn(
         'h-2 bg-muted',
-        lvl === 'warning' && '[&>[data-slot=progress-indicator]]:bg-warning',
-        lvl === 'error' && '[&>[data-slot=progress-indicator]]:bg-danger',
+        tone === 'warning' && '[&>[data-slot=progress-indicator]]:bg-warning',
+        tone === 'danger' && '[&>[data-slot=progress-indicator]]:bg-danger',
       )}
     />
   )
