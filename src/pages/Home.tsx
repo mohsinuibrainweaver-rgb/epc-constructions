@@ -31,7 +31,7 @@ function Kpi({ label, value, icon: Icon, mesh, to, children, corner, className }
     <Link
       to={to}
       className={cn(
-        'group relative flex flex-col gap-2 rounded-xl border p-3 transition-shadow duration-150 hover:shadow-md sm:gap-3 sm:p-4',
+        '@container group relative flex flex-col gap-2 rounded-xl border p-3 transition-shadow duration-150 hover:shadow-md sm:gap-3 sm:p-4',
         meshCard(mesh),
         className,
       )}
@@ -43,7 +43,7 @@ function Kpi({ label, value, icon: Icon, mesh, to, children, corner, className }
         <span className="min-w-0 truncate text-sm font-medium text-muted-foreground sm:hidden">{label}</span>
       </span>
       {corner ? (
-        <span className="absolute inset-e-4 top-4 max-sm:hidden">{corner}</span>
+        <span className="absolute inset-e-4 top-4 hidden @[13.5rem]:block">{corner}</span>
       ) : (
         <ArrowUpRight
           aria-hidden="true"
@@ -180,8 +180,8 @@ export function Home() {
           {budget ? (
             <>
               <BudgetBar spent={spent} budget={budget} label={t('home.budgetUsed', { pct: percent(spent, budget) })} className="bg-white dark:bg-white/20" />
-              {/* On a phone the note stays under the bar; from a tablet up it sits in the card's top right corner. */}
-              <span className="sm:hidden">{usedNote}</span>
+              {/* The note sits in the card's top right corner when the card is wide enough for it (about 216 px), and under the bar when it is narrow: a phone, or a narrow window. */}
+              <span className="@[13.5rem]:hidden">{usedNote}</span>
             </>
           ) : null}
         </Kpi>

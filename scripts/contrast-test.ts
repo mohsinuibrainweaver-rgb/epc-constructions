@@ -29,6 +29,10 @@ const ratio = (a: string, b: string): number => (Math.max(lum(a), lum(b)) + 0.05
 // [foreground token, background token, needed ratio, what it is]
 const TEXT = 4.5
 const UI = 3
+/** Field borders were made soft on purpose (neutral-200). They no longer carry the 3:1 of WCAG 1.4.11 on their own: a field is told apart by its label,
+ *  its fill and its hover and focus states, and those keep 3:1 (the focus-ring pairs below). The border must stay at 1.2:1 or better so it never fades out, and a field's fill against the page at 1.05. */
+const SOFT = 1.05
+const SOFT_EDGE = 1.2
 const PAIRS: [string, string, number, string][] = [
   ['foreground', 'background', TEXT, 'body text'],
   ['foreground', 'canvas', TEXT, 'text straight on the page'],
@@ -74,11 +78,11 @@ const PAIRS: [string, string, number, string][] = [
   ['sidebar-foreground', 'sidebar-accent', TEXT, 'sidebar drop-down text'],
   ['sidebar-primary', 'sidebar-accent', UI, 'check mark in the sidebar drop-down'],
   // interface parts: field borders, focus rings (WCAG 1.4.11)
-  ['input', 'background', UI, 'field border on white'],
-  ['input', 'canvas', UI, 'field border on the page'],
-  ['input', 'card', UI, 'field border in a card'],
-  ['input', 'popover', UI, 'field border in a popover'],
-  ['input', 'muted', UI, 'field border on a muted fill'],
+  ['input', 'background', SOFT_EDGE, 'field border on white'],
+  ['card', 'canvas', SOFT, 'field fill against the page (white in light mode; a slightly raised grey in dark mode)'],
+  ['input', 'card', SOFT_EDGE, 'field border in a card'],
+  ['input', 'popover', SOFT_EDGE, 'field border in a popover'],
+  ['background', 'muted', SOFT, 'white field fill on a muted panel'],
   ['ring', 'background', UI, 'focus ring on white'],
   ['ring', 'canvas', UI, 'focus ring on the page'],
   ['ring', 'card', UI, 'focus ring in a card'],

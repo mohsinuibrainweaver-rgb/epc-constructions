@@ -111,6 +111,23 @@ They are never used on general cards, forms, tables or navigation.
   styling and are not given a gradient.
 * The cards have no visible border (the 1 px is kept, transparent, so sizes do not change). A card you press (the vendor Paid and Planned filters) still gets a dark outline, because that outline is how its on/off state is shown. Printing: a mesh card prints on white with black text.
 
+## Sliding tab highlight (added 2026-11-22)
+
+Every tab group (`TabsList` in `src/components/ui/tabs.tsx`) draws its white highlight as one element that slides and resizes to the tab
+you choose (300 ms, ease-out) instead of each tab switching its own background. The highlight is decoration (`aria-hidden`); the tabs keep
+their roles, `aria-selected` and keyboard behaviour. It is measured before paint, re-measured when the list resizes, wraps, changes the
+active tab or flips right to left (switching to Urdu), and appears in place on first render rather than sliding in. With the system
+setting "reduce motion" the highlight jumps with no animation. Checked on sign in, Add payment (four groups), Settings (five) and at
+375 px; axe was clean in light and dark.
+
+## Sidebar gradient (added 2026-11-22)
+
+The desktop sidebar (and the narrow icon rail) uses a four-corner dark blue-grey mesh (`.sidebar-mesh` in `src/index.css`: `#34373c`, `#4c5159`,
+`#282d34`, `#0c0e12`) instead of a flat `#171717`. It is dark in both themes, so the sidebar text, hover fill and selected-item colours
+are unchanged. Because text sits on a gradient, contrast was measured on the rendered gradient: the gradient was redrawn on a canvas,
+the background under each piece of sidebar text was sampled, and compared with that text's colour. Lowest result 6.9:1 (the user badge
+on its own fill); the navigation labels on the gradient itself were 9.4:1 or better; AA needs 4.5:1. Axe was clean in light and dark.
+
 ## Not covered, and worth doing with real people
 
 - A screen reader pass (VoiceOver on iPhone, TalkBack on Android) of the main flows: add a payment, approve an entry, read a statement.

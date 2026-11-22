@@ -248,7 +248,7 @@ export function Shell() {
 
       <aside
         aria-label={t('app.full')}
-        className="sticky top-[var(--page-gap)] hidden h-[calc(100dvh-2*var(--page-gap))] flex-col gap-3 overflow-y-auto rounded-2xl border border-sidebar-border bg-sidebar p-2.5 text-sidebar-foreground [--ring:var(--sidebar-ring)] sm:flex print:hidden"
+        className="sticky top-[var(--page-gap)] hidden h-[calc(100dvh-2*var(--page-gap))] flex-col gap-3 overflow-y-auto rounded-2xl border border-sidebar-border sidebar-mesh p-2.5 text-sidebar-foreground [--ring:var(--sidebar-ring)] sm:flex print:hidden"
       >
         <div className="flex flex-col items-center gap-2 lg:flex-row lg:gap-2 lg:[&>[data-slot=badge]]:ms-auto">
           <Link to="/" aria-label={t('app.name')} className="flex min-h-9 items-center justify-center gap-2.5 rounded-control px-1 lg:shrink-0 lg:justify-start">
@@ -290,8 +290,8 @@ export function Shell() {
               aria-label={t(key)}
               className={({ isActive }) =>
                 cn(
-                  'flex min-h-9 items-center justify-center gap-2.5 rounded-control px-3 text-sm font-semibold transition-colors duration-150 hover:bg-sidebar-accent/70 lg:justify-start',
-                  isActive && 'bg-sidebar-active text-sidebar-active-foreground hover:bg-sidebar-active',
+                  'flex min-h-9 items-center justify-center gap-2.5 nav-glass rounded-control px-3 text-sm font-semibold lg:justify-start',
+                  isActive && 'text-white',
                 )
               }
             >
@@ -303,7 +303,7 @@ export function Shell() {
 
         <Link
           to="/settings"
-          className="mt-auto flex min-h-10 items-center justify-center gap-2.5 rounded-control px-1 text-sm transition-colors hover:bg-sidebar-accent/70 lg:justify-start"
+          className="mt-auto flex min-h-10 items-center justify-center gap-2.5 nav-glass rounded-control px-1 text-sm lg:justify-start"
         >
           <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-primary text-xs font-extrabold text-sidebar-primary-foreground">
             {initials(who)}
