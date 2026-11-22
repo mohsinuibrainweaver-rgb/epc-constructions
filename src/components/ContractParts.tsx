@@ -13,27 +13,27 @@ export function ContractPill({ state }: { state: ContractState }) {
   if (state === 'overpaid')
     return (
       <Badge variant="danger">
-        <TriangleAlert aria-hidden="true" />
+        <TriangleAlert aria-hidden="true" data-solid="" />
         {label}
       </Badge>
     )
   if (state === 'fullyPaid')
     return (
       <Badge variant="success">
-        <CircleCheck aria-hidden="true" />
+        <CircleCheck aria-hidden="true" data-solid="" />
         {label}
       </Badge>
     )
   if (state === 'inProgress')
     return (
       <Badge variant="info">
-        <CircleArrowRight aria-hidden="true" />
+        <CircleArrowRight aria-hidden="true" data-solid="" />
         {label}
       </Badge>
     )
   return (
     <Badge variant="neutral">
-      <Clock aria-hidden="true" />
+      <Clock aria-hidden="true" data-solid="" />
       {label}
     </Badge>
   )

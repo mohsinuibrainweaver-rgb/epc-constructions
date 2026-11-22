@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { CheckCheck } from 'lucide-react'
+import { CardHeading } from '@/components/CardHeading'
+import { CheckCheck, ClipboardCheck } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { ApprovalActions } from '@/components/ApprovalActions'
 import { StatusPill } from '@/components/common'
@@ -29,9 +30,9 @@ export function ApprovalsCard({ payments }: { payments: Payment[] }) {
   return (
     <Card className="gap-0 overflow-hidden py-0" aria-labelledby="appr-title">
       <div className="flex flex-wrap items-center justify-between gap-2 p-4">
-        <h2 id="appr-title" className="text-lg font-semibold">
+        <CardHeading icon={ClipboardCheck} id="appr-title">
           {t(investor ? 'approval.title' : 'approval.titleBuilder')} ({waiting.length + turnedDown.length})
-        </h2>
+        </CardHeading>
         {investor && waiting.length > 1 && (
           <Button
             size="sm"

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Ban, CalendarPlus, CircleCheck, HandCoins, FileSignature, FileText, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2 } from 'lucide-react'
+import { Ban, CalendarClock, CalendarPlus, CircleCheck, FilePlus2, FileSignature, FileText, HandCoins, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading, IconTile } from '@/components/CardHeading'
 import { BackLink, EmptyState, PageHeader, StatusPill } from '@/components/common'
 import { ContractBar, ContractPill } from '@/components/ContractParts'
 import { ContractDialog, VariationDialog } from '@/components/ContractDialog'
@@ -232,7 +233,7 @@ export function ContractDetail() {
       <div className="grid items-start gap-6 md:grid-cols-12">
         <Card className="md:col-span-7">
           <CardHeader>
-            <CardTitle className="text-lg">{t('contract.summary')}</CardTitle>
+            <CardTitle className="flex items-center gap-2.5 text-lg"><IconTile icon={FileText} />{t('contract.summary')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
             <ContractBar pct={s.pct} state={s.state} label={t('contract.paidPct', { pct: s.pct })} />
@@ -279,9 +280,9 @@ export function ContractDetail() {
 
         <Card className="gap-0 overflow-hidden py-0 md:col-span-5" aria-labelledby="var-title">
           <div className="flex items-center justify-between gap-3 p-4">
-            <h2 id="var-title" className="text-lg font-semibold">
+            <CardHeading icon={FilePlus2} id="var-title">
               {t('contract.variations')}
-            </h2>
+            </CardHeading>
             {editable && (
               <Button size="sm" variant="outline" onClick={() => setVariation({ open: true })}>
                 <Plus aria-hidden="true" />
@@ -324,9 +325,9 @@ export function ContractDetail() {
         <Card className="gap-0 overflow-hidden py-0" aria-labelledby="sch-title">
           <div className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div className="grid gap-0.5">
-              <h2 id="sch-title" className="text-lg font-semibold">
+              <CardHeading icon={CalendarClock} id="sch-title">
                 {t('contract.schedule')}
-              </h2>
+              </CardHeading>
               <p className="text-sm text-muted-foreground">{t('contract.scheduleSub')}</p>
             </div>
             {canPlan && (
@@ -373,9 +374,9 @@ export function ContractDetail() {
       )}
 
       <Card className="gap-0 overflow-hidden py-0" aria-labelledby="cp-title">
-        <h2 id="cp-title" className="p-4 text-lg font-semibold">
+        <CardHeading icon={ReceiptText} id="cp-title" className="p-4">
           {t('contract.payments')} ({mine.length})
-        </h2>
+        </CardHeading>
         {mine.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('contract.noPayments')} body={t('contract.noPaymentsBody')} /> : <PaymentsTable payments={mine} />}
       </Card>
 

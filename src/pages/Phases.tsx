@@ -1,32 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import {
-  Building2,
-  BrickWall,
-  Cable,
-  CircleCheck,
-  ClipboardList,
-  DoorOpen,
-  FileText,
-  Grid3x3,
-  GripVertical,
-  EllipsisVertical,
-  Hammer,
-  HardHat,
-  KeyRound,
-  Layers3,
-  Lightbulb,
-  PaintBucket,
-  Pencil,
-  Pickaxe,
-  Plus,
-  ReceiptText,
-  RotateCcw,
-  Shovel,
-  Trash2,
-  type LucideIcon,
-} from 'lucide-react'
+import { ChartPie, CircleCheck, EllipsisVertical, FileText, GripVertical, Layers3, Package, Pencil, Plus, ReceiptText, RotateCcw, Trash2 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading } from '@/components/CardHeading'
+import { colourMap } from '@/lib/avatarColours'
+import { phaseIcon } from '@/components/PhaseIcon'
 import { BackLink, BudgetBar, Dialog, EmptyState, Field, PageHeader } from '@/components/common'
 import { BudgetChip } from '@/components/BudgetChip'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -116,27 +94,11 @@ function PhaseDialog({ open, phase, onClose }: { open: boolean; phase?: Phase; o
   )
 }
 
-/** An icon for each standard phase, so a long list is easy to scan. A phase you added yourself gets a hard hat. */
-const PHASE_ICONS: Record<string, LucideIcon> = {
-  planning: ClipboardList,
-  site: Shovel,
-  foundation: Pickaxe,
-  grey: Building2,
-  services: Cable,
-  windows: DoorOpen,
-  ceiling: BrickWall,
-  flooring: Grid3x3,
-  woodwork: Hammer,
-  paint: PaintBucket,
-  finishing: Lightbulb,
-  handover: KeyRound,
-}
-const phaseIcon = (ph: Phase): LucideIcon => (ph.key && PHASE_ICONS[ph.key]) || HardHat
-
 /** One phase row. Also drawn as the floating copy that follows the pointer while it is dragged. */
 function PhaseRow({
   ph,
   num,
+  colour,
   payments,
   editable,
   canDrag,
@@ -148,6 +110,8 @@ function PhaseRow({
 }: {
   ph: Phase
   num: number
+  /** The tile colour (light fill, colour-500 icon), from the whole list so neighbours differ. */
+  colour: string
   payments: Payment[]
   editable: boolean
   canDrag: boolean
@@ -210,7 +174,7 @@ function PhaseRow({
       <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
         <Link to={`/phases/${ph.id}`} className="grid min-w-0 flex-1 gap-2 rounded-md md:grid-cols-[minmax(0,1fr)_minmax(12rem,22rem)] md:items-center md:gap-8">
           <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-            <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-control bg-secondary text-primary">
+            <span aria-hidden="true" className={cn('grid size-9 shrink-0 place-items-center rounded-control', colour)}>
               <Icon className="size-[1.125rem]" strokeWidth={1.75} />
             </span>
             <span className="text-base leading-snug font-bold">
@@ -218,7 +182,7 @@ function PhaseRow({
             </span>
             {done && (
               <Badge variant="success">
-                <CircleCheck aria-hidden="true" />
+                <CircleCheck aria-hidden="true" data-solid="" />
                 {t('phases.done')}
               </Badge>
             )}
@@ -332,6 +296,8 @@ export function Phases() {
   const { t, project, phaseName, can } = useApp()
   const editable = can('editPhases')
   const phases = usePhases(project?.id)
+  // Worked out from the saved order, so the colours hold still while a row is being dragged.
+  const phaseColour = useMemo(() => colourMap(phases.map((p) => p.id)), [phases])
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<Phase>()
@@ -484,6 +450,7 @@ export function Phases() {
                   <PhaseRow
                     ph={s.ph}
                     num={i + 1}
+                    colour={phaseColour.get(s.ph.id) ?? ''}
                     payments={payments}
                     editable={editable}
                     canDrag={canDrag}
@@ -506,6 +473,7 @@ export function Phases() {
                 floating
                 ph={dragged}
                 num={drag.to + 1}
+                colour={phaseColour.get(dragged.id) ?? ''}
                 payments={payments}
                 editable={false}
                 canDrag
@@ -610,7 +578,7 @@ export function PhaseDetail() {
 
       {phase.done && (
         <Badge variant="success" className="w-fit">
-          <CircleCheck aria-hidden="true" />
+          <CircleCheck aria-hidden="true" data-solid="" />
           {t('phases.done')}
         </Badge>
       )}
@@ -656,7 +624,7 @@ export function PhaseDetail() {
 
       {where.length > 0 && (
         <Card className="gap-4 p-4">
-          <h2 className="text-lg font-semibold">{t('phases.whereMoney')}</h2>
+          <CardHeading icon={ChartPie}>{t('phases.whereMoney')}</CardHeading>
           <ul className="grid gap-3">
             {where.map((r) => (
               <li key={r.label} className="grid gap-1.5">
@@ -673,7 +641,7 @@ export function PhaseDetail() {
 
       {bought.length > 0 && (
         <Card className="gap-4 p-4">
-          <h2 className="text-lg font-semibold">{t('phases.materials')}</h2>
+          <CardHeading icon={Package}>{t('phases.materials')}</CardHeading>
           <ul className="grid gap-3">
             {bought.map((r) => (
               <li key={r.key} className="flex items-start justify-between gap-3">
@@ -691,7 +659,7 @@ export function PhaseDetail() {
       )}
 
       <Card className="gap-0 overflow-hidden py-0">
-        <h2 className="p-4 text-lg font-semibold">{t('phases.payments')}</h2>
+        <CardHeading icon={ReceiptText} className="p-4">{t('phases.payments')}</CardHeading>
         {payments.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('home.recentEmpty')} /> : <PaymentsTable payments={payments} showPhase={false} />}
       </Card>
 

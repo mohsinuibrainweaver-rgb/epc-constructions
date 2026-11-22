@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { isAwaitingApproval, sum } from '@/lib/stats'
-import { ArrowLeftRight, Pencil, Plus, Printer, Trash2 } from 'lucide-react'
+import { ArrowLeftRight, Banknote, Pencil, Percent, Plus, Printer, Scale, Trash2 } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading, IconTile } from '@/components/CardHeading'
 import { EmptyState, PageHeader } from '@/components/common'
 import { FeeDialog } from '@/components/FeeDialog'
 import { useToast } from '@/components/Toast'
@@ -87,7 +88,7 @@ export function Settlement() {
       <div className="grid items-start gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{t('stl.balance')}</CardTitle>
+            <CardTitle className="flex items-center gap-2.5 text-lg"><IconTile icon={Scale} />{t('stl.balance')}</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="divide-y">
@@ -107,7 +108,7 @@ export function Settlement() {
 
         <Card>
           <CardHeader className="flex-row items-center justify-between gap-3">
-            <CardTitle className="text-lg">{t('stl.fee')}</CardTitle>
+            <CardTitle className="flex items-center gap-2.5 text-lg"><IconTile icon={Percent} />{t('stl.fee')}</CardTitle>
             {can('editFee') && (
               <Button size="sm" variant="outline" className="print:hidden" onClick={() => setFeeOpen(true)}>
                 <Pencil aria-hidden="true" />
@@ -165,7 +166,7 @@ export function Settlement() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{t('stl.totalDue')}</CardTitle>
+          <CardTitle className="flex items-center gap-2.5 text-lg"><IconTile icon={Banknote} />{t('stl.totalDue')}</CardTitle>
         </CardHeader>
         <CardContent>
           <p role="status" className="text-xl font-extrabold text-balance">
@@ -176,7 +177,7 @@ export function Settlement() {
       </Card>
 
       <Card className="gap-0 overflow-hidden py-0">
-        <h2 className="p-4 text-lg font-semibold">{t('stl.transfers')}</h2>
+        <CardHeading icon={ArrowLeftRight} className="p-4">{t('stl.transfers')}</CardHeading>
         {transfers.length === 0 ? (
           <EmptyState compact icon={ArrowLeftRight} title={t('stl.transferEmpty')} body={t('stl.transferEmptyBody')} />
         ) : (

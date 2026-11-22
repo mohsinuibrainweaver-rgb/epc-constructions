@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { CalendarClock, ChevronRight, CircleAlert } from 'lucide-react'
+import { CalendarClock, ChartLine, ChevronRight, CircleAlert, FileText, Wallet } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading } from '@/components/CardHeading'
 import { EmptyState, PageHeader } from '@/components/common'
 import { ForecastChart, type ForecastColumn } from '@/components/ForecastChart'
 import { Badge } from '@/components/ui/badge'
@@ -117,7 +118,7 @@ export function Forecast() {
 
       {advice && (
         <Card className="gap-3 p-4">
-          <h2 className="text-lg font-semibold">{t('forecast.cash')}</h2>
+          <CardHeading icon={Wallet}>{t('forecast.cash')}</CardHeading>
           <p className="text-sm text-muted-foreground">{t('forecast.cashSub')}</p>
           {advice.needs > 0 ? <BuilderCash advice={advice} /> : <p className="text-muted-foreground">{t('forecast.noBuilderPay')}</p>}
           <ArrangeBox f={f} advice={advice} />
@@ -126,7 +127,7 @@ export function Forecast() {
 
       <Card className="gap-4 p-4">
         <div className="grid gap-1">
-          <h2 className="text-lg font-semibold">{t('forecast.chartTitle')}</h2>
+          <CardHeading icon={ChartLine}>{t('forecast.chartTitle')}</CardHeading>
           <p className="text-sm text-muted-foreground">{t('forecast.chartSub')}</p>
         </div>
         <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
@@ -202,7 +203,7 @@ export function Forecast() {
       {f.unscheduled.length > 0 && (
         <Card id="unplanned" className="scroll-mt-20 gap-3 p-4">
           <div className="grid gap-1">
-            <h2 className="text-lg font-semibold">{t('forecast.contractsTitle')}</h2>
+            <CardHeading icon={FileText}>{t('forecast.contractsTitle')}</CardHeading>
             <p className="text-sm text-muted-foreground">{t('forecast.contractsNote')}</p>
           </div>
           <ul className="divide-y">

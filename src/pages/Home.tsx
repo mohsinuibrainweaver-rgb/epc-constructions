@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, CalendarClock, HandCoins, ReceiptText, Target, Wallet, type LucideIcon } from 'lucide-react'
+import { ArrowUpRight, CalendarClock, HandCoins, Layers3, type LucideIcon, ReceiptText, Target, Wallet } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useApp } from '@/app/AppContext'
+import { CardHeading } from '@/components/CardHeading'
 import { BudgetBar, CardSkeleton, EmptyState, PageHeader, StatusPill } from '@/components/common'
 import { ApprovalsCard } from '@/components/ApprovalsCard'
 import { AttentionCard } from '@/components/AttentionCard'
@@ -33,7 +34,7 @@ const TONES = {
  * On a phone the icon is small and sits beside the label, so a tile is about a third shorter; from the `sm` breakpoint up it is the
  * 48 px tile above the text, as before. (The label is written twice, once for each layout; only one is displayed.)
  */
-function Kpi({ label, value, icon: Icon, tone, to, children, className }: { label: string; value: string; icon: LucideIcon; tone: keyof typeof TONES; to: string; children?: React.ReactNode; className?: string }) {
+function Kpi({ label, value, icon: Icon, tone, to, children, corner, className }: { label: string; value: string; icon: LucideIcon; tone: keyof typeof TONES; to: string; children?: React.ReactNode; /** Shown in the top right corner from `sm` up (it replaces the hover arrow there); on a phone put the same thing in `children`. */ corner?: React.ReactNode; className?: string }) {
   return (
     <Link
       to={to}
@@ -48,10 +49,14 @@ function Kpi({ label, value, icon: Icon, tone, to, children, className }: { labe
         </span>
         <span className="min-w-0 truncate text-sm font-medium text-muted-foreground sm:hidden">{label}</span>
       </span>
-      <ArrowUpRight
-        aria-hidden="true"
-        className="absolute inset-e-3 top-3 size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 rtl:-scale-x-100 max-sm:hidden sm:inset-e-4 sm:top-4"
-      />
+      {corner ? (
+        <span className="absolute inset-e-4 top-4 max-sm:hidden">{corner}</span>
+      ) : (
+        <ArrowUpRight
+          aria-hidden="true"
+          className="absolute inset-e-3 top-3 size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 rtl:-scale-x-100 max-sm:hidden sm:inset-e-4 sm:top-4"
+        />
+      )}
       <span className="grid min-w-0 gap-1">
         <span className="text-sm font-medium text-muted-foreground max-sm:hidden">{label}</span>
         <span className="tabular text-[1.0625rem] font-extrabold whitespace-nowrap sm:text-2xl">{value}</span>
@@ -118,9 +123,9 @@ export function Home() {
   const dueCard = (
     <Card className={cn('gap-0 overflow-hidden py-0 md:order-none md:col-span-6 md:col-start-1 md:row-start-2', urgent ? 'max-md:order-3' : 'max-md:order-7')} aria-labelledby="due-title">
       <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
-        <h2 id="due-title" className="text-lg font-semibold">
+        <CardHeading icon={CalendarClock} id="due-title">
           {t('home.due')}
-        </h2>
+        </CardHeading>
         <Link to="/plans" aria-label={t('due.manage')} className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
           <span className="sm:hidden">{t('due.manageShort')}</span>
           <span className="max-sm:hidden">{t('due.manage')}</span>
@@ -157,6 +162,16 @@ export function Home() {
     </Card>
   )
 
+  const usedNote = budget ? (
+    tone === 'danger' || tone === 'warning' ? (
+      <Badge variant={tone === 'danger' ? 'danger' : 'warning'} className="w-fit">
+        {t('home.budgetUsed', { pct: percent(spent, budget) })}
+      </Badge>
+    ) : (
+      <span className="text-sm text-muted-foreground">{t('home.budgetUsed', { pct: percent(spent, budget) })}</span>
+    )
+  ) : null
+
   return (
     <>
       <PageHeader title={project.name} subtitle={project.location || undefined} />
@@ -168,17 +183,12 @@ export function Home() {
         <Kpi label={t('home.budget')} value={budget ? money(budget) : '—'} icon={Target} tone="violet" to={budget || !can('editProject') ? '/phases' : `/projects/${project.id}/edit`}>
           {!budget && <span className="text-sm text-primary underline underline-offset-4">{t('home.noBudget')}</span>}
         </Kpi>
-        <Kpi label={t('home.left')} value={left === undefined ? '—' : money(left)} icon={Wallet} tone="emerald" to="/phases" className={showPlanned ? undefined : 'max-sm:col-span-2'}>
+        <Kpi label={t('home.left')} value={left === undefined ? '—' : money(left)} icon={Wallet} tone="emerald" to="/phases" className={showPlanned ? undefined : 'max-sm:col-span-2'} corner={budget ? usedNote : undefined}>
           {budget ? (
             <>
               <BudgetBar spent={spent} budget={budget} label={t('home.budgetUsed', { pct: percent(spent, budget) })} />
-              {tone === 'danger' || tone === 'warning' ? (
-                <Badge variant={tone === 'danger' ? 'danger' : 'warning'} className="w-fit">
-                  {t('home.budgetUsed', { pct: percent(spent, budget) })}
-                </Badge>
-              ) : (
-                <span className="text-sm text-muted-foreground">{t('home.budgetUsed', { pct: percent(spent, budget) })}</span>
-              )}
+              {/* On a phone the note stays under the bar; from a tablet up it sits in the card's top right corner. */}
+              <span className="sm:hidden">{usedNote}</span>
             </>
           ) : null}
         </Kpi>
@@ -200,9 +210,9 @@ export function Home() {
 
         <Card className="gap-0 overflow-hidden py-0 max-md:order-6 md:col-span-12 md:col-start-1 md:row-start-1" aria-labelledby="recent-title">
           <div className="flex items-center justify-between gap-3 p-4">
-            <h2 id="recent-title" className="text-lg font-semibold">
+            <CardHeading icon={ReceiptText} id="recent-title">
               {t('home.recent')}
-            </h2>
+            </CardHeading>
             <Link to="/ledger" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
               {t('home.viewAll')}
             </Link>
@@ -214,9 +224,9 @@ export function Home() {
 
         <Card className="gap-0 overflow-hidden py-0 max-md:order-8 md:col-span-6 md:col-start-7 md:row-start-2" aria-labelledby="ph-title">
           <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
-            <h2 id="ph-title" className="text-lg font-semibold">
+            <CardHeading icon={Layers3} id="ph-title">
               {t('home.phaseProgress')}
-            </h2>
+            </CardHeading>
             <Link to="/phases" className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
               {t('home.viewAll')}
             </Link>

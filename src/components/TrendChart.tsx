@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { TrendingUp } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading } from '@/components/CardHeading'
 import { Card } from '@/components/ui/card'
 import { formatMonth, formatMonthShort, money } from '@/lib/format'
 import { compact, niceCeil, noBreak } from '@/lib/chart'
@@ -61,7 +63,7 @@ export function TrendChart({ points, budget }: { points: TrendPoint[]; budget?: 
   return (
     <Card className="gap-4 p-4 md:col-span-2">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="text-lg font-semibold">{t('reports.trend')}</h2>
+        <CardHeading icon={TrendingUp}>{t('reports.trend')}</CardHeading>
         <strong className="tabular">{money(points[Math.max(0, pastEnd)]?.spent ?? 0)}</strong>
       </div>
 

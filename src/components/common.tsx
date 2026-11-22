@@ -1,6 +1,6 @@
 import { Children, cloneElement, isValidElement, useId, useLayoutEffect, useRef, type ReactElement, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Ban, Bell, CircleArrowRight, CircleCheck, CircleX, Clock, Hourglass, TriangleAlert, X, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, Ban, Bell, CircleArrowRight, CircleCheck, CircleX, Clock, CircleEllipsis, TriangleAlert, X, type LucideIcon } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import type { Payment } from '@/db/types'
 import { addDays, todayISO } from '@/lib/format'
@@ -27,55 +27,55 @@ export function StatusPill({ payment }: { payment: Pick<Payment, 'status' | 'dat
   if (payment.approval === 'pending')
     return (
       <Badge variant="warning">
-        <Hourglass aria-hidden="true" />
+        <CircleEllipsis aria-hidden="true" data-solid="" />
         {t('approval.pending')}
       </Badge>
     )
   if (payment.approval === 'rejected')
     return (
       <Badge variant="danger">
-        <CircleX aria-hidden="true" />
+        <CircleX aria-hidden="true" data-solid="" />
         {t('approval.rejected')}
       </Badge>
     )
   if (payment.status === 'paid')
     return (
       <Badge variant="success">
-        <CircleCheck aria-hidden="true" />
+        <CircleCheck aria-hidden="true" data-solid="" />
         {t('status.paid')}
       </Badge>
     )
   if (payment.status === 'skipped')
     return (
       <Badge variant="neutral">
-        <Ban aria-hidden="true" />
+        <Ban aria-hidden="true" data-solid="" />
         {t('status.skipped')}
       </Badge>
     )
   if (payment.status === 'advance')
     return (
       <Badge variant="info">
-        <CircleArrowRight aria-hidden="true" />
+        <CircleArrowRight aria-hidden="true" data-solid="" />
         {t('status.advance')}
       </Badge>
     )
   if (payment.date < today)
     return (
       <Badge variant="danger">
-        <TriangleAlert aria-hidden="true" />
+        <TriangleAlert aria-hidden="true" data-solid="" />
         {t('status.overdue')}
       </Badge>
     )
   if (payment.date <= addDays(today, 3))
     return (
       <Badge variant="warning">
-        <Bell aria-hidden="true" />
+        <Bell aria-hidden="true" data-solid="" />
         {t('status.due')}
       </Badge>
     )
   return (
     <Badge variant="neutral">
-      <Clock aria-hidden="true" />
+      <Clock aria-hidden="true" data-solid="" />
       {t('status.planned')}
     </Badge>
   )

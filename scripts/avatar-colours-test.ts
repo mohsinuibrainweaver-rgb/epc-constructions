@@ -1,6 +1,6 @@
 // Checks the avatar colours of a list. Run: npx vite-node scripts/avatar-colours-test.ts
 import assert from 'node:assert/strict'
-import { assignColours, COLOUR_GAP, FAMILY_GAP, PALETTE, preferredIndex } from '../src/lib/avatarColours'
+import { assignColours, colourMap, COLOUR_GAP, FAMILY_GAP, PALETTE, preferredIndex } from '../src/lib/avatarColours'
 
 const familyOf = (classes: string) => PALETTE.find((c) => c.classes === classes)!.family
 const ids = (n: number, tag = 'v') => Array.from({ length: n }, (_, i) => `${tag}-${i}-${(i * 2654435761) % 99991}`)
@@ -33,5 +33,11 @@ assert.equal(assignColours([first])[0], PALETTE[preferredIndex(first)].classes)
 
 // 4. The colours are spread out, not all one or two.
 assert.ok(new Set(assignColours(ids(60, 'spread'))).size >= 8, 'too few colours used')
+
+// 5. colourMap gives each id the colour it has in the list, so one thing keeps one colour wherever it is shown.
+const phaseIds = ids(13, 'phase')
+const map = colourMap(phaseIds)
+assert.deepEqual(phaseIds.map((id) => map.get(id)), assignColours(phaseIds))
+assert.equal(map.size, 13)
 
 console.log('avatar colours: all checks passed')

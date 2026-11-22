@@ -21,7 +21,7 @@ export function BudgetChip({ state, spent, estimate, className }: { state: Budge
     case 'full':
       return (
         <Badge variant="info" className={className}>
-          <Info aria-hidden="true" />
+          <Info aria-hidden="true" data-solid="" />
           {t('phases.estimateUsed')}
         </Badge>
       )
@@ -29,21 +29,21 @@ export function BudgetChip({ state, spent, estimate, className }: { state: Budge
     case 'over':
       return (
         <Badge variant={state === 'over' ? 'danger' : 'warning'} className={className}>
-          <TriangleAlert aria-hidden="true" />
+          <TriangleAlert aria-hidden="true" data-solid="" />
           {t('phases.overAmount', { amount: money(spent - est) })}
         </Badge>
       )
     case 'onEstimate':
       return (
         <Badge variant="success" className={className}>
-          <CircleCheck aria-hidden="true" />
+          <CircleCheck aria-hidden="true" data-solid="" />
           {t('phases.onEstimate')}
         </Badge>
       )
     case 'under':
       return (
         <Badge variant="success" className={className}>
-          <CircleCheck aria-hidden="true" />
+          <CircleCheck aria-hidden="true" data-solid="" />
           {t('phases.underBy', { amount: money(est - spent) })}
         </Badge>
       )

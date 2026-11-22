@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CalendarCheck, CalendarClock, ChevronRight, CircleCheck, Copy, FileText, HandCoins, Pencil, Phone, Plus, ReceiptText, Search, SearchX, Share2, Users, X } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading } from '@/components/CardHeading'
 import { BackLink, EmptyState, PageHeader } from '@/components/common'
 import { PaymentsTable } from '@/components/PaymentsTable'
 import { useToast } from '@/components/Toast'
@@ -297,7 +298,7 @@ export function VendorDetail() {
 
       {contracts.length > 0 && (
         <Card id="vendor-contracts" className="scroll-mt-24 gap-3 p-4">
-          <h2 className="text-lg font-semibold">{t('vendors.contracts')}</h2>
+          <CardHeading icon={FileText}>{t('vendors.contracts')}</CardHeading>
           <ul className="grid gap-4">
             {contracts.map((c) => {
               const s = summarizeContract(c, everyPayment)
@@ -330,7 +331,7 @@ export function VendorDetail() {
 
       <Card id="vendor-payments" className="scroll-mt-24 gap-0 overflow-hidden py-0">
         <div className="flex items-center justify-between gap-3 p-4">
-          <h2 className="text-lg font-semibold">{t('vendors.payments')}</h2>
+          <CardHeading icon={ReceiptText}>{t('vendors.payments')}</CardHeading>
           <Button variant="secondary" asChild size="sm">
             <Link to={`/add?vendor=${vendor.id}`}>
               <Plus aria-hidden="true" />

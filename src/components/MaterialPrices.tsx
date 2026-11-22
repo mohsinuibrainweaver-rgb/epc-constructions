@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, Package } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading } from '@/components/CardHeading'
 import { Card } from '@/components/ui/card'
 import type { Key } from '@/i18n/en'
 import { formatDate, money, moneyRate } from '@/lib/format'
@@ -21,9 +22,9 @@ export function MaterialPrices({ rows, coverage, className }: { rows: PriceRow[]
   return (
     <section aria-labelledby="mat-prices" className={className ?? 'grid gap-3'}>
       <div>
-        <h2 id="mat-prices" className="text-lg font-semibold">
+        <CardHeading icon={Package} id="mat-prices">
           {t('mat.prices')}
-        </h2>
+        </CardHeading>
         <p className="text-sm text-muted-foreground">{t('mat.pricesNote')}</p>
         {coverage && coverage.total > 0 && coverage.withQuantity < coverage.total && (
           <p className="mt-1 text-sm text-muted-foreground">{t('mat.coverage', { withQuantity: coverage.withQuantity, total: coverage.total })}</p>

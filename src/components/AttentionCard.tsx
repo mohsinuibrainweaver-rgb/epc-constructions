@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Info, TriangleAlert } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading } from '@/components/CardHeading'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import type { AttentionItem } from '@/lib/attention'
@@ -23,14 +24,15 @@ export function AttentionCard({ items }: { items: AttentionItem[] }) {
   const hidden = items.length - VISIBLE
   return (
     <Card className="gap-0 overflow-hidden py-0" aria-labelledby="attn-title">
-      <h2 id="attn-title" className="p-4 text-lg font-semibold">
+      <CardHeading icon={TriangleAlert} id="attn-title" className="p-4">
         {t('attn.title')} ({items.length})
-      </h2>
+      </CardHeading>
       <ul id="attn-list" className="divide-y border-t">
         {shown.map((a) => (
           <li key={a.id}>
             <Link to={a.to} className="flex min-h-11 items-center gap-3 px-4 py-3 transition-colors hover:bg-accent">
-              <Badge variant={a.tone === 'info' ? 'neutral' : a.tone}>
+              {/* An exact circle with a line icon (not filled), as in the notifications list. */}
+              <Badge variant={a.tone === 'info' ? 'neutral' : a.tone} className="size-7 justify-center rounded-full p-0 [&>svg]:size-3.5">
                 {a.tone === 'info' ? <Info aria-hidden="true" /> : <TriangleAlert aria-hidden="true" />}
               </Badge>
               <span className="min-w-0 flex-1 text-sm font-medium">{t(a.key, a.vars)}</span>

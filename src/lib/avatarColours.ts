@@ -37,6 +37,12 @@ export function preferredIndex(id: string): number {
   return h % PALETTE.length
 }
 
+/** The colour for each id of a list, by id. Compute it once from the whole list and look rows up, so a thing keeps one colour wherever it is shown. */
+export function colourMap(ids: string[]): Map<string, string> {
+  const colours = assignColours(ids)
+  return new Map(ids.map((id, i) => [id, colours[i]]))
+}
+
 /** One colour class string for each id, in the order given. */
 export function assignColours(ids: string[]): string[] {
   const chosen: number[] = []

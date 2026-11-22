@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { CircleCheck, CircleDashed, Hammer, Hourglass, Lightbulb, Pencil, PiggyBank, TriangleAlert } from 'lucide-react'
+import { CircleCheck, CircleDashed, Gauge, Hammer, Hourglass, Lightbulb, Pencil, PiggyBank, TriangleAlert } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading } from '@/components/CardHeading'
 import { Dialog, Field } from '@/components/common'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
@@ -116,7 +117,7 @@ export function BudgetOutlookCard({ phases, payments }: { phases: Phase[]; payme
   return (
     <Card className="gap-3 p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-lg font-semibold">{t('outlook.title')}</h2>
+        <CardHeading icon={Gauge}>{t('outlook.title')}</CardHeading>
         <span className="text-sm text-muted-foreground">{t('outlook.done', { done: o.done, total: o.total })}</span>
       </div>
 

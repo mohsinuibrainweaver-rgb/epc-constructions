@@ -100,7 +100,7 @@ function AlertsBell({ conflicts, onReviewConflicts }: { conflicts: number; onRev
                   }}
                   className="flex min-h-11 w-full items-center gap-3 p-4 text-start transition-colors hover:bg-accent"
                 >
-                  <Badge variant="warning">
+                  <Badge variant="warning" className="size-7 justify-center rounded-full p-0 [&>svg]:size-3.5">
                     <TriangleAlert aria-hidden="true" />
                   </Badge>
                   <span className="flex-1 text-sm font-medium">{t('conflict.bell', { count: conflicts })}</span>
@@ -115,7 +115,7 @@ function AlertsBell({ conflicts, onReviewConflicts }: { conflicts: number; onRev
                   onClick={() => setOpen(false)}
                   className="flex min-h-11 items-center gap-3 p-4 transition-colors hover:bg-accent"
                 >
-                  <Badge variant={a.kind === 'error' ? 'danger' : 'warning'}>
+                  <Badge variant={a.kind === 'error' ? 'danger' : 'warning'} className="size-7 justify-center rounded-full p-0 [&>svg]:size-3.5">
                     <TriangleAlert aria-hidden="true" />
                   </Badge>
                   <span className="flex-1 text-sm font-medium">{t(a.key, a.vars)}</span>

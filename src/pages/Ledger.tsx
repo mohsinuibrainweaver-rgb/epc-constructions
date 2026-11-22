@@ -127,7 +127,7 @@ export function Ledger() {
       />
 
       <Card className="p-4">
-        <div role="search" aria-label={t('ledger.filtersLabel')} className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+        <div role="search" aria-label={t('ledger.filtersLabel')} className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="col-span-full flex gap-2">
             <div className="relative min-w-0 flex-1">
               <Search aria-hidden="true" className="pointer-events-none absolute inset-s-3.5 top-1/2 size-[1.125rem] -translate-y-1/2 text-muted-foreground" />

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Plus, Scale, TrendingDown, TrendingUp } from 'lucide-react'
+import { Layers3, Package, Plus, Scale, Tags, Timer, TrendingDown, TrendingUp } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { CardHeading } from '@/components/CardHeading'
 import { CompareBars, KeyChip, Legend, PaceChart, RateChangeBars, StatTile, type BarRow, type RateRow } from '@/components/CompareParts'
 import { EmptyState, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -316,7 +317,7 @@ function CompareBody({
       {pace && (
         <Card className="gap-4 p-4">
           <div className="grid gap-1">
-            <h2 className="text-lg font-semibold">{t('compare.paceTitle')}</h2>
+            <CardHeading icon={Timer}>{t('compare.paceTitle')}</CardHeading>
             <p className="text-sm text-muted-foreground">{t('compare.paceSub')}</p>
           </div>
           <Legend />
@@ -327,7 +328,7 @@ function CompareBody({
       <Card className="gap-4 p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="grid gap-1">
-            <h2 className="text-lg font-semibold">{t('compare.byPhase')}</h2>
+            <CardHeading icon={Layers3}>{t('compare.byPhase')}</CardHeading>
             <p className="text-sm text-muted-foreground">{perArea ? t('compare.basisArea') : t('compare.basisTotal')}</p>
           </div>
           <ViewTabs
@@ -345,14 +346,14 @@ function CompareBody({
       </Card>
 
       <Card className="gap-4 p-4">
-        <h2 className="text-lg font-semibold">{t('compare.byCategory')}</h2>
+        <CardHeading icon={Tags}>{t('compare.byCategory')}</CardHeading>
         <Legend />
         {catBars.length === 0 ? <p className="text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={catBars} format={fmt} labelWidth={labelWidth} />}
       </Card>
 
       <Card className="gap-4 p-4">
         <div className="grid gap-1">
-          <h2 className="text-lg font-semibold">{t('compare.materials')}</h2>
+          <CardHeading icon={Package}>{t('compare.materials')}</CardHeading>
           <p className="text-sm text-muted-foreground">{t('compare.materialsNote')}</p>
         </div>
         {materials.length === 0 ? <p className="text-muted-foreground">{t('compare.noMaterials')}</p> : <RateChangeBars rows={rateRows} />}

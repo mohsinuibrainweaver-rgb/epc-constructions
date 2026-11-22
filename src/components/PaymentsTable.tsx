@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Banknote, Landmark } from 'lucide-react'
+import { Banknote, HardHat, Landmark, Wallet } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { StatusPill } from '@/components/common'
+import { PhaseIcon } from '@/components/PhaseIcon'
+import { colourMap } from '@/lib/avatarColours'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { usePhases, useVendors } from '@/db/hooks'
 import type { Payment } from '@/db/types'
@@ -17,6 +19,17 @@ function ModeIcon({ mode }: { mode: Payment['mode'] }) {
   return <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
 }
 
+/** Who paid: the investor (a wallet) or the builder (a hard hat). Words always come with it. */
+function PaidBy({ role, label }: { role: Payment['paidBy']; label: string }) {
+  const Icon = role === 'builder' ? HardHat : Wallet
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+      {label}
+    </span>
+  )
+}
+
 /**
  * A real table when the space is wide, and a list of cards when it is narrow. Both are driven by the
  * container's width (container query), so they also work inside a side panel or a dialog.
@@ -27,6 +40,9 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
   const phases = usePhases(project?.id)
   const vendorMap = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
   const phaseMap = useMemo(() => new Map(phases.map((p) => [p.id, phaseName(p)])), [phases, phaseName])
+  const phaseById = useMemo(() => new Map(phases.map((p) => [p.id, p])), [phases])
+  // The same colour a phase has on the Phases page: worked out once from the phases in their order.
+  const phaseColour = useMemo(() => colourMap(phases.map((p) => p.id)), [phases])
 
   const who = (p: Payment) => (p.vendorId && vendorMap.get(p.vendorId)) || p.payeeName || ''
   // Under the purpose: the kind of miscellaneous cost, or for a material purchase how much was bought and at what rate.
@@ -47,6 +63,7 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
               <TableHead>{t('ledger.purpose')}</TableHead>
               {showPhase && <TableHead>{t('ledger.phase')}</TableHead>}
               <TableHead>{t('ledger.mode')}</TableHead>
+              <TableHead>{t('pay.paidBy')}</TableHead>
               <TableHead className="text-end">{t('ledger.amount')}</TableHead>
               <TableHead>{t('ledger.status')}</TableHead>
             </TableRow>
@@ -62,13 +79,27 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
                   {who(p) && <div className="text-sm text-muted-foreground">{who(p)}</div>}
                   {sub(p) && <div className="text-sm text-muted-foreground">{sub(p)}</div>}
                 </TableCell>
-                {showPhase && <TableCell>{(p.phaseId && phaseMap.get(p.phaseId)) || '—'}</TableCell>}
+                {showPhase && (
+                  <TableCell>
+                    {p.phaseId && phaseMap.get(p.phaseId) ? (
+                      <span className="inline-flex items-center gap-2.5">
+                        <PhaseIcon phase={phaseById.get(p.phaseId)!} colour={phaseColour.get(p.phaseId)} />
+                        {phaseMap.get(p.phaseId)}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </TableCell>
+                )}
                 <TableCell>
                   <span className="inline-flex items-center gap-2">
                     <ModeIcon mode={p.mode} />
                     {t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')}
                   </span>
                   {p.mode === 'bank' && bankLine(p) && <div className="ps-6 text-sm text-muted-foreground">{bankLine(p)}</div>}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <PaidBy role={p.paidBy} label={t(`paidBy.${p.paidBy}` as Key)} />
                 </TableCell>
                 <TableCell className="tabular text-end font-bold whitespace-nowrap">{money(p.amount)}</TableCell>
                 <TableCell>
@@ -91,11 +122,17 @@ export function PaymentsTable({ payments, showPhase = true }: { payments: Paymen
               {(who(p) || sub(p)) && <div className="text-sm text-muted-foreground">{[who(p), sub(p)].filter(Boolean).join(' · ')}</div>}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                 <span className="tabular">{formatDate(p.date, lang)}</span>
-                {showPhase && p.phaseId && phaseMap.get(p.phaseId) && <span>{phaseMap.get(p.phaseId)}</span>}
+                {showPhase && p.phaseId && phaseMap.get(p.phaseId) && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <PhaseIcon phase={phaseById.get(p.phaseId)!} colour={phaseColour.get(p.phaseId)} className="size-6" />
+                    {phaseMap.get(p.phaseId)}
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1.5">
                   <ModeIcon mode={p.mode} />
                   {[t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank'), p.mode === 'bank' ? bankLine(p) : ''].filter(Boolean).join(' · ')}
                 </span>
+                <PaidBy role={p.paidBy} label={`${t('pay.paidBy')}: ${t(`paidBy.${p.paidBy}` as Key)}`} />
                 <StatusPill payment={p} />
               </div>
             </Link>
