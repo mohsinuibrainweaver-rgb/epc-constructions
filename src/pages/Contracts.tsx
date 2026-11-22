@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Ban, CalendarClock, CalendarPlus, CircleCheck, FilePlus2, FileSignature, FileText, HandCoins, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2 } from 'lucide-react'
+import { Ban, CalendarClock, CalendarPlus, CircleCheck, FilePlus2, FileSignature, FileText, HandCoins, Hourglass, Pencil, Plus, ReceiptText, RotateCcw, SearchX, Trash2, Wallet } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { CardHeading, IconTile } from '@/components/CardHeading'
-import { meshCard } from '@/lib/mesh'
+import { MESH_TILE, meshCard } from '@/lib/mesh'
 import { cn } from '@/lib/utils'
 import { BackLink, EmptyState, PageHeader, StatusPill } from '@/components/common'
 import { ContractBar, ContractPill } from '@/components/ContractParts'
@@ -79,16 +79,27 @@ export function Contracts() {
         <>
           <section aria-label={t('contract.summary')} className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
             {[
-              [t('contract.agreed'), sumOf((s) => s.total)],
-              [t('contract.paid'), sumOf((s) => s.paid)],
-              [t('contract.remaining'), sumOf((s) => Math.max(0, s.remaining))],
-              [t('contract.awaiting'), sumOf((s) => s.awaiting)],
-            ].map(([label, v], i) => (
-              <div key={label as string} className={cn('flex flex-col gap-1 rounded-xl border p-3 sm:p-4', meshCard(i))}>
-                <p className="text-sm font-medium text-muted-foreground">{label}</p>
-                <p className="tabular text-[1.0625rem] font-extrabold whitespace-nowrap sm:text-2xl">{money(v as number)}</p>
-              </div>
-            ))}
+              [t('contract.agreed'), sumOf((s) => s.total), FileSignature],
+              [t('contract.paid'), sumOf((s) => s.paid), CircleCheck],
+              [t('contract.remaining'), sumOf((s) => Math.max(0, s.remaining)), Wallet],
+              [t('contract.awaiting'), sumOf((s) => s.awaiting), Hourglass],
+            ].map(([label, v, Icon], i) => {
+              const I = Icon as typeof FileSignature
+              return (
+                <div key={label as string} className={cn('flex flex-col gap-2 rounded-xl border p-3 sm:gap-3 sm:p-4', meshCard(i))}>
+                  <span className="flex items-center gap-2 sm:contents">
+                    <span aria-hidden="true" className={cn('grid size-8 shrink-0 place-items-center rounded-lg sm:size-12 sm:rounded-xl', MESH_TILE)}>
+                      <I className="size-[1.125rem] sm:size-6" strokeWidth={1.75} />
+                    </span>
+                    <p className="min-w-0 truncate text-sm font-medium text-muted-foreground sm:hidden">{label as string}</p>
+                  </span>
+                  <div className="grid min-w-0 gap-1">
+                    <p className="text-sm font-medium text-muted-foreground max-sm:hidden">{label as string}</p>
+                    <p className="tabular text-[1.0625rem] font-extrabold whitespace-nowrap sm:text-2xl">{money(v as number)}</p>
+                  </div>
+                </div>
+              )
+            })}
           </section>
           <p className="-mt-3 text-sm text-muted-foreground">{t('contract.summaryNote')}</p>
 

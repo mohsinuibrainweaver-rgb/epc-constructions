@@ -126,7 +126,7 @@ export function EmptyState({
       {Icon && (
         <span
           aria-hidden="true"
-          className={cn('mb-3 grid shrink-0 place-items-center rounded-full bg-muted text-muted-foreground', compact ? 'size-10' : 'size-14')}
+          className={cn('glass-tile mb-3 grid shrink-0 place-items-center', compact ? 'size-10 rounded-xl' : 'size-14 rounded-2xl')}
         >
           <Icon className={compact ? 'size-5' : 'size-7'} strokeWidth={1.75} />
         </span>

@@ -19,19 +19,14 @@ const ratio = (a: string, b: string) => {
 const hex = (s: string) => s.toLowerCase()
 
 // 1. Six palettes, four colours each, exactly as specified.
-const SPEC: Record<string, string[]> = {
-  amethyst: ['#b4a1f5', '#e4b5ef', '#afc9ff', '#f3e9ff'],
-  arctic: ['#82d8e8', '#a5e8c9', '#a6c5fa', '#e0f7f4'],
-  champagne: ['#f1d49c', '#f6b9a0', '#ebc2b9', '#fff3d9'],
-  rose: ['#eba4c0', '#d4b2ee', '#f6c4d4', '#fbe9f0'],
-  sage: ['#b1d1ad', '#e1e6a0', '#a6dac6', '#eef5d8'],
-  periwinkle: ['#aab9ed', '#d3dcf3', '#b9d3de', '#ecebfa'],
-}
+// Every data card now shares one soft neutral grey mesh; the six names are kept so cards can be told apart again later.
+const NEUTRAL = ['#e8eaed', '#f3f4f6', '#e1e5ea', '#fafafc']
+const SPEC: Record<string, string[]> = Object.fromEntries(['amethyst', 'arctic', 'champagne', 'rose', 'sage', 'periwinkle'].map((n) => [n, NEUTRAL]))
 const palettes: Record<string, string[]> = {}
 for (const name of Object.keys(SPEC)) {
-  const m = new RegExp(`\\.mesh-${name}\\s*\\{([^}]*)\\}`).exec(css)
+  const m = [...css.matchAll(/((?:\.mesh-[\w-]+,\s*)*\.mesh-[\w-]+)\s*\{([^}]*)\}/g)].find((x) => new RegExp(`\\.mesh-${name}\\b`).test(x[1]) && x[2].includes('--mesh-c1'))
   assert.ok(m, `palette ${name} is in index.css`)
-  palettes[name] = [1, 2, 3, 4].map((i) => hex(new RegExp(`--mesh-c${i}:\\s*(#[0-9a-fA-F]{6})`).exec(m![1])![1]))
+  palettes[name] = [1, 2, 3, 4].map((i) => hex(new RegExp(`--mesh-c${i}:\\s*(#[0-9a-fA-F]{6})`).exec(m![2])![1]))
   assert.deepEqual(palettes[name], SPEC[name], `${name} colours`)
 }
 
