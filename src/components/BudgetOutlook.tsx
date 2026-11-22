@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pencil } from 'lucide-react'
+import { CircleCheck, CircleDashed, Hammer, Hourglass, Lightbulb, Pencil, PiggyBank, TriangleAlert } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { Dialog, Field } from '@/components/common'
 import { useToast } from '@/components/Toast'
@@ -96,14 +96,22 @@ export function BudgetOutlookCard({ phases, payments }: { phases: Phase[]; payme
   const pct = (n: number) => `${Math.max(0, (n / scale) * 100)}%`
   const room = o.headroom && o.headroom > 0 ? o.headroom : 0
   const pastBudget = o.budget !== undefined && o.projectedLow > o.budget
+  // Each part of the money is a bar segment and a small card; hovering a card lights up its segment (and dims the rest).
+  const [hot, setHot] = useState<string | null>(null)
   const segments = [
-    { key: 'done', label: t('outlook.finished'), amount: o.spentDone, className: 'bg-success' },
-    { key: 'open', label: t('outlook.unfinished'), amount: o.spentOpen, className: 'bg-primary' },
-    { key: 'outside', label: t('outlook.noPhase'), amount: o.outside, className: 'bg-primary/50' },
-    { key: 'expected', label: t('outlook.expected'), amount: o.estimatedLeft, className: 'bg-primary/20' },
-    { key: 'room', label: t('outlook.room'), amount: room, className: 'bg-border' },
+    { key: 'done', label: t('outlook.finished'), amount: o.spentDone, className: 'bg-success', Icon: CircleCheck, tint: 'bg-success-soft text-success' },
+    { key: 'open', label: t('outlook.unfinished'), amount: o.spentOpen, className: 'bg-primary', Icon: Hammer, tint: 'bg-primary/10 text-primary' },
+    { key: 'outside', label: t('outlook.noPhase'), amount: o.outside, className: 'bg-primary/50', Icon: CircleDashed, tint: 'bg-secondary text-muted-foreground' },
+    { key: 'expected', label: t('outlook.expected'), amount: o.estimatedLeft, className: 'bg-primary/20', Icon: Hourglass, tint: 'bg-primary/10 text-primary' },
+    { key: 'room', label: t('outlook.room'), amount: room, className: 'bg-border', Icon: PiggyBank, tint: 'bg-muted text-foreground/70' },
   ].filter((s) => s.amount > 0)
+  const share = (n: number): string | undefined => {
+    if (!o.budget || n <= 0) return undefined
+    const p = Math.round((n / o.budget) * 100)
+    return p < 1 ? '<1%' : `${p}%`
+  }
   const text = roomText(o, t)
+  const short = o.headroom !== undefined && o.headroom < 0
 
   return (
     <Card className="gap-3 p-4">
@@ -130,24 +138,48 @@ export function BudgetOutlookCard({ phases, payments }: { phases: Phase[]; payme
             className="relative flex h-3 w-full overflow-hidden rounded-full bg-muted"
           >
             {segments.map((s) => (
-              <span key={s.key} className={cn('h-full transition-[width] duration-300 motion-reduce:transition-none', s.className)} style={{ width: pct(s.amount) }} />
+              <span
+                key={s.key}
+                className={cn('h-full transition-[width,opacity] duration-300 motion-reduce:transition-none', s.className, hot && hot !== s.key && 'opacity-25')}
+                style={{ width: pct(s.amount) }}
+              />
             ))}
             {pastBudget && o.budget && <span aria-hidden="true" className="absolute inset-y-0 w-0.5 bg-foreground" style={{ insetInlineStart: pct(o.budget) }} />}
           </div>
-          <ul className="grid gap-1.5 text-sm sm:grid-cols-2">
+          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fit,minmax(10.5rem,1fr))]">
             {segments.map((s) => (
-              <li key={s.key} className="flex items-center justify-between gap-3">
-                <span className="flex min-w-0 items-start gap-2">
-                  <span aria-hidden="true" className={cn('mt-1.5 size-2.5 shrink-0 rounded-full', s.className)} />
-                  <span className="leading-snug text-muted-foreground">{s.label}</span>
+              <li
+                key={s.key}
+                onMouseEnter={() => setHot(s.key)}
+                onMouseLeave={() => setHot(null)}
+                className={cn('grid content-between gap-3 rounded-xl border bg-card p-2.5 transition-shadow sm:p-3', hot === s.key && 'shadow-sm ring-2 ring-primary/25')}
+              >
+                <span className="flex items-start justify-between gap-2">
+                  <span aria-hidden="true" className={cn('grid size-9 shrink-0 place-items-center rounded-lg', s.tint)}>
+                    <s.Icon className="size-[1.125rem]" />
+                  </span>
+                  {share(s.amount) && (
+                    <span className="tabular rounded-full bg-muted px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-muted-foreground">
+                      <span aria-hidden="true">{share(s.amount)}</span>
+                      <span className="sr-only">{t('outlook.share', { pct: share(s.amount) ?? '' })}</span>
+                    </span>
+                  )}
                 </span>
-                <span className="tabular shrink-0 font-semibold">{money(s.amount)}</span>
+                <span className="grid gap-0.5">
+                  <span className="tabular text-[0.9375rem] leading-tight font-bold whitespace-nowrap sm:text-base">{money(s.amount)}</span>
+                  <span className="text-xs leading-snug text-muted-foreground">{s.label}</span>
+                </span>
               </li>
             ))}
             {pastBudget && o.budget && (
-              <li className="flex items-center justify-between gap-3 font-semibold text-danger sm:col-span-2">
-                <span>{t('outlook.over')}</span>
-                <span className="tabular">{money(o.projectedLow - o.budget)}</span>
+              <li className="grid content-between gap-3 rounded-xl border border-danger/40 bg-danger-soft p-2.5 text-danger sm:p-3">
+                <span aria-hidden="true" className="grid size-9 place-items-center rounded-lg bg-danger/10">
+                  <TriangleAlert className="size-[1.125rem]" />
+                </span>
+                <span className="grid gap-0.5">
+                  <span className="tabular text-[0.9375rem] leading-tight font-bold whitespace-nowrap sm:text-base">{money(o.projectedLow - o.budget)}</span>
+                  <span className="text-xs leading-snug">{t('outlook.over')}</span>
+                </span>
               </li>
             )}
           </ul>
@@ -155,7 +187,12 @@ export function BudgetOutlookCard({ phases, payments }: { phases: Phase[]; payme
       )}
 
       {o.budget ? (
-        text && <p className="text-sm font-medium">{text}</p>
+        text && (
+          <div className={cn('flex items-start gap-3 rounded-xl p-3 text-sm', short ? 'bg-warning-soft text-warning' : 'bg-primary/5')}>
+            {short ? <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" /> : <Lightbulb aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />}
+            <p className="font-medium">{text}</p>
+          </div>
+        )
       ) : (
         <p className="text-sm text-muted-foreground">{t('outlook.setBudget')}</p>
       )}

@@ -185,6 +185,7 @@ export const ur: Record<Key, string> = {
   'pay.phaseSpent': '{name}: اب تک {spent} ادا ہوئے۔',
   'pay.phaseDoneNote': '{name} مکمل کے طور پر نشان زد ہے (حتمی لاگت {spent})۔',
   'outlook.title': 'بجٹ کا جائزہ',
+  'outlook.share': 'بجٹ کا {pct}',
   'outlook.setBudgetBtn': 'بجٹ لکھیں',
   'outlook.change': 'بجٹ بدلیں',
   'outlook.spentOf': '{budget} میں سے {spent} خرچ ({pct}%)',

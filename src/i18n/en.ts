@@ -183,6 +183,7 @@ export const en = {
   'pay.phaseSpent': '{name}: {spent} paid so far.',
   'pay.phaseDoneNote': '{name} is marked complete (final cost {spent}).',
   'outlook.title': 'Budget outlook',
+  'outlook.share': '{pct} of budget',
   'outlook.setBudgetBtn': 'Set budget',
   'outlook.change': 'Change budget',
   'outlook.spentOf': 'Spent {spent} of {budget} ({pct}%)',

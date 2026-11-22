@@ -153,6 +153,9 @@ thresholds are `ON_TOLERANCE` (0.5%) and `SLIGHT_OVER` (5%, the usual contingenc
   matters: "7 phases have no estimate yet. The budget leaves Rs 9,881,500 for them, about Rs 1,411,643 each." (budget minus spent minus
   what unfinished phases' estimates still expect, shared among the unfinished phases with no estimate). "The project will cost at least
   ..." is a lower bound: an unpriced phase adds nothing until it is paid or given an estimate.
+  The parts of the money are small **cards** with an icon (finished = check, unfinished = hammer, still expected = hourglass, room
+  left = piggy bank, not in a phase = dashed circle, past the budget = warning) and their share of the budget; hovering a card lights
+  up its segment on the bar and dims the others. The room sentence sits in a callout (a lightbulb; amber with a warning when short).
 - **Change budget** (investors only) opens a dialog that shows what the new figure would mean as it is typed, since the project budget is
   a starting figure that moves up and down. Passing it is an amber alert (red only when clearly over) with the same action, not an alarm.
 - **Phase rows**: spending (or "Final cost"), the estimate if there is one, and a one-tap **Mark complete** (with Undo) so a phase whose
