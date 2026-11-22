@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dropdown } from '@/components/ui/dropdown'
-import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
+import { ViewTabs } from '@/components/ui/tabs'
 import { useContracts, usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Payment } from '@/db/types'
 import type { Key } from '@/i18n/en'
@@ -141,13 +141,12 @@ export function Statements() {
 
       <Card className="grid gap-4 p-4 print:hidden">
         <div className="grid items-start gap-3 md:grid-cols-[auto_1fr]">
-          <PillRadioGroup aria-label={t('stmt.scope')} value={scope} onValueChange={(v) => setScope(v as StatementScope)}>
-            {(['all', 'vendor', 'phase', 'contract'] as StatementScope[]).map((s) => (
-              <PillRadioItem key={s} value={s}>
-                {t(`stmt.scope.${s}` as Key)}
-              </PillRadioItem>
-            ))}
-          </PillRadioGroup>
+          <ViewTabs
+            label={t('stmt.scope')}
+            value={scope}
+            onValueChange={(v) => setScope(v as StatementScope)}
+            tabs={(['all', 'vendor', 'phase', 'contract'] as StatementScope[]).map((s) => ({ value: s, label: t(`stmt.scope.${s}` as Key) }))}
+          />
           {scope === 'vendor' && (
             <Dropdown aria-label={t('stmt.chooseVendor')} value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
               <option value="">{t('stmt.chooseVendor')}</option>

@@ -12,7 +12,7 @@ import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
+import { ViewTabs } from '@/components/ui/tabs'
 import { deleteContract, removeVariation, restoreContract, saveContract } from '@/db/actions'
 import { useContracts, usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Contract, ContractStatus, ContractVariation } from '@/db/types'
@@ -89,13 +89,12 @@ export function Contracts() {
           </section>
           <p className="-mt-3 text-sm text-muted-foreground">{t('contract.summaryNote')}</p>
 
-          <PillRadioGroup aria-label={t('contract.status')} value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-            {(['active', 'completed', 'cancelled', 'all'] as const).map((f) => (
-              <PillRadioItem key={f} value={f}>
-                {f === 'all' ? t('common.all') : t(`contract.status.${f}` as Key)}
-              </PillRadioItem>
-            ))}
-          </PillRadioGroup>
+          <ViewTabs
+            label={t('contract.status')}
+            value={filter}
+            onValueChange={(v) => setFilter(v as typeof filter)}
+            tabs={(['active', 'completed', 'cancelled', 'all'] as const).map((f) => ({ value: f, label: f === 'all' ? t('common.all') : t(`contract.status.${f}` as Key) }))}
+          />
 
           {rows.length === 0 ? (
             <Card>

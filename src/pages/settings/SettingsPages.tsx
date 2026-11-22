@@ -17,9 +17,10 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
+import { LanguageSelect } from '@/components/LanguageSwitcher'
 import { db } from '@/db/db'
 import { exportBackup, importBackup, restorePayment, setSetting } from '@/db/actions'
-import type { Lang, Role } from '@/db/types'
+import type { Role } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { download, formatDate, formatTime, money } from '@/lib/format'
 import { useInstall } from '@/pwa/install'
@@ -237,7 +238,7 @@ function AccountSection() {
 /* ------------------------------------------------------------ Preferences */
 
 function PreferencesSection() {
-  const { t, lang } = useApp()
+  const { t } = useApp()
   return (
     <>
       <SettingsSection title={t('set.langRegion')}>
@@ -245,12 +246,7 @@ function PreferencesSection() {
           label={t('set.language')}
           help={t('set.langHelp')}
           control={(a) => (
-            <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={lang} onValueChange={(v) => void setSetting('language', v as Lang)}>
-              <PillRadioItem value="en">English</PillRadioItem>
-              <PillRadioItem value="ur" lang="ur">
-                اردو
-              </PillRadioItem>
-            </PillRadioGroup>
+            <LanguageSelect id={a.id} labelId={a.labelId} describedBy={a.describedBy} />
           )}
         />
       </SettingsSection>

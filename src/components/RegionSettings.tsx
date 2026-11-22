@@ -1,6 +1,6 @@
 import { useApp } from '@/app/AppContext'
 import { SettingRow, SettingsSection } from '@/components/settings'
-import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
+import { ViewTabs } from '@/components/ui/tabs'
 import { setSetting } from '@/db/actions'
 import type { Key } from '@/i18n/en'
 import { formatDate, formatMoney, formatTime, weekdayName } from '@/lib/format'
@@ -34,39 +34,39 @@ export function RegionSettings() {
           label={t('set.region.week')}
           help={t('set.region.weekHelp')}
           control={(a) => (
-            <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={String(region.weekStart)} onValueChange={(v) => choose('weekStart', Number(v) as Region['weekStart'])}>
-              {WEEK_STARTS.map((d) => (
-                <PillRadioItem key={d} value={String(d)}>
-                  {weekdayName(d, lang)}
-                </PillRadioItem>
-              ))}
-            </PillRadioGroup>
+            <ViewTabs
+              labelledBy={a.labelId}
+              describedBy={a.describedBy}
+              value={String(region.weekStart)}
+              onValueChange={(v) => choose('weekStart', Number(v) as Region['weekStart'])}
+              tabs={WEEK_STARTS.map((d) => ({ value: String(d), label: weekdayName(d, lang) }))}
+            />
           )}
         />
         <SettingRow
           label={t('set.region.clock')}
           help={t('set.region.example', { example: formatTime(SAMPLE_TIME, lang, region.clock) })}
           control={(a) => (
-            <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={region.clock} onValueChange={(v) => choose('clock', v as Region['clock'])}>
-              {CLOCKS.map((c) => (
-                <PillRadioItem key={c} value={c}>
-                  {t(`set.region.clock.${c}` as Key)}
-                </PillRadioItem>
-              ))}
-            </PillRadioGroup>
+            <ViewTabs
+              labelledBy={a.labelId}
+              describedBy={a.describedBy}
+              value={region.clock}
+              onValueChange={(v) => choose('clock', v as Region['clock'])}
+              tabs={CLOCKS.map((c) => ({ value: c, label: t(`set.region.clock.${c}` as Key) }))}
+            />
           )}
         />
         <SettingRow
           label={t('set.region.date')}
           help={t('set.region.example', { example: formatDate(SAMPLE_DAY, lang, region.dateStyle) })}
           control={(a) => (
-            <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={region.dateStyle} onValueChange={(v) => choose('dateStyle', v as Region['dateStyle'])}>
-              {DATE_STYLES.map((s) => (
-                <PillRadioItem key={s} value={s}>
-                  <bdi>{formatDate(SAMPLE_DAY, lang, s)}</bdi>
-                </PillRadioItem>
-              ))}
-            </PillRadioGroup>
+            <ViewTabs
+              labelledBy={a.labelId}
+              describedBy={a.describedBy}
+              value={region.dateStyle}
+              onValueChange={(v) => choose('dateStyle', v as Region['dateStyle'])}
+              tabs={DATE_STYLES.map((s) => ({ value: s, label: <bdi>{formatDate(SAMPLE_DAY, lang, s)}</bdi> }))}
+            />
           )}
         />
         <SettingRow
@@ -81,26 +81,26 @@ export function RegionSettings() {
           label={t('set.region.grouping')}
           help={t('set.region.groupingHelp')}
           control={(a) => (
-            <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={region.grouping} onValueChange={(v) => choose('grouping', v as Region['grouping'])}>
-              {GROUPINGS.map((g) => (
-                <PillRadioItem key={g} value={g}>
-                  <bdi className="tabular">{groupNumber(SAMPLE_AMOUNT, g)}</bdi>
-                </PillRadioItem>
-              ))}
-            </PillRadioGroup>
+            <ViewTabs
+              labelledBy={a.labelId}
+              describedBy={a.describedBy}
+              value={region.grouping}
+              onValueChange={(v) => choose('grouping', v as Region['grouping'])}
+              tabs={GROUPINGS.map((g) => ({ value: g, label: <bdi className="tabular">{groupNumber(SAMPLE_AMOUNT, g)}</bdi> }))}
+            />
           )}
         />
         <SettingRow
           label={t('set.region.currency')}
           help={t('set.region.currencyHelp', { example: formatMoney(SAMPLE_AMOUNT, region) })}
           control={(a) => (
-            <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={region.currency} onValueChange={(v) => choose('currency', v as Region['currency'])}>
-              {CURRENCIES.map((c) => (
-                <PillRadioItem key={c} value={c} lang={c === 'روپے' ? 'ur' : undefined}>
-                  {c === 'auto' ? t('set.region.currency.auto') : c}
-                </PillRadioItem>
-              ))}
-            </PillRadioGroup>
+            <ViewTabs
+              labelledBy={a.labelId}
+              describedBy={a.describedBy}
+              value={region.currency}
+              onValueChange={(v) => choose('currency', v as Region['currency'])}
+              tabs={CURRENCIES.map((c) => ({ value: c, lang: c === 'روپے' ? 'ur' : undefined, label: c === 'auto' ? t('set.region.currency.auto') : c }))}
+            />
           )}
         />
       </SettingsSection>

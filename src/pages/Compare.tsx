@@ -7,7 +7,7 @@ import { EmptyState, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dropdown } from '@/components/ui/dropdown'
-import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
+import { ViewTabs } from '@/components/ui/tabs'
 import { usePayments, usePhases } from '@/db/hooks'
 import type { Key } from '@/i18n/en'
 import {
@@ -213,12 +213,15 @@ function CompareBody({
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm font-semibold">{t('compare.basis')}</span>
-        <PillRadioGroup aria-label={t('compare.basis')} value={perArea ? 'sqft' : 'total'} onValueChange={setBasis}>
-          <PillRadioItem value="total">{t('compare.basisTotal')}</PillRadioItem>
-          <PillRadioItem value="sqft" disabled={areaBasis === undefined}>
-            {t('compare.basisArea')}
-          </PillRadioItem>
-        </PillRadioGroup>
+        <ViewTabs
+          label={t('compare.basis')}
+          value={perArea ? 'sqft' : 'total'}
+          onValueChange={setBasis}
+          tabs={[
+            { value: 'total', label: t('compare.basisTotal') },
+            { value: 'sqft', label: t('compare.basisArea'), disabled: areaBasis === undefined },
+          ]}
+        />
         {areaBasis === undefined && <span className="text-sm text-muted-foreground">{t('compare.noArea')}</span>}
       </div>
 
@@ -327,10 +330,15 @@ function CompareBody({
             <h2 className="text-lg font-semibold">{t('compare.byPhase')}</h2>
             <p className="text-sm text-muted-foreground">{perArea ? t('compare.basisArea') : t('compare.basisTotal')}</p>
           </div>
-          <PillRadioGroup aria-label={t('compare.sortBy')} value={phaseSort} onValueChange={(v) => setPhaseSort(v as PhaseSort)}>
-            <PillRadioItem value="order">{t('compare.sortOrder')}</PillRadioItem>
-            <PillRadioItem value="difference">{t('compare.sortDiff')}</PillRadioItem>
-          </PillRadioGroup>
+          <ViewTabs
+            label={t('compare.sortBy')}
+            value={phaseSort}
+            onValueChange={(v) => setPhaseSort(v as PhaseSort)}
+            tabs={[
+              { value: 'order', label: t('compare.sortOrder') },
+              { value: 'difference', label: t('compare.sortDiff') },
+            ]}
+          />
         </div>
         <Legend />
         {phaseBars.length === 0 ? <p className="text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={phaseBars} format={fmt} labelWidth={labelWidth} />}

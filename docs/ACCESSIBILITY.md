@@ -55,6 +55,27 @@ Every drop-down in the app is the designed `Dropdown` (`src/components/ui/dropdo
 - **While a list is open** axe reports only what any modal list causes: the page behind is hidden from assistive technology on purpose, so rules about "no h1" and "focusable elements in hidden content" fire; they are not defects.
 - **Found and fixed on the way:** Radix keeps a hidden input beside each choice and moves it one width to the left; on a right-to-left page that area scrolls, so Add payment could be dragged sideways at 375 px in Urdu (and a list opened there appeared misplaced). One CSS rule keeps those inputs in place. The 8 px page gap also moved from the body to the root element, because an open dialog or list locks the body and reset its padding, nudging the page by 8 px.
 
+## Create account: password and confirmation (added 2026-11-22)
+
+Rules (`src/lib/password.ts`, checked by `scripts/password-test.ts`): 8 or more characters, a capital and a small letter, and a number
+are required to create an account. A symbol and 12 or more characters are optional and raise the level. Common passwords
+(Password1, Qwerty123!, the project's own name) are shown as Weak even when they meet the rules. Signing in is not checked, so an
+older, shorter password still works.
+
+What was tested (axe-core WCAG 2.0 to 2.2 A and AA, plus manual checks on the fake-sync server):
+
+* Zero violations for weak, fair, good, strong and mismatch states, in light and dark, and in Urdu (RTL) at 375 px; no sideways scroll.
+* The label focuses its input (the old field put the id on a wrapper div). The password field is described by the rules panel; the
+  confirm field by its match status. A wrong submit moves focus to the first invalid field.
+* The strength level is written as a word and sits in a polite live region that changes only when the level changes; each rule has a
+  tick or an empty circle plus the words "done" or "not yet" for screen readers; colour is never the only signal.
+* "Passwords do not match" appears only once the confirmation is as long as the password, or the field is left, so a half-typed
+  confirmation is not called an error. The match status and the field error are never both announced.
+* Show / hide buttons are separate for each field and say whether the password is visible (`aria-pressed`).
+* The language drop-down is 44 px tall on phones (it was 36).
+
+Not covered: a real screen-reader pass (VoiceOver, TalkBack) and password-manager behaviour on real phones.
+
 ## Not covered, and worth doing with real people
 
 - A screen reader pass (VoiceOver on iPhone, TalkBack on Android) of the main flows: add a payment, approve an entry, read a statement.

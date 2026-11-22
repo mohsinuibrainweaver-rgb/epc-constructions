@@ -1,12 +1,14 @@
-import { useState, type FormEvent } from 'react'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { useId, useRef, useState, type FormEvent } from 'react'
+import { Loader2 } from 'lucide-react'
 import { BrandLogo } from '@/components/Brand'
 import { useApp } from '@/app/AppContext'
 import { Field } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
-import { setSetting } from '@/db/actions'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { ConfirmStatus, PasswordInput, PasswordStrength } from '@/components/PasswordFields'
+import { checkPassword } from '@/lib/password'
 import { supabase } from '@/sync/supabase'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -18,19 +20,30 @@ const MIN_PASSWORD = 6
  * two are kept on this device and in the account, so a second phone can pick them up.
  */
 export function SignIn() {
-  const { t, lang } = useApp()
+  const { t } = useApp()
   const [mode, setMode] = useState<'signin' | 'create'>('signin')
   const create = mode === 'create'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [show, setShow] = useState(false)
+  const [confirm, setConfirm] = useState('')
+  const [confirmTouched, setConfirmTouched] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({})
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirm?: string }>({})
   const [notice, setNotice] = useState('')
+  const formRef = useRef<HTMLFormElement>(null)
+  const uid = useId()
+  const strengthId = `${uid}-strength`
+  const confirmStatusId = `${uid}-confirm-status`
+  const check = checkPassword(password)
+  // Say "do not match" only when the person has typed as much as the password, or has left the field; a half-typed confirmation is not an error yet.
+  const confirmState: 'idle' | 'match' | 'mismatch' =
+    confirm === '' ? 'idle' : confirm === password ? 'match' : confirmTouched || confirm.length >= password.length ? 'mismatch' : 'idle'
 
   const switchMode = (m: string) => {
     setMode(m as 'signin' | 'create')
+    setConfirm('')
+    setConfirmTouched(false)
     setErrors({})
     setNotice('')
   }
@@ -41,9 +54,18 @@ export function SignIn() {
     const next: typeof errors = {}
     if (create && !name.trim()) next.name = t('auth.nameRequired')
     if (!EMAIL.test(email.trim())) next.email = t('auth.invalidEmail')
-    if (password.length < MIN_PASSWORD) next.password = t('auth.passwordShort')
+    if (create) {
+      if (!check.ok) next.password = t('auth.passwordWeak')
+      if (!confirm) next.confirm = t('auth.confirmRequired')
+      else if (confirm !== password) next.confirm = t('auth.confirmMismatch')
+    } else if (password.length < MIN_PASSWORD) next.password = t('auth.passwordShort')
     setErrors(next)
-    if (Object.keys(next).length > 0 || !supabase) return
+    if (Object.keys(next).length > 0) {
+      // Move focus to the first field that needs attention, so a keyboard or screen-reader user lands on it.
+      requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus())
+      return
+    }
+    if (!supabase) return
 
     setBusy(true)
     const creds = { email: email.trim(), password }
@@ -64,49 +86,56 @@ export function SignIn() {
   }
 
   return (
-    <main className="grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center rounded-2xl border bg-card px-4 py-8">
+    <main className="relative grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center rounded-2xl border bg-card px-4 py-8 max-sm:pt-20">
+      <LanguageSwitcher />
       <div className="grid w-full max-w-md justify-items-start gap-5">
         <BrandLogo className="h-auto w-[min(70%,14rem)]" alt={t('app.full')} />
-        <PillRadioGroup aria-label={t('auth.mode')} value={mode} onValueChange={switchMode}>
-          <PillRadioItem value="signin">{t('auth.signIn')}</PillRadioItem>
-          <PillRadioItem value="create">{t('auth.createAccount')}</PillRadioItem>
-        </PillRadioGroup>
-        <div className="grid gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">{create ? t('auth.createTitle') : t('auth.title')}</h1>
-          <p className="text-muted-foreground">{create ? t('auth.createBody') : t('auth.body')}</p>
-        </div>
+        <Tabs value={mode} onValueChange={switchMode} className="w-full">
+          <TabsList aria-label={t('auth.mode')}>
+            <TabsTrigger value="signin">{t('auth.signIn')}</TabsTrigger>
+            <TabsTrigger value="create">{t('auth.createAccount')}</TabsTrigger>
+          </TabsList>
+          <TabsContent value={mode} className="grid gap-5">
+        <h1 className="text-3xl font-semibold tracking-tight">{create ? t('auth.createTitle') : t('auth.title')}</h1>
 
-        <form className="grid w-full gap-4" onSubmit={(e) => void submit(e)} noValidate>
+        <form ref={formRef} className="grid w-full gap-4" onSubmit={(e) => void submit(e)} noValidate>
           {create && (
-            <Field label={t('set.name')} hint={t('set.nameHelp')} error={errors.name}>
+            <Field label={t('set.name')} error={errors.name}>
               <Input autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
           )}
           <Field label={t('auth.email')} error={errors.email}>
             <Input type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </Field>
-          <Field label={t('auth.password')} hint={create ? t('auth.passwordHint') : undefined} error={errors.password}>
-            <div className="relative">
-              <Input
-                type={show ? 'text' : 'password'}
-                autoComplete={create ? 'new-password' : 'current-password'}
-                className="pe-12"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute inset-y-0 end-0"
-                aria-label={show ? t('auth.hide') : t('auth.show')}
-                aria-pressed={show}
-                onClick={() => setShow((v) => !v)}
-              >
-                {show ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
-              </Button>
-            </div>
+          <Field label={t('auth.password')} error={errors.password}>
+            <PasswordInput
+              autoComplete={create ? 'new-password' : 'current-password'}
+              describedBy={create ? strengthId : undefined}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                if (errors.password) setErrors((x) => ({ ...x, password: undefined }))
+              }}
+            />
           </Field>
+          {create && <PasswordStrength id={strengthId} check={check} />}
+          {create && (
+            <div className="grid gap-1.5">
+              <Field label={t('auth.confirmPassword')} error={errors.confirm}>
+                <PasswordInput
+                  autoComplete="new-password"
+                  describedBy={confirmStatusId}
+                  value={confirm}
+                  onChange={(e) => {
+                    setConfirm(e.target.value)
+                    if (errors.confirm) setErrors((x) => ({ ...x, confirm: undefined }))
+                  }}
+                  onBlur={() => setConfirmTouched(true)}
+                />
+              </Field>
+              <ConfirmStatus id={confirmStatusId} state={errors.confirm ? 'idle' : confirmState} />
+            </div>
+          )}
           {notice && (
             <p role="status" className="rounded-xl bg-info-soft p-3 text-sm font-semibold text-info">
               {notice}
@@ -117,10 +146,8 @@ export function SignIn() {
             {create ? t('auth.createAccount') : t('auth.signIn')}
           </Button>
         </form>
-
-        <Button variant="ghost" size="sm" onClick={() => void setSetting('language', lang === 'en' ? 'ur' : 'en')} lang={lang === 'en' ? 'ur' : 'en'}>
-          {lang === 'en' ? 'اردو' : 'English'}
-        </Button>
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   )

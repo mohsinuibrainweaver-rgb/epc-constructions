@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dropdown } from '@/components/ui/dropdown'
-import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
+import { ViewTabs } from '@/components/ui/tabs'
 import { deleteFile, restoreFile } from '@/db/actions'
 import { useFiles, usePayments, usePhases, useProjectAttachments } from '@/db/hooks'
 import { DOC_TYPES, type Attachment, type DocType, type FileKind, type Payment, type ProjectFile } from '@/db/types'
@@ -132,14 +132,15 @@ export function Files() {
 
       <Card className="p-4">
         <div className="grid items-center gap-3 sm:grid-cols-[auto_1fr_1fr]">
-          <PillRadioGroup aria-label={t('files.kind')} value={kind} onValueChange={(v) => setKind(v as FileKind)}>
-            <PillRadioItem value="photo">
-              {t('files.photos')} ({photoCount})
-            </PillRadioItem>
-            <PillRadioItem value="document">
-              {t('files.documents')} ({docCount})
-            </PillRadioItem>
-          </PillRadioGroup>
+          <ViewTabs
+            label={t('files.kind')}
+            value={kind}
+            onValueChange={(v) => setKind(v as FileKind)}
+            tabs={[
+              { value: 'photo', label: `${t('files.photos')} (${photoCount})` },
+              { value: 'document', label: `${t('files.documents')} (${docCount})` },
+            ]}
+          />
           <Dropdown aria-label={t('files.phase')} value={phase} onChange={(e) => setPhase(e.target.value)}>
             <option value="">{t('files.allPhases')}</option>
             {phases.map((p) => (
