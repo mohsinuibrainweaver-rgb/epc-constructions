@@ -52,7 +52,7 @@ export function FileViewer({
   /** For a payment's receipt: the payment to open. Its photo is changed there, so there is no edit or delete here. */
   openPayment?: { id: string; amount: string }
 }) {
-  const { t, lang } = useApp()
+  const { t, lang, can } = useApp()
   const toast = useToast()
   const { blob, failed } = useFileBlob(file, fetchBlob)
   const url = useObjectUrl(blob)
@@ -90,7 +90,7 @@ export function FileViewer({
                 {t('files.openPayment')}
               </Link>
             </Button>
-          ) : (
+          ) : can('manageFiles') ? (
             <>
               <Button variant="outline" onClick={() => onEdit(file)}>
                 <Pencil aria-hidden="true" />
@@ -101,7 +101,7 @@ export function FileViewer({
                 {t('common.delete')}
               </Button>
             </>
-          )}
+          ) : null}
           {url && (
             <Button asChild>
               <a href={url} download={file.name}>

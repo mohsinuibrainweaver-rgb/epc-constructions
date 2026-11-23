@@ -68,22 +68,22 @@ export function Roles() {
   }
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-5 max-sm:gap-3">
       <PageHeader title="Roles and permissions" subtitle="Choose what investors and builders can do in this project. The project owner always has full access." />
-      <Tabs value={role} onValueChange={(value) => setRole(value as Role)}>
+      <Tabs value={role} onValueChange={(value) => setRole(value as Role)} className="max-sm:gap-3">
         <TabsList className="w-full sm:w-fit">
           <TabsTrigger value="investor" className="flex-1 sm:flex-none">Investor</TabsTrigger>
           <TabsTrigger value="builder" className="flex-1 sm:flex-none">Builder</TabsTrigger>
         </TabsList>
         {(['investor', 'builder'] as Role[]).map((tabRole) => (
-          <TabsContent key={tabRole} value={tabRole} className="grid gap-4">
+          <TabsContent key={tabRole} value={tabRole} className="grid gap-4 max-sm:gap-3">
             {GROUPS.map((group) => (
-              <Card key={group}>
-                <CardHeader><CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="size-4 text-primary" />{TITLES[group]}</CardTitle></CardHeader>
-                <CardContent className="divide-y">
+              <Card key={group} className="max-sm:gap-3 max-sm:py-4">
+                <CardHeader className="max-sm:px-4"><CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="size-4 text-primary" />{TITLES[group]}</CardTitle></CardHeader>
+                <CardContent className="divide-y max-sm:px-4">
                   {PERMISSIONS.filter((p) => p.group === group).map((permission) => (
-                    <label key={permission.key} className="flex min-h-16 cursor-pointer items-center gap-4 py-3">
-                      <span className="min-w-0 flex-1"><span className="block font-semibold">{permission.label}</span><span className="block text-sm text-muted-foreground">{permission.description}</span></span>
+                    <label key={permission.key} className="flex min-h-16 cursor-pointer items-center gap-4 py-3 max-sm:min-h-0 max-sm:gap-3 max-sm:py-2.5">
+                      <span className="min-w-0 flex-1"><span className="block font-semibold">{permission.label}</span><span className="block text-sm text-muted-foreground max-sm:text-[0.8125rem] max-sm:leading-snug">{permission.description}</span></span>
                       <Switch checked={values[tabRole][permission.key]} disabled={busy === permission.key} onCheckedChange={(checked) => void change(permission.key, checked)} aria-label={permission.label} />
                     </label>
                   ))}

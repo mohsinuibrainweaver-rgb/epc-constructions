@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { CalendarCheck, CalendarClock, ChevronRight, CircleCheck, Copy, FileText, HandCoins, Pencil, Phone, Plus, ReceiptText, Search, SearchX, Share2, Users, X } from 'lucide-react'
+import { CalendarCheck, CalendarClock, ChevronRight, CircleCheck, Copy, EllipsisVertical, FileText, HandCoins, Pencil, Phone, Plus, ReceiptText, Search, SearchX, Share2, Users, X } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { CardHeading } from '@/components/CardHeading'
 import { BackLink, EmptyState, PageHeader } from '@/components/common'
@@ -15,6 +15,7 @@ import { VendorAvatar } from '@/components/VendorAvatar'
 import { assignColours } from '@/lib/avatarColours'
 import { Input } from '@/components/ui/input'
 import { Dropdown } from '@/components/ui/dropdown'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ContractBar, ContractPill } from '@/components/ContractParts'
 import { useContracts, usePayments, useVendors } from '@/db/hooks'
 import type { Key } from '@/i18n/en'
@@ -51,10 +52,7 @@ export function Vendors() {
       <PageHeader
         title={t('vendors.title')}
         actions={
-          <Button variant="secondary" disabled={!can('manageVendors')} onClick={() => setAdding(true)}>
-            <Plus aria-hidden="true" />
-            {t('vendors.add')}
-          </Button>
+          can('manageVendors') ? <Button variant="secondary" onClick={() => setAdding(true)}><Plus aria-hidden="true" />{t('vendors.add')}</Button> : undefined
         }
       />
 
@@ -206,10 +204,12 @@ export function VendorDetail() {
         <BackLink to="/vendors" label={t('vendors.title')} />
         <PageHeader
           title={vendor.name}
+          titleClassName="max-sm:text-xl max-sm:leading-tight"
+          actionsBeside
           actions={
             <>
               {vendor.phone && (
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="max-sm:hidden">
                   <a href={`tel:${vendor.phone}`}>
                     <Phone aria-hidden="true" />
                     {t('common.call')}
@@ -217,25 +217,64 @@ export function VendorDetail() {
                 </Button>
               )}
               {vendor.bankAccount && can('viewBankDetails') && (
-                <Button variant="outline" onClick={() => void copyAccount()}>
+                <Button variant="outline" className="max-sm:hidden" onClick={() => void copyAccount()}>
                   <Copy aria-hidden="true" />
                   {t('vendors.copyAccount')}
                 </Button>
               )}
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="max-sm:hidden">
                 <Link to={`/statements?vendor=${vendor.id}`}>
                   <FileText aria-hidden="true" />
                   {t('stmt.open')}
                 </Link>
               </Button>
-              <Button variant="outline" onClick={() => void share()}>
+              <Button variant="outline" className="max-sm:hidden" onClick={() => void share()}>
                 <Share2 aria-hidden="true" />
                 {t('vendors.statement')}
               </Button>
-              <Button variant="outline" disabled={!can('manageVendors')} onClick={() => setEditing(true)}>
+              {can('manageVendors') && <Button variant="outline" className="max-sm:hidden" onClick={() => setEditing(true)}>
                 <Pencil aria-hidden="true" />
                 {t('common.edit')}
-              </Button>
+              </Button>}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="outline" className="sm:hidden" aria-label={t('nav.more')}>
+                    <EllipsisVertical aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {vendor.phone && (
+                    <DropdownMenuItem asChild>
+                      <a href={`tel:${vendor.phone}`}>
+                        <Phone aria-hidden="true" />
+                        {t('common.call')}
+                      </a>
+                    </DropdownMenuItem>
+                  )}
+                  {vendor.bankAccount && can('viewBankDetails') && (
+                    <DropdownMenuItem onSelect={() => void copyAccount()}>
+                      <Copy aria-hidden="true" />
+                      {t('vendors.copyAccount')}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem asChild>
+                    <Link to={`/statements?vendor=${vendor.id}`}>
+                      <FileText aria-hidden="true" />
+                      {t('stmt.open')}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void share()}>
+                    <Share2 aria-hidden="true" />
+                    {t('vendors.statement')}
+                  </DropdownMenuItem>
+                  {can('manageVendors') && (
+                    <DropdownMenuItem onSelect={() => setEditing(true)}>
+                      <Pencil aria-hidden="true" />
+                      {t('common.edit')}
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           }
         />
@@ -332,12 +371,7 @@ export function VendorDetail() {
       <Card id="vendor-payments" className="scroll-mt-24 gap-0 overflow-hidden py-0">
         <div className="flex items-center justify-between gap-3 p-4">
           <CardHeading icon={ReceiptText}>{t('vendors.payments')}</CardHeading>
-          <Button variant="secondary" asChild size="sm">
-            <Link to={`/add?vendor=${vendor.id}`}>
-              <Plus aria-hidden="true" />
-              {t('pay.add')}
-            </Link>
-          </Button>
+          {can('addPayments') && <Button variant="secondary" asChild size="sm"><Link to={`/add?vendor=${vendor.id}`}><Plus aria-hidden="true" />{t('pay.add')}</Link></Button>}
         </div>
         {view !== 'all' && (
           <div className="flex items-center justify-between gap-3 border-t bg-secondary/40 px-4 py-2">

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Banknote, CalendarClock, ChartColumn, ChevronRight, Clock, Compass, FileSignature, FileText, FolderOpen, GitCompareArrows, ReceiptText, Scale, Settings as SettingsIcon } from 'lucide-react'
+import { Banknote, CalendarClock, ChartColumn, ChevronRight, Clock, Compass, FileSignature, FileText, FolderOpen, GitCompareArrows, ReceiptText, Scale, Settings as SettingsIcon, ShieldCheck } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { EmptyState, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
@@ -8,8 +8,8 @@ import type { Key } from '@/i18n/en'
 
 /** The "More" tab on phones. */
 export function More() {
-  const { t } = useApp()
-  const items: { to: string; key: Key; icon: typeof ReceiptText }[] = [
+  const { t, isOwner } = useApp()
+  const items: { to: string; key: Key; icon: typeof ReceiptText; ownerOnly?: boolean }[] = [
     { to: '/contracts', key: 'nav.contracts', icon: FileSignature },
     { to: '/ledger', key: 'nav.ledger', icon: ReceiptText },
     { to: '/plans', key: 'nav.plans', icon: CalendarClock },
@@ -20,6 +20,7 @@ export function More() {
     { to: '/statements', key: 'nav.statements', icon: FileText },
     { to: '/files', key: 'nav.files', icon: FolderOpen },
     { to: '/projects', key: 'nav.projects', icon: FolderOpen },
+    { to: '/roles', key: 'nav.roles', icon: ShieldCheck, ownerOnly: true },
     { to: '/settings', key: 'nav.settings', icon: SettingsIcon },
   ]
   return (
@@ -27,7 +28,7 @@ export function More() {
       <PageHeader title={t('more.title')} />
       <Card className="gap-0 overflow-hidden py-0">
         <ul className="divide-y">
-          {items.map(({ to, key, icon: Icon }) => (
+          {items.filter(({ ownerOnly }) => !ownerOnly || isOwner()).map(({ to, key, icon: Icon }) => (
             <li key={to}>
               <Link to={to} className="flex min-h-14 items-center gap-3 px-4 transition-colors hover:bg-accent">
                 <Icon className="size-5 text-muted-foreground" aria-hidden="true" />

@@ -25,7 +25,7 @@ import { syncPushLanguage } from '@/push/push'
 import { onRefused } from '@/sync/engine'
 import { useSync } from '@/sync/SyncProvider'
 
-const NAV: { to: string; key: Key; icon: typeof House; end?: boolean }[] = [
+const NAV: { to: string; key: Key; icon: typeof House; end?: boolean; ownerOnly?: boolean }[] = [
   { to: '/', key: 'nav.home', icon: House, end: true },
   { to: '/phases', key: 'nav.phases', icon: Layers3 },
   { to: '/vendors', key: 'nav.vendors', icon: Users },
@@ -38,7 +38,7 @@ const NAV: { to: string; key: Key; icon: typeof House; end?: boolean }[] = [
   { to: '/compare', key: 'nav.compare', icon: GitCompareArrows },
   { to: '/statements', key: 'nav.statements', icon: FileText },
   { to: '/files', key: 'nav.files', icon: FolderOpen },
-  { to: '/roles', key: 'nav.roles', icon: ShieldCheck },
+  { to: '/roles', key: 'nav.roles', icon: ShieldCheck, ownerOnly: true },
   { to: '/settings', key: 'nav.settings', icon: SettingsIcon },
 ]
 
@@ -131,7 +131,7 @@ function AlertsBell({ conflicts, onReviewConflicts }: { conflicts: number; onRev
 }
 
 export function Shell() {
-  const { t, project, projects, settings, isOwner } = useApp()
+  const { t, project, projects, settings, isOwner, can } = useApp()
   const loc = useLocation()
   const navigate = useNavigate()
   const toast = useToast()
@@ -282,7 +282,7 @@ export function Shell() {
         </div>
 
         <nav aria-label={t('app.name')} className="grid gap-0.5">
-          {NAV.map(({ to, key, icon: Icon, end }) => (
+          {NAV.filter(({ ownerOnly }) => !ownerOnly || isOwner()).map(({ to, key, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -345,7 +345,7 @@ export function Shell() {
               />
             </form>
             <span className="flex-1" />
-            {!fullscreen && (
+            {!fullscreen && can('addPayments') && (
               <Button asChild>
                 <Link to={addPaymentPath(loc.pathname)}>
                   <Plus aria-hidden="true" />
@@ -385,7 +385,7 @@ export function Shell() {
         aria-label={t('app.name')}
         className={cn('fixed inset-x-0 bottom-0 z-30 border-t bg-background pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden', fullscreen && 'hidden')}
       >
-        <div className="mx-auto grid h-[4.25rem] max-w-lg grid-cols-5 items-center">
+        <div className={cn('mx-auto grid h-[4.25rem] max-w-lg items-center', can('addPayments') ? 'grid-cols-5' : 'grid-cols-4')}>
           {(
             [
               ['/', 'nav.home', House, true],
@@ -394,13 +394,15 @@ export function Shell() {
           ).map(([to, key, Icon, end]) => (
             <TabLink key={to} to={to} end={end} label={t(key)} icon={<Icon className="size-[1.375rem]" aria-hidden="true" />} />
           ))}
-          <Link
-            to={addPaymentPath(loc.pathname)}
-            aria-label={t('pay.add')}
-            className="fab-orbit -mt-5 grid size-14 place-items-center justify-self-center rounded-full border-4 border-background transition-transform duration-150 active:scale-95"
-          >
-            <Plus className="size-7" aria-hidden="true" />
-          </Link>
+          {can('addPayments') && (
+            <Link
+              to={addPaymentPath(loc.pathname)}
+              aria-label={t('pay.add')}
+              className="fab-orbit -mt-5 grid size-14 place-items-center justify-self-center rounded-full border-4 border-background transition-transform duration-150 active:scale-95"
+            >
+              <Plus className="size-7" aria-hidden="true" />
+            </Link>
+          )}
           <TabLink to="/vendors" label={t('nav.vendors')} icon={<Users className="size-[1.375rem]" aria-hidden="true" />} />
           <TabLink to="/more" label={t('nav.more')} icon={<Ellipsis className="size-[1.375rem]" aria-hidden="true" />} />
         </div>

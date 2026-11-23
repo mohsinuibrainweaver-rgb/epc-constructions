@@ -89,7 +89,7 @@ function DocumentLine({ file }: { file: Attachment }) {
  * Editing is one button away, and only where this person may change the payment.
  */
 export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClose: () => void }) {
-  const { t, lang, project, phaseName, settings, can } = useApp()
+  const { t, lang, project, phaseName, settings, can, isOwner } = useApp()
   const vendors = useVendors(project?.id)
   const phases = usePhases(project?.id)
   const contracts = useContracts(project?.id)
@@ -113,7 +113,7 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
       title={t('pay.details')}
       onClose={onClose}
       footer={
-        p && canChangePayment(settings.role, p, can('editPayments')) ? (
+        p && canChangePayment(isOwner() ? 'investor' : settings.role, p, can('editPayments')) ? (
           <Button asChild>
             <Link to={`/payments/${p.id}`} onClick={onClose}>
               <Pencil aria-hidden="true" />

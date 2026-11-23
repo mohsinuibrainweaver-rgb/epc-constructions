@@ -582,12 +582,14 @@ export function PhaseDetail() {
           actions={
             <>
               {/* On a phone a plus button (the words are kept for screen readers), so the heading has the room to stay on one line. */}
-              <Button variant="secondary" asChild className="max-sm:w-10 max-sm:px-0">
-                <Link to={`/add?phase=${phase.id}`}>
-                  <Plus aria-hidden="true" />
-                  <span className="max-sm:sr-only">{t('pay.add')}</span>
-                </Link>
-              </Button>
+              {can('addPayments') && (
+                <Button variant="secondary" asChild className="max-sm:w-10 max-sm:px-0">
+                  <Link to={`/add?phase=${phase.id}`}>
+                    <Plus aria-hidden="true" />
+                    <span className="max-sm:sr-only">{t('pay.add')}</span>
+                  </Link>
+                </Button>
+              )}
               <Button
                 variant="outline"
                 className="max-sm:hidden"

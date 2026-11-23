@@ -33,6 +33,21 @@ const SettingsSectionPage = lazy(() => import('./pages/settings/SettingsPages').
 const More = lazy(() => import('./pages/Misc').then((m) => ({ default: m.More })))
 const NotFound = lazy(() => import('./pages/Misc').then((m) => ({ default: m.NotFound })))
 
+function AddPaymentGate() {
+  const { can } = useApp()
+  return can('addPayments') ? <AddPayment /> : <Navigate to="/ledger" replace />
+}
+
+function EditPaymentGate() {
+  const { can } = useApp()
+  return can('editPayments') ? <AddPayment /> : <Navigate to="/ledger" replace />
+}
+
+function OwnerRolesGate() {
+  const { isOwner } = useApp()
+  return isOwner() ? <Roles /> : <Navigate to="/" replace />
+}
+
 function Loading() {
   return (
     <div role="status" aria-busy="true" className="grid gap-4">
@@ -89,8 +104,8 @@ export default function App() {
           <Route path="vendors" element={<Vendors />} />
           <Route path="vendors/:id" element={<VendorDetail />} />
           <Route path="ledger" element={<Ledger />} />
-          <Route path="add" element={<AddPayment />} />
-          <Route path="payments/:id" element={<AddPayment />} />
+          <Route path="add" element={<AddPaymentGate />} />
+          <Route path="payments/:id" element={<EditPaymentGate />} />
           <Route path="reports" element={<Reports />} />
           <Route path="compare" element={<Compare />} />
           <Route path="forecast" element={<Forecast />} />
@@ -99,7 +114,7 @@ export default function App() {
           <Route path="contracts" element={<Contracts />} />
           <Route path="contracts/:id" element={<ContractDetail />} />
           <Route path="statements" element={<Statements />} />
-          <Route path="roles" element={<Roles />} />
+          <Route path="roles" element={<OwnerRolesGate />} />
           <Route path="materials" element={<Navigate to="/reports" replace />} />
           <Route path="files" element={<Files />} />
           <Route path="more" element={<More />} />

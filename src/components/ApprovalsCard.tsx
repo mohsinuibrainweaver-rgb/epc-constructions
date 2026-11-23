@@ -62,7 +62,7 @@ export function ApprovalsCard({ payments }: { payments: Payment[] }) {
               <StatusPill payment={p} />
             </Link>
             {investor && p.approval === 'pending' && <ApprovalActions payment={p} />}
-            {!investor && p.approval === 'rejected' && (
+            {!investor && can('editPayments') && p.approval === 'rejected' && (
               <Button asChild size="sm" variant="outline" className="w-fit">
                 <Link to={`/payments/${p.id}`}>{t('approval.fix')}</Link>
               </Button>

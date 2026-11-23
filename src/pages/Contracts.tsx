@@ -168,7 +168,7 @@ export function Contracts() {
         </>
       )}
 
-      <ContractDialog open={adding} onClose={() => setAdding(false)} onSaved={(id) => nav(`/contracts/${id}`)} />
+      {editable && <ContractDialog open={adding} onClose={() => setAdding(false)} onSaved={(id) => nav(`/contracts/${id}`)} />}
     </>
   )
 }
@@ -177,6 +177,8 @@ export function ContractDetail() {
   const { id } = useParams()
   const { t, lang, project, phaseName, can } = useApp()
   const editable = can('editContracts')
+  const canAddPayment = can('addPayments')
+  const canManagePlans = can('managePlans')
   const toast = useToast()
   const nav = useNavigate()
   const contract = useContracts(project?.id).find((c) => c.id === id)
@@ -216,12 +218,12 @@ export function ContractDetail() {
         subtitle={[vendor?.name, phase && phaseName(phase), formatDate(contract.date, lang)].filter(Boolean).join(' · ')}
         actions={
           <>
-            <Button variant="secondary" asChild>
+            {canAddPayment && <Button variant="secondary" asChild>
               <Link to={`/add?contract=${contract.id}`}>
                 <Plus aria-hidden="true" />
                 {t('contract.addPayment')}
               </Link>
-            </Button>
+            </Button>}
             <Button asChild variant="outline">
               <Link to={`/statements?contract=${contract.id}`}>
                 <FileText aria-hidden="true" />
@@ -343,18 +345,18 @@ export function ContractDetail() {
               </CardHeading>
               <p className="text-sm text-muted-foreground">{t('contract.scheduleSub')}</p>
             </div>
-            {canPlan && (
+            {canPlan && (canAddPayment || canManagePlans) && (
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" asChild>
+                {canAddPayment && <Button size="sm" asChild>
                   <Link to={`/add?contract=${contract.id}&amount=${unplanned}`}>
                     <HandCoins aria-hidden="true" />
                     {t('contract.payNow', { amount: money(unplanned) })}
                   </Link>
-                </Button>
-                <Button size="sm" variant="secondary" onClick={() => setPlanning(true)}>
+                </Button>}
+                {canManagePlans && <Button size="sm" variant="secondary" onClick={() => setPlanning(true)}>
                   <CalendarPlus aria-hidden="true" />
                   {scheduled.length > 0 ? t('contract.planRest', { amount: money(unplanned) }) : t('contract.planButton')}
-                </Button>
+                </Button>}
               </div>
             )}
           </div>
@@ -393,9 +395,9 @@ export function ContractDetail() {
         {mine.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('contract.noPayments')} body={t('contract.noPaymentsBody')} /> : <PaymentsTable payments={mine} />}
       </Card>
 
-      <ContractDialog open={editing} contract={contract} onClose={() => setEditing(false)} />
-      <InstalmentsDialog open={planning} contract={contract} unplanned={unplanned} payments={mine} onClose={() => setPlanning(false)} />
-      <VariationDialog open={variation.open} contractId={contract.id} variation={variation.v} onClose={() => setVariation({ open: false })} />
+      {editable && <ContractDialog open={editing} contract={contract} onClose={() => setEditing(false)} />}
+      {canManagePlans && <InstalmentsDialog open={planning} contract={contract} unplanned={unplanned} payments={mine} onClose={() => setPlanning(false)} />}
+      {editable && <VariationDialog open={variation.open} contractId={contract.id} variation={variation.v} onClose={() => setVariation({ open: false })} />}
     </>
   )
 }

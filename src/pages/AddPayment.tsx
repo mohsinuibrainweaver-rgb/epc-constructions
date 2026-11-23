@@ -130,7 +130,7 @@ export function AddPayment() {
   const { id } = useParams()
   const edit = Boolean(id)
   const [sp] = useSearchParams()
-  const { t, lang, project, settings, phaseName, can } = useApp()
+  const { t, lang, project, settings, phaseName, can, isOwner } = useApp()
   const nav = useNavigate()
   const toast = useToast()
   const vendors = useVendors(project?.id)
@@ -139,7 +139,9 @@ export function AddPayment() {
   const contracts = useContracts(project?.id)
   const existing = useLiveQuery(() => (id ? db.payments.get(id) : undefined), [id])
   // An approved entry, or a paid one the investor made himself, is closed to a builder (the server holds the same rule).
-  const locked = existing ? !canChangePayment(settings.role, existing, can('editPayments')) : !can('addPayments')
+  const locked = existing ? !canChangePayment(isOwner() ? 'investor' : settings.role, existing, can('editPayments')) : !can('addPayments')
+  const canManageVendors = can('manageVendors')
+  const canManageFiles = can('manageFiles')
   const approvalRole = can('approvePayments') ? 'investor' : settings.role
   const existingFiles = useAttachments(id)
 
@@ -530,8 +532,8 @@ export function AddPayment() {
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight max-sm:text-xl sm:text-3xl">{edit ? t('pay.edit') : t('pay.add')}</h1>
-        {edit && (
-          <Button type="button" variant="destructive" size="sm" disabled={locked} onClick={() => void remove()}>
+        {edit && !locked && can('deletePayments') && (
+          <Button type="button" variant="destructive" size="sm" onClick={() => void remove()}>
             <Trash2 aria-hidden="true" />
             {t('pay.delete')}
           </Button>
@@ -711,7 +713,7 @@ export function AddPayment() {
                   {v.name}
                 </option>
               ))}
-              <option value="__new">{t('pay.newVendor')}</option>
+              {canManageVendors && <option value="__new">{t('pay.newVendor')}</option>}
             </Dropdown>
           </Field>
 
@@ -878,7 +880,7 @@ export function AddPayment() {
       </FormSection>
 
       <FormSection icon={Paperclip} title={t('pay.sec.proof')}>
-        <div className="grid gap-2">
+        {canManageFiles && <div className="grid gap-2">
           <span className="text-sm font-semibold">{t('pay.receipts')}</span>
           <FileDropzone accept={PAYMENT_ACCEPT} maxBytes={MAX_ATTACHMENT_BYTES} multiple icon={Paperclip} browseLabel={t('pay.addReceipt')} instruction={t('drop.media')} hint={t('pay.attachHint')} onFiles={addFiles}>
             {(visibleExisting.length > 0 || newFiles.length > 0) && (
@@ -919,14 +921,14 @@ export function AddPayment() {
               </div>
             )}
           </FileDropzone>
-        </div>
+        </div>}
 
         <Field label={`${t('pay.note')} (${t('common.optional')})`}>
           <Textarea value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
       </FormSection>
 
-      {dup && (
+      {dup && !locked && (
         <div role="alert" className="flex items-start gap-3 rounded-xl bg-warning-soft p-4 text-sm font-semibold text-warning">
           <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           <div className="grid gap-2">
@@ -944,7 +946,7 @@ export function AddPayment() {
         </div>
       )}
 
-      {!edit && (
+      {!edit && !locked && (
         <Button type="button" variant="outline" disabled={busy} onClick={() => void submit(false, true)} className="w-full sm:hidden">
           {t('pay.saveAdd')}
         </Button>
@@ -954,18 +956,20 @@ export function AddPayment() {
         <Button type="button" variant="outline" className="max-sm:grow max-sm:basis-[calc(50%-0.375rem)]" onClick={goBack}>
           {t('common.cancel')}
         </Button>
-        {!edit && (
+        {!edit && !locked && (
           <Button type="button" variant="outline" disabled={busy} onClick={() => void submit(false, true)} className="max-sm:hidden">
             {t('pay.saveAdd')}
           </Button>
         )}
-        <Button type="submit" disabled={busy || locked} className="max-sm:grow max-sm:basis-[calc(50%-0.375rem)]">
-          {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
-          {t('pay.save')}
-        </Button>
+        {!locked && (
+          <Button type="submit" disabled={busy} className="max-sm:grow max-sm:basis-[calc(50%-0.375rem)]">
+            {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
+            {t('pay.save')}
+          </Button>
+        )}
       </div>
 
-      <VendorDialog open={vendorOpen} onClose={() => setVendorOpen(false)} onSaved={(vid) => setVendorId(vid)} />
+      {canManageVendors && <VendorDialog open={vendorOpen} onClose={() => setVendorOpen(false)} onSaved={(vid) => setVendorId(vid)} />}
     </form>
         {/* Beside the form where there is room; hidden on a phone, where the page is one column and the form needs the space. */}
         <div className="hidden min-w-0 grid-cols-[minmax(0,1fr)] gap-4 @4xl:grid @4xl:sticky @4xl:top-[var(--page-gap)]">

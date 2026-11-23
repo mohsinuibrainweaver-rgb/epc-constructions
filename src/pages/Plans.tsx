@@ -25,6 +25,7 @@ export function Plans() {
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<PaymentPlan>()
   const [removing, setRemoving] = useState<PaymentPlan>()
+  const manage = can('managePlans')
 
   const vendorMap = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
   const phaseMap = useMemo(() => new Map(phases.map((p) => [p.id, phaseName(p)])), [phases, phaseName])
@@ -34,10 +35,7 @@ export function Plans() {
       <PageHeader
         title={t('plans.title')}
         actions={
-          <Button variant="secondary" disabled={!can('managePlans')} onClick={() => setAdding(true)}>
-            <Plus aria-hidden="true" />
-            {t('plans.add')}
-          </Button>
+          manage ? <Button variant="secondary" onClick={() => setAdding(true)}><Plus aria-hidden="true" />{t('plans.add')}</Button> : undefined
         }
       />
 
@@ -64,7 +62,7 @@ export function Plans() {
                       {ph && ` · ${ph}`}
                     </p>
                   </div>
-                  <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
+                  {manage && <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
                     <Switch
                       checked={p.active}
                       onCheckedChange={(v) => {
@@ -73,14 +71,14 @@ export function Plans() {
                       aria-label={`${t('plans.active')}: ${p.purpose}`}
                     />
                     {t('plans.active')}
-                  </label>
-                  <Button size="sm" variant="outline" disabled={!can('managePlans')} onClick={() => setEditing(p)}>
+                  </label>}
+                  {manage && <Button size="sm" variant="outline" onClick={() => setEditing(p)}>
                     <Pencil aria-hidden="true" />
                     {t('common.edit')}
-                  </Button>
-                  <Button size="icon" variant="ghost" aria-label={`${t('plans.delete')}: ${p.purpose}`} onClick={() => setRemoving(p)}>
+                  </Button>}
+                  {manage && <Button size="icon" variant="ghost" aria-label={`${t('plans.delete')}: ${p.purpose}`} onClick={() => setRemoving(p)}>
                     <Trash2 aria-hidden="true" />
-                  </Button>
+                  </Button>}
                 </li>
               )
             })}
@@ -89,10 +87,10 @@ export function Plans() {
       )}
       {plans.length > 0 && <p className="text-sm text-muted-foreground">{t('plans.note')}</p>}
 
-      <PlanDialog open={adding} onClose={() => setAdding(false)} />
-      <PlanDialog open={Boolean(editing)} plan={editing} onClose={() => setEditing(undefined)} />
+      {manage && <PlanDialog open={adding} onClose={() => setAdding(false)} />}
+      {manage && <PlanDialog open={Boolean(editing)} plan={editing} onClose={() => setEditing(undefined)} />}
       <Dialog
-        open={Boolean(removing)}
+        open={manage && Boolean(removing)}
         title={t('plans.delete')}
         description={removing?.purpose}
         onClose={() => setRemoving(undefined)}

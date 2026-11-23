@@ -129,10 +129,7 @@ export function Files() {
       <PageHeader
         title={t('nav.files')}
         actions={
-          <Button variant="secondary" disabled={!can('manageFiles')} onClick={() => setAdding(true)}>
-            <Plus aria-hidden="true" />
-            {t('files.add')}
-          </Button>
+          can('manageFiles') ? <Button variant="secondary" onClick={() => setAdding(true)}><Plus aria-hidden="true" />{t('files.add')}</Button> : undefined
         }
       />
 
@@ -286,8 +283,8 @@ export function Files() {
           onDelete={() => undefined}
         />
       )}
-      <FileDialog open={adding} defaultKind={kind} defaultPhaseId={phase || undefined} onClose={() => setAdding(false)} />
-      <FileDialog open={!!editing} file={editing} defaultKind={kind} onClose={() => setEditing(undefined)} />
+      {can('manageFiles') && <FileDialog open={adding} defaultKind={kind} defaultPhaseId={phase || undefined} onClose={() => setAdding(false)} />}
+      {can('manageFiles') && <FileDialog open={!!editing} file={editing} defaultKind={kind} onClose={() => setEditing(undefined)} />}
     </>
   )
 }
