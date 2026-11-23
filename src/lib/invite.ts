@@ -6,3 +6,11 @@ export const groupInviteCode = (raw: string): string => (cleanInviteCode(raw).ma
 
 /** A complete code is 12 characters. */
 export const isCompleteInviteCode = (raw: string): boolean => cleanInviteCode(raw).length === 12
+
+/** A shareable account/join link. `invite` stays separate from Supabase Auth's own `code` query parameter. */
+export const inviteLink = (origin: string, code: string): string => {
+  const url = new URL('/join', origin)
+  url.searchParams.set('type', 'create')
+  url.searchParams.set('invite', cleanInviteCode(code))
+  return url.toString()
+}

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
 import type { Role } from '@/db/types'
 import { formatDate } from '@/lib/format'
-import { groupInviteCode } from '@/lib/invite'
+import { groupInviteCode, inviteLink } from '@/lib/invite'
 import { useSync } from '@/sync/SyncProvider'
 import { supabase } from '@/sync/supabase'
 
@@ -62,15 +62,19 @@ export function People() {
     setError('')
     if (!supabase || !project || !session) return
     setBusy(true)
-    const { error: err } = await supabase.from('project_invites').insert({ project_id: project.id, role })
+    const { data, error: err } = await supabase
+      .from('project_invites')
+      .insert({ project_id: project.id, role })
+      .select('id, code, role, expires_at')
+      .single()
     setBusy(false)
     if (err) {
       // Row level security rejects this until the project has reached the server.
       setError(err.code === '42501' ? t('people.syncFirst') : err.message)
       return
     }
+    if (data) setInvites((current) => [data as Invite, ...current])
     toast.show({ kind: 'success', message: t('people.sent') })
-    void load()
   }
 
   const withdraw = async (id: string) => {
@@ -78,17 +82,19 @@ export function People() {
     void load()
   }
 
+  const linkFor = (code: string) => inviteLink(window.location.origin, code)
+
   const copy = async (code: string) => {
     try {
-      await navigator.clipboard.writeText(groupInviteCode(code))
+      await navigator.clipboard.writeText(linkFor(code))
       toast.show({ kind: 'success', message: t('people.copied') })
     } catch {
-      toast.show({ kind: 'error', message: groupInviteCode(code) })
+      toast.show({ kind: 'error', message: linkFor(code) })
     }
   }
 
   const whatsapp = (i: Invite) => {
-    const link = `${window.location.origin}/join?code=${i.code}`
+    const link = linkFor(i.code)
     const text = t('people.shareText', { project: project?.name ?? '', role: roleLabel(i.role), link, code: groupInviteCode(i.code) })
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
   }
@@ -162,10 +168,11 @@ export function People() {
                     <Badge variant="neutral">{roleLabel(i.role)}</Badge>
                     {i.expires_at && <span className="text-sm text-muted-foreground">{t('people.ends', { date: formatDate(i.expires_at.slice(0, 10), lang) })}</span>}
                   </div>
+                  <p className="break-all text-xs text-muted-foreground" dir="ltr">{linkFor(i.code)}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={() => void copy(i.code)}>
                       <Copy aria-hidden="true" />
-                      {t('people.copy')}
+                      {t('people.copyLink')}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => whatsapp(i)}>
                       <MessageCircle aria-hidden="true" />

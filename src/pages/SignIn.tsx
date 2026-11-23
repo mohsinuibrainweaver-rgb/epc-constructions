@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type FormEvent } from 'react'
 import { Loader2 } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { BrandLogo } from '@/components/Brand'
 import { useApp } from '@/app/AppContext'
 import { Field } from '@/components/common'
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { ConfirmStatus, PasswordInput, PasswordStrength } from '@/components/PasswordFields'
 import { checkPassword } from '@/lib/password'
+import { cleanInviteCode, inviteLink, isCompleteInviteCode } from '@/lib/invite'
 import { supabase } from '@/sync/supabase'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -21,7 +23,10 @@ const MIN_PASSWORD = 6
  */
 export function SignIn() {
   const { t } = useApp()
-  const [mode, setMode] = useState<'signin' | 'create'>('signin')
+  const [params] = useSearchParams()
+  const invite = cleanInviteCode(params.get('invite') ?? '')
+  const invited = isCompleteInviteCode(invite)
+  const [mode, setMode] = useState<'signin' | 'create'>(() => (params.get('type') === 'create' && invited ? 'create' : 'signin'))
   const create = mode === 'create'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -70,7 +75,13 @@ export function SignIn() {
     setBusy(true)
     const creds = { email: email.trim(), password }
     if (create) {
-      const { data, error } = await supabase.auth.signUp({ ...creds, options: { data: { name: name.trim() } } })
+      const { data, error } = await supabase.auth.signUp({
+        ...creds,
+        options: {
+          data: { name: name.trim() },
+          ...(invited ? { emailRedirectTo: inviteLink(window.location.origin, invite) } : {}),
+        },
+      })
       if (error) setErrors({ password: error.message })
       // With "Confirm email" on, an email that already has an account comes back without an error and with no identities.
       else if (data.user && data.user.identities?.length === 0) setErrors({ email: t('auth.exists') })
@@ -97,6 +108,8 @@ export function SignIn() {
           </TabsList>
           <TabsContent value={mode} className="grid gap-5">
         <h1 className="text-3xl font-semibold tracking-tight">{create ? t('auth.createTitle') : t('auth.title')}</h1>
+
+        {invited && <p className="rounded-xl bg-info-soft p-3 text-sm font-semibold text-info">{t('auth.invite')}</p>}
 
         <form ref={formRef} className="grid w-full gap-4" onSubmit={(e) => void submit(e)} noValidate>
           {create && (
