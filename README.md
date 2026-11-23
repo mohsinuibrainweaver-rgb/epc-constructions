@@ -302,6 +302,18 @@ One form for both, in the same look as the other screens: a **Back** link, a tit
 - **Create project** / **Save** is disabled while saving, so a double tap cannot make two projects. On a phone the Cancel and Save buttons
   stay at the bottom of the screen.
 
+## Home on a phone: shorter, for a glance
+
+Home used to be three screens tall on a phone (2448 px on a real project), almost half of it the six roomy payment cards. Now (phone only; the
+wide layout is unchanged) it is about two screens (1610 px):
+
+- **Recent payments:** five short lines instead of six cards: a small icon (the phase, or a plain tile when there is none), the name (up to two
+  lines), the date and phase, and the amount. A payment that is simply paid shows no status; one that is waiting, turned down or an advance
+  does. The full card with mode, who paid and bank details is one tap away (and in the Ledger). `PaymentsTable` has a `compact` option for this.
+- **Phase progress:** the first four phases; a phase that is on track or finished shows no extra line (its final cost is still there).
+  "View all" opens the rest.
+- Order is unchanged: the budget tiles, approvals, what needs attention, then payments due, recent payments and phases.
+
 ## The Projects screen (`/projects`)
 
 One card per project, all the same height with their buttons on one line: the picture (nothing drawn over it), then the marks **Current** and

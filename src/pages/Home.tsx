@@ -212,7 +212,7 @@ export function Home() {
               {t('home.viewAll')}
             </Link>
           </div>
-          {recent.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('home.recentEmpty')} /> : <PaymentsTable payments={recent.slice(0, 6)} />}
+          {recent.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('home.recentEmpty')} /> : <PaymentsTable payments={recent.slice(0, 6)} compact />}
         </Card>
 
         {!urgent && dueCard}
@@ -228,7 +228,7 @@ export function Home() {
           </div>
           <div className="grid gap-4 border-t p-4">
             {progress.rows.map(({ phase: ph, spent: s, budget: b, pct, done, state }) => (
-              <Link key={ph.id} to={`/phases/${ph.id}`} className="grid gap-1.5 rounded-md">
+              <Link key={ph.id} to={`/phases/${ph.id}`} className="grid gap-1.5 rounded-md max-md:nth-[n+5]:hidden">
                 <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-sm">
                   <span className="font-semibold">{phaseName(ph)}</span>
                   <span className="tabular ms-auto whitespace-nowrap text-muted-foreground">
@@ -238,7 +238,7 @@ export function Home() {
                 {/* A bar only while an estimate is being measured against; a finished phase shows how it ended. */}
                 {!done && b ? <BudgetBar spent={s} budget={b} label={phaseName(ph)} /> : null}
                 {b ? (
-                  <span className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span className={cn('flex flex-wrap items-center gap-2 text-sm text-muted-foreground', (state === 'ok' || state === 'onEstimate' || state === 'under') && 'max-md:hidden')}>
                     {!done && state === 'ok' && <span>{t('phases.used', { pct })}</span>}
                     <BudgetChip state={state} spent={s} estimate={b} />
                   </span>
