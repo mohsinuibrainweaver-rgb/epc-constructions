@@ -277,6 +277,20 @@ export async function refreshMembership(): Promise<void> {
   const old = ((await db.settings.toCollection().primaryKeys()) as string[]).filter((k) => k.startsWith('member.role.') && !keep.has(k))
   await db.settings.bulkDelete(old)
   await db.settings.bulkPut(rows.map((r) => ({ key: `member.role.${r.project_id}`, value: r.role })))
+  const projectIds = rows.map((r) => r.project_id)
+  if (projectIds.length) {
+    const { data: permissionRows } = await supabase.from('role_permissions').select('project_id, role, permission, enabled').in('project_id', projectIds)
+    if (permissionRows) {
+      const byProject = new Map<string, Record<string, boolean>>()
+      for (const row of permissionRows as { project_id: string; role: string; permission: string; enabled: boolean }[]) {
+        if (rows.find((r) => r.project_id === row.project_id)?.role !== row.role) continue
+        const map = byProject.get(row.project_id) ?? {}
+        map[row.permission] = row.enabled
+        byProject.set(row.project_id, map)
+      }
+      await db.settings.bulkPut(projectIds.map((id) => ({ key: `member.permissions.${id}`, value: byProject.get(id) ?? {} })))
+    }
+  }
 }
 
 async function resetCursors(): Promise<void> {
@@ -408,7 +422,7 @@ export function startSync(uid: string): void {
 
   // Live updates: another phone saved something, so pull soon.
   const channel = supabase.channel('epc-sync')
-  for (const def of [...TABLES.map((d) => d.remote ?? d.name), 'project_members']) {
+  for (const def of [...TABLES.map((d) => d.remote ?? d.name), 'project_members', 'role_permissions']) {
     channel.on('postgres_changes', { event: '*', schema: 'public', table: def }, () => {
       clearTimeout(pullTimer)
       pullTimer = setTimeout(() => void syncNow(), 500)

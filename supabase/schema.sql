@@ -62,6 +62,18 @@ alter table public.project_invites alter column expires_at set default (now() + 
 alter table public.project_invites alter column invited_by set default auth.uid();
 create unique index if not exists project_invites_code on public.project_invites (code);
 
+-- Project-specific permissions for the two member roles. The project creator owns these settings and
+-- always bypasses them. Missing rows use the defaults in default_role_permission(), preserving the
+-- behaviour of projects created before this table existed.
+create table if not exists public.role_permissions (
+  project_id uuid not null references public.projects (id) on delete cascade,
+  role text not null check (role in ('investor', 'builder')),
+  permission text not null,
+  enabled boolean not null,
+  updated_at timestamptz not null default now(),
+  primary key (project_id, role, permission)
+);
+
 -- Soft references (no foreign keys) so rows can arrive in any order during a sync.
 create table if not exists public.phases (
   id uuid primary key,
@@ -315,6 +327,46 @@ as $$
   select m.role from public.project_members m where m.project_id = pid and m.user_id = auth.uid();
 $$;
 
+create or replace function public.is_project_owner(pid uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from public.projects p where p.id = pid and p.owner_id = auth.uid());
+$$;
+
+create or replace function public.default_role_permission(member_role text, permission_key text)
+returns boolean
+language sql
+immutable
+as $$
+  select case
+    when member_role = 'investor' then true
+    when member_role = 'builder' then permission_key in
+      ('addPayments', 'editPayments', 'deletePayments', 'manageVendors', 'completePhases', 'managePlans', 'manageFiles')
+    else false
+  end;
+$$;
+
+create or replace function public.has_permission(pid uuid, permission_key text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select case
+    when public.is_project_owner(pid) then true
+    else coalesce(
+      (select rp.enabled from public.role_permissions rp
+       where rp.project_id = pid and rp.role = public.role_of(pid) and rp.permission = permission_key),
+      public.default_role_permission(public.role_of(pid), permission_key)
+    )
+  end;
+$$;
+
 -- What a builder may write. The investor, the dashboard and the service key are not limited here.
 -- A write the builder may not make is ignored (the trigger returns null), never an error: the app sends rows in batches,
 -- and one refused row must not fail the others. The app notices the missing row in the answer and brings the real one down.
@@ -343,21 +395,52 @@ begin
   end if;
   -- A brand new project has no member yet; its creator is checked by the insert policy.
   if tg_table_name = 'projects' and o is null then return new; end if;
-  if public.role_of(pid) is distinct from 'builder' then return new; end if;
+  -- Let RLS reject a stranger. Returning null here would incorrectly turn an attack into a successful no-op.
+  if not public.is_member(pid) then return new; end if;
+  if public.is_project_owner(pid) then return new; end if;
 
-  if tg_table_name in ('projects', 'contracts', 'transfers') then
-    return null;
+  if tg_table_name = 'projects' then
+    if o is not null and (o ->> 'deleted_at') is distinct from (n ->> 'deleted_at') then
+      if public.has_permission(pid, 'deleteProject') then return new; else return null; end if;
+    elsif o is not null and
+      (o -> 'fee_basis' is distinct from n -> 'fee_basis' or o -> 'fee_amount' is distinct from n -> 'fee_amount' or
+       o -> 'fee_percent' is distinct from n -> 'fee_percent' or o -> 'retainer_amount' is distinct from n -> 'retainer_amount' or
+       o -> 'retainer_start' is distinct from n -> 'retainer_start' or o -> 'retainer_end' is distinct from n -> 'retainer_end') then
+      if public.has_permission(pid, 'editFee') then return new; else return null; end if;
+    elsif public.has_permission(pid, 'editProject') then return new; else return null; end if;
   elsif tg_table_name = 'phases' then
-    if o is null then return null; end if;
-    if (o - 'done' - 'updated_at' - 'server_updated_at') is distinct from (n - 'done' - 'updated_at' - 'server_updated_at') then return null; end if;
-    return new;
+    if o is not null and (o - 'done' - 'updated_at' - 'server_updated_at') is not distinct from (n - 'done' - 'updated_at' - 'server_updated_at') then
+      if public.has_permission(pid, 'completePhases') then return new; else return null; end if;
+    end if;
+    if public.has_permission(pid, 'editPhases') then return new; else return null; end if;
+  elsif tg_table_name = 'vendors' then
+    if public.has_permission(pid, 'manageVendors') then return new; else return null; end if;
+  elsif tg_table_name = 'contracts' then
+    if public.has_permission(pid, 'editContracts') then return new; else return null; end if;
+  elsif tg_table_name = 'transfers' then
+    if public.has_permission(pid, 'editTransfers') then return new; else return null; end if;
+  elsif tg_table_name = 'payment_plans' then
+    if public.has_permission(pid, 'managePlans') then return new; else return null; end if;
+  elsif tg_table_name in ('attachments', 'project_files') then
+    if public.has_permission(pid, 'manageFiles') then return new; else return null; end if;
   elsif tg_table_name = 'payments' then
-    if o is not null and (o ->> 'status') in ('paid', 'advance') and coalesce(o ->> 'approval', '') not in ('pending', 'rejected') then
+    if public.role_of(pid) = 'builder' and o is not null and (o ->> 'status') in ('paid', 'advance') and
+       coalesce(o ->> 'approval', '') not in ('pending', 'rejected') and not public.has_permission(pid, 'approvePayments') then
       return null;
     end if;
-    if (n ->> 'status') in ('paid', 'advance') then
+    if o is null then
+      if not public.has_permission(pid, 'addPayments') then return null; end if;
+    elsif (o ->> 'deleted_at') is distinct from (n ->> 'deleted_at') then
+      if not public.has_permission(pid, 'deletePayments') then return null; end if;
+    elsif (n ->> 'approval') in ('approved', 'rejected') and (o ->> 'approval') is distinct from (n ->> 'approval') then
+      if not public.has_permission(pid, 'approvePayments') then return null; end if;
+    elsif not public.has_permission(pid, 'editPayments') then
+      return null;
+    end if;
+    if public.role_of(pid) = 'builder' and (n ->> 'status') in ('paid', 'advance') and
+       not public.has_permission(pid, 'approvePayments') then
       new.approval := 'pending'; new.approved_by := null; new.approved_at := null; new.reject_reason := null;
-    else
+    elsif public.role_of(pid) = 'builder' and not public.has_permission(pid, 'approvePayments') and o is not null then
       new.approval := o ->> 'approval'; new.approved_by := o ->> 'approved_by';
       new.approved_at := (o ->> 'approved_at')::bigint; new.reject_reason := o ->> 'reject_reason';
     end if;
@@ -379,8 +462,8 @@ begin
   if new.project_id <> old.project_id or new.user_id <> old.user_id then
     raise exception 'a member cannot be moved' using errcode = '42501';
   end if;
-  if new.role <> old.role and (old.user_id = auth.uid() or public.role_of(old.project_id) is distinct from 'investor') then
-    raise exception 'only the investor can change another person''s role' using errcode = '42501';
+  if new.role <> old.role and (old.user_id = auth.uid() or not public.has_permission(old.project_id, 'managePeople')) then
+    raise exception 'you do not have permission to change this role' using errcode = '42501';
   end if;
   return new;
 end;
@@ -415,7 +498,7 @@ end $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['projects', 'phases', 'payments', 'contracts', 'transfers'] loop
+  foreach t in array array['projects', 'phases', 'vendors', 'payments', 'attachments', 'payment_plans', 'transfers', 'project_files', 'contracts'] loop
     execute format('drop trigger if exists %I_guard on public.%I', t, t);
     execute format(
       'create trigger %I_guard before insert or update on public.%I for each row execute function public.role_guard()',
@@ -523,6 +606,14 @@ alter table public.transfers enable row level security;
 alter table public.materials enable row level security;
 alter table public.project_files enable row level security;
 alter table public.contracts enable row level security;
+alter table public.role_permissions enable row level security;
+
+drop policy if exists role_permissions_select on public.role_permissions;
+drop policy if exists role_permissions_owner on public.role_permissions;
+create policy role_permissions_select on public.role_permissions for select to authenticated
+  using (public.is_member(project_id));
+create policy role_permissions_owner on public.role_permissions for all to authenticated
+  using (public.is_project_owner(project_id)) with check (public.is_project_owner(project_id));
 
 drop policy if exists projects_select on public.projects;
 drop policy if exists projects_insert on public.projects;
@@ -542,21 +633,21 @@ create policy members_select on public.project_members for select to authenticat
   using (public.is_member(project_id));
 -- A role changes only through member_guard: nobody changes their own, only an investor changes another person's.
 create policy members_update on public.project_members for update to authenticated
-  using (user_id = auth.uid() or public.role_of(project_id) = 'investor')
-  with check (user_id = auth.uid() or public.role_of(project_id) = 'investor');
+  using (user_id = auth.uid() or public.has_permission(project_id, 'managePeople'))
+  with check (user_id = auth.uid() or public.has_permission(project_id, 'managePeople'));
 -- An investor removes another person; a builder may leave a project himself. There is no insert policy: members are made by the
 -- project's creator trigger and by join_project.
 create policy members_delete on public.project_members for delete to authenticated
-  using ((public.role_of(project_id) = 'investor' and user_id <> auth.uid()) or (user_id = auth.uid() and role = 'builder'));
+  using ((public.has_permission(project_id, 'managePeople') and user_id <> auth.uid()) or (user_id = auth.uid() and not public.is_project_owner(project_id)));
 
 -- Only an investor sees, makes and withdraws invitations (a code is a key to the project).
 drop policy if exists invites_all on public.project_invites;
 drop policy if exists invites_select on public.project_invites;
 drop policy if exists invites_insert on public.project_invites;
 drop policy if exists invites_delete on public.project_invites;
-create policy invites_select on public.project_invites for select to authenticated using (public.role_of(project_id) = 'investor');
-create policy invites_insert on public.project_invites for insert to authenticated with check (public.role_of(project_id) = 'investor');
-create policy invites_delete on public.project_invites for delete to authenticated using (public.role_of(project_id) = 'investor');
+create policy invites_select on public.project_invites for select to authenticated using (public.has_permission(project_id, 'managePeople'));
+create policy invites_insert on public.project_invites for insert to authenticated with check (public.has_permission(project_id, 'managePeople'));
+create policy invites_delete on public.project_invites for delete to authenticated using (public.has_permission(project_id, 'managePeople'));
 
 do $$
 declare t text;
@@ -630,7 +721,7 @@ alter table public.push_log enable row level security;
 do $$
 declare t text;
 begin
-  foreach t in array array['projects', 'phases', 'vendors', 'payments', 'attachments', 'payment_plans', 'transfers', 'materials', 'project_files', 'contracts', 'project_members'] loop
+  foreach t in array array['projects', 'phases', 'vendors', 'payments', 'attachments', 'payment_plans', 'transfers', 'materials', 'project_files', 'contracts', 'project_members', 'role_permissions'] loop
     begin
       execute format('alter publication supabase_realtime add table public.%I', t);
     exception when duplicate_object then null;

@@ -130,7 +130,7 @@ export function AddPayment() {
   const { id } = useParams()
   const edit = Boolean(id)
   const [sp] = useSearchParams()
-  const { t, lang, project, settings, phaseName } = useApp()
+  const { t, lang, project, settings, phaseName, can } = useApp()
   const nav = useNavigate()
   const toast = useToast()
   const vendors = useVendors(project?.id)
@@ -139,7 +139,8 @@ export function AddPayment() {
   const contracts = useContracts(project?.id)
   const existing = useLiveQuery(() => (id ? db.payments.get(id) : undefined), [id])
   // An approved entry, or a paid one the investor made himself, is closed to a builder (the server holds the same rule).
-  const locked = Boolean(existing && !canChangePayment(settings.role, existing))
+  const locked = existing ? !canChangePayment(settings.role, existing, can('editPayments')) : !can('addPayments')
+  const approvalRole = can('approvePayments') ? 'investor' : settings.role
   const existingFiles = useAttachments(id)
 
   const [misc, setMisc] = useState(sp.get('misc') === '1')
@@ -310,7 +311,7 @@ export function AddPayment() {
   const preview = useMemo(
     () =>
       contractObj
-        ? previewPayment(contractObj, payments, { id, amount: draftAmount, status, waitsForApproval: needsApproval(settings.role, status) })
+        ? previewPayment(contractObj, payments, { id, amount: draftAmount, status, waitsForApproval: needsApproval(approvalRole, status) })
         : undefined,
     [contractObj, payments, id, draftAmount, status, settings.role],
   )
@@ -318,7 +319,7 @@ export function AddPayment() {
   // What this payment does to the chosen phase's budget: spent so far, and how far it is after saving.
   const phaseObj = phases.find((p) => p.id === phaseId)
   const phaseBudget = useMemo(
-    () => (phaseObj ? previewPhaseBudget(phaseObj, payments, { id, amount: draftAmount, status, waitsForApproval: needsApproval(settings.role, status) }) : undefined),
+    () => (phaseObj ? previewPhaseBudget(phaseObj, payments, { id, amount: draftAmount, status, waitsForApproval: needsApproval(approvalRole, status) }) : undefined),
     [phaseObj, payments, id, draftAmount, status, settings.role],
   )
   // The line under the phase. With an estimate: how far it is, and what this payment does to it (red only for a clear overspend). Without
@@ -475,7 +476,7 @@ export function AddPayment() {
           bankAccount: bankValue(bankAccount, existing?.bankAccount),
           bankRef: bankValue(bankRef, existing?.bankRef),
           addedBy: existing?.addedBy ?? (settings.userName || settings.role),
-          ...approvalFields(settings.role, status, existing),
+          ...approvalFields(approvalRole, status, existing),
         },
         newFiles.map((f) => f.blob),
         removed,
@@ -499,7 +500,7 @@ export function AddPayment() {
   }
 
   const remove = async () => {
-    if (!id || locked) return
+    if (!id || locked || !can('deletePayments')) return
     await binPayment(id)
     toast.show({
       kind: 'info',
@@ -820,7 +821,7 @@ export function AddPayment() {
           )}
         </GroupField>
 
-        {needsApproval(settings.role, status) && (
+        {needsApproval(approvalRole, status) && (
           <p className="flex items-start gap-2 rounded-xl bg-info-soft px-3 py-2 text-sm font-medium text-info">
             <Clock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             {t('pay.approvalHint')}
@@ -867,10 +868,10 @@ export function AddPayment() {
             </p>
             <BankSelect id="bank-name" label={t('pay.bankName')} value={bankName} onChange={setBankName} />
             <Field label={t('pay.bankAccount')} htmlFor="bank-account" hint={t('pay.bankAccountHint')}>
-              <Input value={bankAccount} onChange={(e) => setBankAccount(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+              <Input value={can('viewBankDetails') ? bankAccount : bankAccount ? '••••••••' : ''} disabled={!can('viewBankDetails')} onChange={(e) => setBankAccount(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
             </Field>
             <Field label={t('pay.bankRef')} htmlFor="bank-ref" className="sm:col-span-2">
-              <Input value={bankRef} onChange={(e) => setBankRef(e.target.value)} autoComplete="off" spellCheck={false} />
+              <Input value={can('viewBankDetails') ? bankRef : bankRef ? '••••••••' : ''} disabled={!can('viewBankDetails')} onChange={(e) => setBankRef(e.target.value)} autoComplete="off" spellCheck={false} />
             </Field>
           </div>
         )}

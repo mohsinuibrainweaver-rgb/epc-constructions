@@ -16,7 +16,7 @@ import { money, weekdayName } from '@/lib/format'
 import { weekdayRank } from '@/lib/region'
 
 export function Plans() {
-  const { t, lang, project, phaseName } = useApp()
+  const { t, lang, project, phaseName, can } = useApp()
   const toast = useToast()
   // In the order of the week as chosen in Settings (the first day of the week comes first).
   const plans = [...usePlans(project?.id)].sort((a, b) => weekdayRank(a.weekday) - weekdayRank(b.weekday) || a.purpose.localeCompare(b.purpose))
@@ -34,7 +34,7 @@ export function Plans() {
       <PageHeader
         title={t('plans.title')}
         actions={
-          <Button variant="secondary" onClick={() => setAdding(true)}>
+          <Button variant="secondary" disabled={!can('managePlans')} onClick={() => setAdding(true)}>
             <Plus aria-hidden="true" />
             {t('plans.add')}
           </Button>
@@ -74,7 +74,7 @@ export function Plans() {
                     />
                     {t('plans.active')}
                   </label>
-                  <Button size="sm" variant="outline" onClick={() => setEditing(p)}>
+                  <Button size="sm" variant="outline" disabled={!can('managePlans')} onClick={() => setEditing(p)}>
                     <Pencil aria-hidden="true" />
                     {t('common.edit')}
                   </Button>

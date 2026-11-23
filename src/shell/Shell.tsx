@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { EmptyState } from '@/components/common'
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Banknote, Bell, BellOff, CalendarClock, ChartColumn, Ellipsis, FileSignature, FileText, FolderOpen, GitCompareArrows, House, Layers3, Plus, ReceiptText, RefreshCw, Scale, Search, Settings as SettingsIcon, TriangleAlert, Users, WifiOff } from 'lucide-react'
+import { Banknote, Bell, BellOff, CalendarClock, ChartColumn, Ellipsis, FileSignature, FileText, FolderOpen, GitCompareArrows, House, Layers3, Plus, ReceiptText, RefreshCw, Scale, Search, Settings as SettingsIcon, ShieldCheck, TriangleAlert, Users, WifiOff } from 'lucide-react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { BrandLogo, BrandMark } from '@/components/Brand'
 import { useApp } from '@/app/AppContext'
@@ -38,6 +38,7 @@ const NAV: { to: string; key: Key; icon: typeof House; end?: boolean }[] = [
   { to: '/compare', key: 'nav.compare', icon: GitCompareArrows },
   { to: '/statements', key: 'nav.statements', icon: FileText },
   { to: '/files', key: 'nav.files', icon: FolderOpen },
+  { to: '/roles', key: 'nav.roles', icon: ShieldCheck },
   { to: '/settings', key: 'nav.settings', icon: SettingsIcon },
 ]
 
@@ -130,7 +131,7 @@ function AlertsBell({ conflicts, onReviewConflicts }: { conflicts: number; onRev
 }
 
 export function Shell() {
-  const { t, project, projects, settings } = useApp()
+  const { t, project, projects, settings, isOwner } = useApp()
   const loc = useLocation()
   const navigate = useNavigate()
   const toast = useToast()
@@ -308,7 +309,10 @@ export function Shell() {
           <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full mesh-violet text-xs font-extrabold text-white">
             {initials(who)}
           </span>
-          <span className="hidden truncate font-semibold lg:inline">{who}</span>
+          <span className="hidden min-w-0 lg:grid">
+            <span className="truncate font-semibold">{who}</span>
+            {isOwner() && <span className="text-[0.6875rem] leading-tight text-sidebar-foreground/70">{t('people.owner')}</span>}
+          </span>
           <span className="sr-only lg:hidden">{who}</span>
         </Link>
       </aside>

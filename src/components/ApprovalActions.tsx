@@ -11,12 +11,13 @@ import { formatDate, money } from '@/lib/format'
 
 /** Approve or reject one entry the builder added. Only the investor sees these buttons. */
 export function ApprovalActions({ payment, size = 'sm' }: { payment: Payment; size?: 'sm' | 'default' }) {
-  const { t, settings } = useApp()
+  const { t, settings, can } = useApp()
   const toast = useToast()
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState('')
   const by = settings.userName || settings.role
 
+  if (!can('approvePayments')) return null
   return (
     <>
       <div className="flex flex-wrap gap-2">
@@ -79,7 +80,7 @@ export function ApprovalActions({ payment, size = 'sm' }: { payment: Payment; si
 
 /** What an entry's approval status means, shown at the top of its page. */
 export function ApprovalNotice({ payment }: { payment: Payment }) {
-  const { t, lang, settings } = useApp()
+  const { t, lang, settings, can } = useApp()
   if (!payment.approval) return null
   const investor = settings.role === 'investor'
   const name = payment.addedBy || '—'
@@ -96,7 +97,7 @@ export function ApprovalNotice({ payment }: { payment: Payment }) {
       <p className="font-semibold">{text}</p>
       {payment.approval === 'rejected' && payment.rejectReason && <p>{t('approval.reasonIs', { reason: payment.rejectReason })}</p>}
       {payment.approval === 'approved' && !investor && <p className="text-sm">{t('approval.editAgain')}</p>}
-      {investor && payment.approval !== 'approved' && <ApprovalActions payment={payment} size="default" />}
+      {can('approvePayments') && payment.approval !== 'approved' && <ApprovalActions payment={payment} size="default" />}
     </div>
   )
 }

@@ -44,7 +44,8 @@ export async function createProject(input: ProjectInput, template: PhaseTemplate
   const id = uid()
   const t = now()
   await db.transaction('rw', db.projects, db.phases, db.settings, async () => {
-    await db.projects.add({ ...input, id, currency: 'PKR', type: 'house', createdAt: t, updatedAt: t })
+    const accountId = (await db.settings.get('account.userId'))?.value as string | undefined
+    await db.projects.add({ ...input, ownerId: input.ownerId ?? accountId, id, currency: 'PKR', type: 'house', createdAt: t, updatedAt: t })
     if (template === 'standard') {
       const phases: Phase[] = PHASE_KEYS.map((key, i) => ({
         id: uid(),

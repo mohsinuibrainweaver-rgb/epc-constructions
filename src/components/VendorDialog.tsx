@@ -22,7 +22,7 @@ export function VendorDialog({
   onClose: () => void
   onSaved?: (id: string) => void
 }) {
-  const { t, project } = useApp()
+  const { t, project, can } = useApp()
   const toast = useToast()
   const [name, setName] = useState('')
   const [role, setRole] = useState<VendorRole>('other')
@@ -106,7 +106,7 @@ export function VendorDialog({
         </Field>
         <BankSelect id="vendor-bank-name" label={t('vendors.bankName')} value={bankName} onChange={setBankName} />
         <Field label={t('vendors.account')} hint={t('vendors.accountHint')}>
-          <Input value={bank} onChange={(e) => setBank(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+          <Input value={can('viewBankDetails') ? bank : bank ? '••••••••' : ''} disabled={!can('viewBankDetails')} onChange={(e) => setBank(e.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} />
         </Field>
         <Field label={t('vendors.notes')}>
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />

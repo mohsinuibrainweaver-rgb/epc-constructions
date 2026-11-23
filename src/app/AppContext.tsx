@@ -7,7 +7,7 @@ import type { Lang, Phase, Project, Role, Settings } from '../db/types'
 import { en, type Key } from '../i18n/en'
 import { ur } from '../i18n/ur'
 import { interpolate } from '../lib/format'
-import { can as canDo, type Action } from '../lib/permissions'
+import { can as canDo, type Action, type PermissionMap } from '../lib/permissions'
 import { currencyLabel, regionFrom, setRegion } from '../lib/region'
 
 interface AppCtx {
@@ -17,6 +17,7 @@ interface AppCtx {
   roleFromProject: boolean
   /** Whether the person may do this in the open project. Only an investor may do the things in lib/permissions.ts. */
   can: (action: Action, projectId?: string) => boolean
+  isOwner: (projectId?: string) => boolean
   /** What the person is in the given project (the Projects list shows several). */
   roleOf: (projectId: string) => Role
   lang: Lang
@@ -108,7 +109,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     [rows, deviceSettings.role],
   )
-  const can = useCallback((action: Action, projectId?: string) => canDo(projectId ? roleIn(projectId) : role, action), [role, roleIn])
+  const accountId = rows?.find((r) => r.key === 'account.userId')?.value as string | undefined
+  const ownerOf = useCallback(
+    (id?: string): boolean => Boolean(accountId && list.find((p) => p.id === (id ?? project?.id))?.ownerId === accountId),
+    [accountId, list, project?.id],
+  )
+  const permissionsOf = useCallback(
+    (id: string): PermissionMap | undefined => rows?.find((r) => r.key === `member.permissions.${id}`)?.value as PermissionMap | undefined,
+    [rows],
+  )
+  const can = useCallback((action: Action, projectId?: string) => {
+    const id = projectId ?? project?.id
+    const r = id ? roleIn(id) : role
+    return canDo(r, action, id ? permissionsOf(id) : undefined, ownerOf(id))
+  }, [project?.id, role, roleIn, permissionsOf, ownerOf])
 
   const phaseName = useCallback(
     (p: Phase) => p.name || (p.key ? t(`phase.${p.key}` as Key) : ''),
@@ -116,8 +130,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo<AppCtx>(
-    () => ({ settings, roleFromProject: fromProject, can, roleOf: roleIn, lang, t, project, projects: list, phaseName }),
-    [settings, fromProject, can, roleIn, lang, t, project, list, phaseName],
+    () => ({ settings, roleFromProject: fromProject, can, isOwner: ownerOf, roleOf: roleIn, lang, t, project, projects: list, phaseName }),
+    [settings, fromProject, can, ownerOf, roleIn, lang, t, project, list, phaseName],
   )
 
   // Wait for the first read from the local database so the app never flashes empty.

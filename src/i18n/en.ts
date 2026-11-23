@@ -1065,6 +1065,7 @@ export const en = {
 
   'people.title': 'People on this project',
   'people.you': 'you',
+  'people.owner': 'Project owner',
   'people.pending': 'Invited, not joined yet',
   'people.role': 'Role',
   'people.sent': 'Invite code created. Send it to them.',
@@ -1317,6 +1318,7 @@ export const en = {
     'The server needs the updated supabase/schema.sql for: {what}. Everything else keeps syncing; changes that use it wait until it is run.',
 
   'more.title': 'More',
+  'nav.roles': 'Roles',
   'err.generic': 'Something went wrong. Your entries are kept.',
   'err.notFound': 'That page was not found.',
 } as const

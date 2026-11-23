@@ -14,6 +14,7 @@ import { SettingRow, SettingsSection } from '@/components/settings'
 import { useToast } from '@/components/Toast'
 import { FileDropzone } from '@/components/FileDropzone'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
@@ -137,7 +138,7 @@ export function SettingsSectionPage() {
 /* ---------------------------------------------------------------- Account */
 
 function AccountSection() {
-  const { t, settings, roleFromProject } = useApp()
+  const { t, settings, roleFromProject, isOwner } = useApp()
   const sync = useSync()
   const [pw, setPw] = useState(false)
   const [everywhere, setEverywhere] = useState(false)
@@ -172,7 +173,10 @@ function AccountSection() {
           help={roleFromProject ? t('set.roleFromProject') : t('set.roleHelp')}
           control={(a) =>
             roleFromProject ? (
-              <span className="font-semibold">{t(settings.role === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')}</span>
+              <span className="flex flex-wrap items-center gap-2 font-semibold">
+                {t(settings.role === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')}
+                {isOwner() && <Badge variant="secondary">{t('people.owner')}</Badge>}
+              </span>
             ) : (
             <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={settings.role} onValueChange={(v) => {
                 void setSetting('role', v as Role)

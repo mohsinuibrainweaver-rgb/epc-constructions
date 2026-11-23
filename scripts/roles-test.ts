@@ -172,8 +172,26 @@ assert.equal(await wrote(`update phases set budget = 2100000, updated_at = 40 wh
 // Changing roles: only an investor changes another person's.
 assert.equal(await wrote(`update project_members set role = 'investor' where user_id = '${BLD}'`, 'user_id'), 1, 'the investor can promote the builder')
 await db.exec(`update project_members set role = 'builder' where user_id = '${BLD}'`)
-await assert.rejects(db.exec(`update project_members set role = 'builder' where user_id = '${INV}'`), /only the investor/, 'an investor cannot demote himself')
+await assert.rejects(db.exec(`update project_members set role = 'builder' where user_id = '${INV}'`), /permission/, 'an investor cannot demote himself')
 console.log('investor: ok')
+
+// ---------------------------------------------------------------- project-specific permissions; the creator always bypasses them
+await db.exec(`insert into role_permissions (project_id, role, permission, enabled) values
+  ('${P}','builder','editContracts',true),
+  ('${P}','builder','manageVendors',false),
+  ('${P}','investor','editProject',false)`)
+// Mohsin is both investor and project owner, so the investor restriction does not apply to him.
+assert.equal(await wrote(`update projects set location = 'Lahore', updated_at = 41 where id = '${P}'`), 1, 'owner bypasses role permissions')
+await asBuilder()
+assert.equal(await wrote(`update contracts set amount = 2700000, updated_at = 41 where id = '${contractId}'`), 1, 'owner can grant a builder permission')
+assert.equal(await wrote(`update vendors set name = 'Blocked' where id = '${vendorId}'`), 0, 'owner can remove a builder permission')
+assert.equal(
+  await wrote(`update role_permissions set enabled = true where project_id = '${P}' and role = 'builder' and permission = 'manageVendors'`, 'permission'),
+  0,
+  'a member cannot change role permissions',
+)
+await asInvestor()
+console.log('configurable permissions: ok')
 
 // ---------------------------------------------------------------- email invitations need a confirmed email
 await db.exec(`insert into project_invites (project_id, email, role) values ('${P}','late@x.com','builder')`)

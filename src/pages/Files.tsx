@@ -78,7 +78,7 @@ function ReceiptTile({ attachment, payment, onOpen }: { attachment: Attachment; 
 }
 
 export function Files() {
-  const { t, lang, project, phaseName } = useApp()
+  const { t, lang, project, phaseName, can } = useApp()
   const toast = useToast()
   const files = useFiles(project?.id)
   const payments = usePayments(project?.id)
@@ -129,7 +129,7 @@ export function Files() {
       <PageHeader
         title={t('nav.files')}
         actions={
-          <Button variant="secondary" onClick={() => setAdding(true)}>
+          <Button variant="secondary" disabled={!can('manageFiles')} onClick={() => setAdding(true)}>
             <Plus aria-hidden="true" />
             {t('files.add')}
           </Button>

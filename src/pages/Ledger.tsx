@@ -16,7 +16,7 @@ import { csvEscape, download, formatMonth, money, monthKey } from '@/lib/format'
 import { ledgerTotals, LEDGER_SORTS, sortPayments, type LedgerSort } from '@/lib/ledger'
 
 export function Ledger() {
-  const { t, lang, project, phaseName } = useApp()
+  const { t, lang, project, phaseName, can } = useApp()
   const [sp] = useSearchParams()
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
   const phases = usePhases(project?.id)
@@ -102,9 +102,9 @@ export function Ledger() {
         p.approval ?? '',
         p.amount,
         p.note ?? '',
-        p.mode === 'bank' ? (p.bankName ?? '') : '',
-        p.mode === 'bank' ? (p.bankAccount ?? '') : '',
-        p.mode === 'bank' ? (p.bankRef ?? '') : '',
+        p.mode === 'bank' && can('viewBankDetails') ? (p.bankName ?? '') : '',
+        p.mode === 'bank' && can('viewBankDetails') ? (p.bankAccount ?? '') : '',
+        p.mode === 'bank' && can('viewBankDetails') ? (p.bankRef ?? '') : '',
       ]
         .map(csvEscape)
         .join(','),

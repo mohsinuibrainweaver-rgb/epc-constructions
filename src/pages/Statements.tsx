@@ -31,7 +31,7 @@ function initialScope(sp: URLSearchParams): StatementScope {
 type StmtCol = 'date' | 'purpose' | 'payee' | 'phase' | 'mode' | 'paidBy' | 'status' | 'amount'
 
 export function Statements() {
-  const { t, lang, project, settings, phaseName } = useApp()
+  const { t, lang, project, settings, phaseName, can } = useApp()
   const toast = useToast()
   const [sp] = useSearchParams()
   const payments = usePayments(project?.id)
@@ -122,9 +122,9 @@ export function Statements() {
         p.paidBy,
         isAwaitingApproval(p) ? 'awaiting approval' : p.status,
         p.amount,
-        p.mode === 'bank' ? (p.bankName ?? '') : '',
-        p.mode === 'bank' ? (p.bankAccount ?? '') : '',
-        p.mode === 'bank' ? (p.bankRef ?? '') : '',
+        p.mode === 'bank' && can('viewBankDetails') ? (p.bankName ?? '') : '',
+        p.mode === 'bank' && can('viewBankDetails') ? (p.bankAccount ?? '') : '',
+        p.mode === 'bank' && can('viewBankDetails') ? (p.bankRef ?? '') : '',
       ]
         .map(csvEscape)
         .join(','),

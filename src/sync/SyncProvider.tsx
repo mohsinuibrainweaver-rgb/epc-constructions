@@ -76,6 +76,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!userId || !deviceOk) return
     void (async () => {
+      await db.settings.put({ key: 'account.userId', value: userId })
       const change = profileToApply(readProfile(meta), {
         userName: (await db.settings.get('userName'))?.value as string | undefined,
         role: (await db.settings.get('role'))?.value as Role | undefined,

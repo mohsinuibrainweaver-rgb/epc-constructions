@@ -18,9 +18,9 @@ import { isAwaitingApproval, isRejected, sum } from '@/lib/stats'
  * Shows nothing when there is nothing to act on.
  */
 export function ApprovalsCard({ payments }: { payments: Payment[] }) {
-  const { t, lang, settings } = useApp()
+  const { t, lang, settings, can } = useApp()
   const toast = useToast()
-  const investor = settings.role === 'investor'
+  const investor = can('approvePayments')
   const waiting = payments.filter(isAwaitingApproval).sort((a, b) => a.date.localeCompare(b.date))
   const turnedDown = investor ? [] : payments.filter(isRejected)
   if (waiting.length === 0 && turnedDown.length === 0) return null

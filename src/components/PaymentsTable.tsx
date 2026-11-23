@@ -52,7 +52,7 @@ function PaidBy({ role, label }: { role: Payment['paidBy']; label: React.ReactNo
  * `compact` is for a glance (the Home screen): when narrow, a payment is one short line and the list stops at five.
  */
 export function PaymentsTable({ payments, showPhase = true, compact = false }: { payments: Payment[]; showPhase?: boolean; compact?: boolean }) {
-  const { t, lang, project, phaseName } = useApp()
+  const { t, lang, project, phaseName, can } = useApp()
   const vendors = useVendors(project?.id)
   const phases = usePhases(project?.id)
   const vendorMap = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
@@ -161,7 +161,7 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
                     <ModeIcon mode={p.mode} />
                     {t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')}
                   </span>
-                  {p.mode === 'bank' && bankLine(p) && <div className="ps-6 text-sm text-muted-foreground">{bankLine(p)}</div>}
+                  {p.mode === 'bank' && bankLine(p) && <div className="ps-6 text-sm text-muted-foreground">{can('viewBankDetails') ? bankLine(p) : '••••••••'}</div>}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <PaidBy role={p.paidBy} label={t(`paidBy.${p.paidBy}` as Key)} />

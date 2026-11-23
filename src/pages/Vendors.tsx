@@ -24,7 +24,7 @@ import { isPlanned, isSpent, sum } from '@/lib/stats'
 import { sortVendors, vendorFigures, vendorMatches, VENDOR_SORTS, type VendorSort } from '@/lib/vendors'
 
 export function Vendors() {
-  const { t, lang, project } = useApp()
+  const { t, lang, project, can } = useApp()
   const vendors = useVendors(project?.id)
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
   const contracts = useContracts(project?.id)
@@ -51,7 +51,7 @@ export function Vendors() {
       <PageHeader
         title={t('vendors.title')}
         actions={
-          <Button variant="secondary" onClick={() => setAdding(true)}>
+          <Button variant="secondary" disabled={!can('manageVendors')} onClick={() => setAdding(true)}>
             <Plus aria-hidden="true" />
             {t('vendors.add')}
           </Button>
@@ -148,7 +148,7 @@ export function Vendors() {
 
 export function VendorDetail() {
   const { id } = useParams()
-  const { t, lang, project } = useApp()
+  const { t, lang, project, can } = useApp()
   const toast = useToast()
   const vendor = useVendors(project?.id).find((v) => v.id === id)
   const everyPayment = usePayments(project?.id)
@@ -216,7 +216,7 @@ export function VendorDetail() {
                   </a>
                 </Button>
               )}
-              {vendor.bankAccount && (
+              {vendor.bankAccount && can('viewBankDetails') && (
                 <Button variant="outline" onClick={() => void copyAccount()}>
                   <Copy aria-hidden="true" />
                   {t('vendors.copyAccount')}
@@ -232,7 +232,7 @@ export function VendorDetail() {
                 <Share2 aria-hidden="true" />
                 {t('vendors.statement')}
               </Button>
-              <Button variant="outline" onClick={() => setEditing(true)}>
+              <Button variant="outline" disabled={!can('manageVendors')} onClick={() => setEditing(true)}>
                 <Pencil aria-hidden="true" />
                 {t('common.edit')}
               </Button>
@@ -244,7 +244,7 @@ export function VendorDetail() {
         </Badge>
         {(vendor.bankName || vendor.bankAccount) && (
           <p className="text-sm text-muted-foreground">
-            <bdi>{[vendor.bankName, vendor.bankAccount].filter(Boolean).join(' · ')}</bdi>
+            <bdi>{can('viewBankDetails') ? [vendor.bankName, vendor.bankAccount].filter(Boolean).join(' · ') : '••••••••'}</bdi>
           </p>
         )}
       </div>

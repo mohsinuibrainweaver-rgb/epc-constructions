@@ -121,6 +121,7 @@ export function People() {
         <ul className="divide-y rounded-xl border">
           {members.map((m) => {
             const me = m.user_id === session?.user.id
+            const owner = m.user_id === project?.ownerId
             return (
               <li key={m.user_id} className="flex items-center gap-3 p-3">
                 <span className="min-w-0 flex-1 truncate font-semibold">
@@ -128,14 +129,17 @@ export function People() {
                   {me && <span className="font-normal text-muted-foreground"> ({t('people.you')})</span>}
                 </span>
                 <Badge variant="secondary">{roleLabel(m.role)}</Badge>
-                {manage && !me &&
+                {owner && <Badge variant="neutral">{t('people.owner')}</Badge>}
+                {manage && !me && !owner &&
                   (removing === m.user_id ? (
-                    <Button size="sm" variant="destructive" onClick={() => void removeMember(m)}>
-                      {t('people.removeSure')}
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button size="sm" variant="destructive" onClick={() => void removeMember(m)}>{t('people.removeSure')}</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setRemoving(undefined)}>{t('common.cancel')}</Button>
+                    </div>
                   ) : (
-                    <Button variant="ghost" size="icon" aria-label={`${t('people.removeMember')}: ${m.email ?? ''}`} onClick={() => setRemoving(m.user_id)}>
+                    <Button variant="outline" size="sm" aria-label={`${t('people.removeMember')}: ${m.email ?? ''}`} onClick={() => setRemoving(m.user_id)}>
                       <UserMinus aria-hidden="true" />
+                      {t('people.removeMember')}
                     </Button>
                   ))}
               </li>

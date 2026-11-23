@@ -26,6 +26,7 @@ const Files = lazy(() => import('./pages/Files').then((m) => ({ default: m.Files
 const Contracts = lazy(() => import('./pages/Contracts').then((m) => ({ default: m.Contracts })))
 const ContractDetail = lazy(() => import('./pages/Contracts').then((m) => ({ default: m.ContractDetail })))
 const Statements = lazy(() => import('./pages/Statements').then((m) => ({ default: m.Statements })))
+const Roles = lazy(() => import('./pages/Roles').then((m) => ({ default: m.Roles })))
 const SettingsLayout = lazy(() => import('./pages/settings/SettingsPages').then((m) => ({ default: m.SettingsLayout })))
 const SettingsIndex = lazy(() => import('./pages/settings/SettingsPages').then((m) => ({ default: m.SettingsIndex })))
 const SettingsSectionPage = lazy(() => import('./pages/settings/SettingsPages').then((m) => ({ default: m.SettingsSectionPage })))
@@ -98,6 +99,7 @@ export default function App() {
           <Route path="contracts" element={<Contracts />} />
           <Route path="contracts/:id" element={<ContractDetail />} />
           <Route path="statements" element={<Statements />} />
+          <Route path="roles" element={<Roles />} />
           <Route path="materials" element={<Navigate to="/reports" replace />} />
           <Route path="files" element={<Files />} />
           <Route path="more" element={<More />} />

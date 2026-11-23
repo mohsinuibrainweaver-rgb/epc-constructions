@@ -1067,6 +1067,7 @@ export const ur: Record<Key, string> = {
 
   'people.title': 'اس پراجیکٹ کے افراد',
   'people.you': 'آپ',
+  'people.owner': 'پراجیکٹ مالک',
   'people.pending': 'مدعو کیا، ابھی شامل نہیں ہوا',
   'people.role': 'کردار',
   'people.sent': 'دعوت کا کوڈ بن گیا۔ اسے انہیں بھیجیں۔',
@@ -1319,6 +1320,7 @@ export const ur: Record<Key, string> = {
     'سرور کو {what} کے لیے تازہ supabase/schema.sql چاہیے۔ باقی سب کچھ سنک ہوتا رہتا ہے؛ جو تبدیلیاں اسے استعمال کرتی ہیں وہ اسے چلانے تک انتظار کریں گی۔',
 
   'more.title': 'مزید',
+  'nav.roles': 'کردار',
   'err.generic': 'کچھ غلط ہو گیا۔ آپ کی اندراجات محفوظ ہیں۔',
   'err.notFound': 'یہ صفحہ نہیں ملا۔',
 }
