@@ -42,7 +42,7 @@ function Providers() {
 
 applyTheme()
 
-// A screen file that no longer exists (new version published): reload the current version once.
+// A screen file that no longer exists (new version published): reload the current version 
 window.addEventListener('vite:preloadError', (e) => {
   if (recoverOnce()) e.preventDefault()
 })
