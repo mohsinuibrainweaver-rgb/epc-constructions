@@ -3,7 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Design tokens (shadcn/ui variables). Indigo #4338CA is the single brand colour; status colours
+/* Design tokens (shadcn/ui variables). Indigo #4338CA is the single brand colour; status colour
    follow the usual green / amber / red / blue conventions. Text colours are chosen for 4.5:1 or better. */
 :root {
   --radius: 0.75rem;
