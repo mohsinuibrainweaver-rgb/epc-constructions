@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FileText, FolderOpen, Images, Loader2, Plus, ReceiptText, SearchX } from 'lucide-react'
+import { FileText, FolderOpen, Images, Loader2, Mic, Plus, ReceiptText, SearchX } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { EmptyState, PageHeader } from '@/components/common'
 import { FileDialog } from '@/components/FileDialog'
@@ -16,7 +16,8 @@ import { DOC_TYPES, type Attachment, type DocType, type FileKind, type Payment, 
 import type { Key } from '@/i18n/en'
 import { fileSize, formatDate, money } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
-import { itemPhaseId, photoItems, receiptAsFile } from '@/lib/receipts'
+import { isAudio } from '@/lib/media'
+import { documentItems, documentPhaseId, itemPhaseId, photoItems, receiptAsFile } from '@/lib/receipts'
 import { MediaPreview } from '@/components/FilePreview'
 import { ensureAttachmentBlob } from '@/sync/engine'
 
@@ -95,14 +96,17 @@ export function Files() {
 
   const phaseLabel = useMemo(() => new Map(phases.map((p) => [p.id, phaseName(p)])), [phases, phaseName])
   const items = useMemo(() => photoItems(files, receipts, payments), [files, receipts, payments])
-  const docs = files.filter((f) => f.kind === 'document')
+  // Documents are what was uploaded here plus the documents (PDF, Word, Excel ...) attached to payments.
+  const docs = useMemo(() => documentItems(files, receipts, payments), [files, receipts, payments])
   const photoRows = items.filter((i) => (!source || (source === 'progress') === (i.kind === 'progress')) && (!phase || itemPhaseId(i) === phase))
-  const docRows = docs.filter((f) => (!phase || f.phaseId === phase) && (!docType || f.docType === docType))
+  const docRows = docs.filter((d) => (!phase || documentPhaseId(d) === phase) && (!docType || (d.kind === 'upload' && d.file.docType === docType)))
   const total = kind === 'photo' ? items.length : docs.length
   const shownCount = kind === 'photo' ? photoRows.length : docRows.length
   const photoCount = items.length
   const docCount = docs.length
   const hasBoth = items.some((i) => i.kind === 'receipt') && items.some((i) => i.kind === 'progress')
+  /** The second dropdown (photos from the site or receipts, or the kind of document) only exists sometimes. */
+  const hasSecondFilter = (kind === 'photo' && hasBoth) || kind === 'document'
 
   /** Pictures grouped by the day they were taken (a receipt: the day of its payment), newest day first. */
   const byDay = useMemo(() => {
@@ -132,9 +136,11 @@ export function Files() {
         }
       />
 
-      <Card className="p-4">
-        <div className="grid items-center gap-3 sm:grid-cols-[auto_1fr_1fr]">
+      <div>
+        <div className="grid min-w-0 grid-cols-2 items-center gap-3 max-sm:gap-2.5 sm:grid-cols-[auto_1fr_1fr]">
           <ViewTabs
+            size="default"
+            className="max-sm:col-span-2"
             label={t('files.kind')}
             value={kind}
             onValueChange={(v) => setKind(v as FileKind)}
@@ -143,7 +149,7 @@ export function Files() {
               { value: 'document', label: `${t('files.documents')} (${docCount})` },
             ]}
           />
-          <Dropdown aria-label={t('files.phase')} value={phase} onChange={(e) => setPhase(e.target.value)}>
+          <Dropdown className={hasSecondFilter ? undefined : 'max-sm:col-span-2'} aria-label={t('files.phase')} value={phase} onChange={(e) => setPhase(e.target.value)}>
             <option value="">{t('files.allPhases')}</option>
             {phases.map((p) => (
               <option key={p.id} value={p.id}>
@@ -169,7 +175,7 @@ export function Files() {
             </Dropdown>
           )}
         </div>
-      </Card>
+      </div>
 
       {total === 0 ? (
         <Card>
@@ -221,24 +227,40 @@ export function Files() {
       ) : (
         <Card className="gap-0 overflow-hidden py-0">
           <ul className="divide-y">
-            {docRows.map((f) => (
-              <li key={f.id}>
-                <button
-                  type="button"
-                  onClick={() => setViewing(f)}
-                  className="flex w-full items-center gap-3 p-4 text-start transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
-                >
-                  <FileText aria-hidden="true" className="size-6 shrink-0 text-muted-foreground" />
-                  <span className="grid min-w-0 flex-1 gap-0.5">
-                    <span className="truncate font-semibold">{f.title}</span>
-                    <span className="truncate text-sm text-muted-foreground">
-                      {[f.phaseId && phaseLabel.get(f.phaseId), formatDate(f.date, lang), fileSize(f.size)].filter(Boolean).join(' · ')}
+            {docRows.map((d) => {
+              const phaseId = documentPhaseId(d)
+              // A document attached to a payment is named after its payment and says which file it is; it opens with a link back to the payment.
+              const title = d.kind === 'upload' ? d.file.title : d.payment.purpose
+              const size = d.kind === 'upload' ? d.file.size : d.attachment.blob?.size
+              return (
+                <li key={d.id}>
+                  <button
+                    type="button"
+                    onClick={() => (d.kind === 'upload' ? setViewing(d.file) : setViewingReceipt({ attachment: d.attachment, payment: d.payment }))}
+                    className="flex w-full items-center gap-3 p-4 text-start transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                  >
+                    {d.kind === 'payment' && isAudio(d.attachment) ? (
+                      <Mic aria-hidden="true" className="size-6 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <FileText aria-hidden="true" className="size-6 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="grid min-w-0 flex-1 gap-0.5">
+                      <span className="truncate font-semibold">{title}</span>
+                      <span className="truncate text-sm text-muted-foreground">
+                        {[d.kind === 'payment' && d.attachment.name, phaseId && phaseLabel.get(phaseId), formatDate(d.date, lang), size ? fileSize(size) : ''].filter(Boolean).join(' · ')}
+                      </span>
                     </span>
-                  </span>
-                  {f.docType && <Badge variant="neutral">{t(`ftype.${f.docType}` as Key)}</Badge>}
-                </button>
-              </li>
-            ))}
+                    {d.kind === 'upload' && d.file.docType && <Badge variant="neutral">{t(`ftype.${d.file.docType}` as Key)}</Badge>}
+                    {d.kind === 'payment' && (
+                      <Badge variant="neutral">
+                        <ReceiptText aria-hidden="true" />
+                        {t('files.fromPayment')}
+                      </Badge>
+                    )}
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         </Card>
       )}

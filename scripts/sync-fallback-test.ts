@@ -12,7 +12,7 @@ Object.defineProperty(globalThis, 'navigator', { value: { onLine: true }, config
 let mode: 'old' | 'new' = 'old'
 const store: Record<string, Record<string, any>> = {}
 const NEW_TABLES = ['payment_plans', 'transfers', 'project_files', 'contracts']
-const NEW_COLS: Record<string, string[]> = { projects: ['fee_basis', 'fee_amount', 'fee_percent', 'retainer_amount', 'retainer_start', 'retainer_end'], phases: ['fee_kind', 'fee_value', 'done'], payments: ['plan_id', 'approval', 'approved_by', 'approved_at', 'reject_reason', 'contract_id', 'quantity', 'unit'] }
+const NEW_COLS: Record<string, string[]> = { projects: ['plot_cost', 'fee_basis', 'fee_amount', 'fee_percent', 'retainer_amount', 'retainer_start', 'retainer_end'], phases: ['fee_kind', 'fee_value', 'done'], payments: ['plan_id', 'approval', 'approved_by', 'approved_at', 'reject_reason', 'contract_id', 'quantity', 'unit'] }
 let tick = 0
 const stamp = () => new Date(Date.UTC(2026, 10, 15, 0, 0, 0) + ++tick * 1000).toISOString()
 
@@ -89,13 +89,22 @@ await actions.savePlan({ projectId: pid, purpose: 'Foreman weekly', amount: 9000
 assert.equal(await actions.ensurePlanPayments(pid, '2026-11-15'), 2, 'Thursdays 12 and 19 Nov are created')
 assert.equal(await actions.ensurePlanPayments(pid, '2026-11-15'), 0, 'running it again creates nothing')
 
+// The plot cost is a newer column too: this project has one, a second project never had one.
+await actions.updateProject(pid, { plotCost: 8_000_000 })
+const plainId = await actions.createProject({ name: 'Plain house', location: '' }, 'blank')
+
 startSync('test-user')
 
 // 1. Old server: the old tables sync, the new things wait, and nothing crashes.
 await settle('old server', (d) => d.phases === 1 && d.vendors === 0 && d.plans > 0 && d.transfers > 0 && d.files > 0 && d.contracts > 0)
 const w = getStatus().warning ?? ''
-assert.match(w, /payment_plans/); assert.match(w, /transfers/); assert.match(w, /quantity/); assert.match(w, /project_files/); assert.match(w, /fee_basis/); assert.match(w, /plan_id/); assert.match(w, /retainer_amount/); assert.match(w, /fee_kind/); assert.match(w, /approval/); assert.match(w, /contract/)
+assert.match(w, /plot_cost/); assert.match(w, /payment_plans/); assert.match(w, /transfers/); assert.match(w, /quantity/); assert.match(w, /project_files/); assert.match(w, /fee_basis/); assert.match(w, /plan_id/); assert.match(w, /retainer_amount/); assert.match(w, /fee_kind/); assert.match(w, /approval/); assert.match(w, /contract/)
 assert.equal(Object.keys(store.phases ?? {}).length, 12, 'phases reached the old server')
+assert.ok(store.projects[pid] && !('plot_cost' in store.projects[pid]), 'the project reached the old server without its plot cost')
+assert.ok(store.projects[plainId] && !('plot_cost' in store.projects[plainId]), 'a project that never had a plot cost sends no such column')
+assert.equal((await db.projects.get(plainId))!.dirty, 0, 'and is fully synced, with no waiting')
+assert.equal((await db.projects.get(pid))!.dirty, 1, 'the project with a plot cost keeps waiting for the column')
+assert.equal((await db.projects.get(pid))!.plotCost, 8_000_000, 'and the plot cost is safe on the phone')
 assert.equal(Object.keys(store.vendors ?? {}).length, 1)
 assert.ok(Object.values(store.payments ?? {}).some((p: any) => p.purpose === 'Plain payment'), 'plain payment reached the old server')
 const bricksOld = Object.values(store.payments ?? {}).find((p: any) => p.purpose === 'Bricks') as any
@@ -117,8 +126,10 @@ assert.ok(Object.values(store.payments).some((p: any) => p.contract_id === cid),
 const bricksNew = Object.values(store.payments).find((p: any) => p.purpose === 'Bricks') as any
 assert.equal(bricksNew.quantity, 1000, 'the quantity arrived once the server had the column')
 assert.equal(bricksNew.unit, 'piece')
-assert.equal((Object.values(store.projects)[0] as any).fee_basis, 'percent')
-assert.equal((Object.values(store.projects)[0] as any).retainer_amount, 100000, 'the retainer kept for later arrived')
+assert.equal((store.projects[pid] as any).fee_basis, 'percent')
+assert.equal((store.projects[pid] as any).plot_cost, 8_000_000, 'the plot cost arrived once the server had the column')
+assert.ok(!('plot_cost' in store.projects[plainId]), 'a project without one still sends none')
+assert.equal((store.projects[pid] as any).retainer_amount, 100000, 'the retainer kept for later arrived')
 assert.equal((store.phases[donePhase.id] as any).done, true, 'phase completion arrived')
 assert.ok(Object.values(store.payments).filter((p: any) => p.plan_id).length === 2, 'plan links arrived')
 assert.equal((Object.values(store.payments).find((p: any) => p.purpose === 'Builder entry') as any).approval, 'pending', 'approval state arrived')

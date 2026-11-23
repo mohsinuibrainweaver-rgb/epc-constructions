@@ -1,8 +1,11 @@
-import { FileText, Loader2, Play, X } from 'lucide-react'
+import { FileText, Loader2, Mic, Play, Repeat, X } from 'lucide-react'
+import { useState } from 'react'
 import { useApp } from '@/app/AppContext'
+import { Button } from '@/components/ui/button'
+import { canPlayAudio, isMp3 } from '@/lib/audio'
 import { fileSize } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
-import { isVideoType } from '@/lib/media'
+import { isVideoType, mimeForPath } from '@/lib/media'
 import { cn } from '@/lib/utils'
 
 /**
@@ -61,12 +64,12 @@ export function FileThumb({
 }
 
 /** A line for a file that is not a picture: its name and size, with a button to take it away. */
-export function FileChip({ name, size, removeLabel, onRemove }: { name: string; size: number; removeLabel: string; onRemove: () => void }) {
+export function FileChip({ name, size, removeLabel, onRemove }: { name: string; size?: number; removeLabel: string; onRemove: () => void }) {
   return (
     <li className="flex min-w-0 items-center gap-2 rounded-lg border bg-muted/40 py-1.5 ps-3 pe-1.5 text-sm">
       <FileText aria-hidden="true" className="size-4 shrink-0 text-primary" />
       <span className="min-w-0 flex-1 truncate font-semibold">{name}</span>
-      <span className="tabular shrink-0 text-muted-foreground">{fileSize(size)}</span>
+      {size ? <span className="tabular shrink-0 text-muted-foreground">{fileSize(size)}</span> : null}
       <button
         type="button"
         aria-label={removeLabel}
@@ -75,6 +78,89 @@ export function FileChip({ name, size, removeLabel, onRemove }: { name: string; 
       >
         <X className="size-4" aria-hidden="true" />
       </button>
+    </li>
+  )
+}
+
+/** Stops the other voice notes when one starts, so two never talk over each other. */
+const pauseOthers = (e: React.SyntheticEvent<HTMLAudioElement>) => {
+  document.querySelectorAll('audio').forEach((a) => {
+    if (a !== e.currentTarget) a.pause()
+  })
+}
+
+/**
+ * A voice note: its name and size, a player to listen to it (before it is saved too), and, when it is not an MP3, a button that turns it into one
+ * (an MP3 plays on every phone; WhatsApp's .ogg does not on some). `onRemove` and `onConvert` are left out where the note can only be listened to.
+ */
+export function AudioNote({
+  blob,
+  name,
+  removeLabel,
+  onRemove,
+  onConvert,
+}: {
+  blob?: Blob
+  name: string
+  removeLabel?: string
+  onRemove?: () => void
+  /** Converts the note to MP3 and replaces it. May throw; the caller says what went wrong. */
+  onConvert?: () => Promise<void>
+}) {
+  const { t } = useApp()
+  const url = useObjectUrl(blob)
+  const [converting, setConverting] = useState(false)
+  const mime = blob?.type || mimeForPath(name) || ''
+  const playable = canPlayAudio(mime)
+  return (
+    <li className="grid min-w-0 gap-2 rounded-lg border bg-muted/40 p-2 ps-3 text-sm">
+      <div className="flex min-w-0 items-center gap-2">
+        <Mic aria-hidden="true" className="size-4 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate font-semibold">{name}</span>
+        {blob ? <span className="tabular shrink-0 text-muted-foreground">{fileSize(blob.size)}</span> : null}
+        {onRemove && (
+          <button
+            type="button"
+            aria-label={removeLabel}
+            onClick={onRemove}
+            className="grid size-7 shrink-0 place-items-center rounded-control text-muted-foreground transition-colors outline-none hover:bg-secondary hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        )}
+      </div>
+      {!url ? (
+        <p role="status" className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+          {t('files.loading')}
+        </p>
+      ) : playable ? (
+        <audio controls preload="metadata" src={url} aria-label={name} onPlay={pauseOthers} className="h-10 w-full" />
+      ) : (
+        <p className="text-muted-foreground">{t('audio.cantPlay')}</p>
+      )}
+      {onConvert && blob && !isMp3(name, blob.type) && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={converting}
+            onClick={async () => {
+              setConverting(true)
+              try {
+                await onConvert()
+              } finally {
+                setConverting(false)
+              }
+            }}
+          >
+            {converting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Repeat aria-hidden="true" />}
+            {converting ? t('audio.converting') : t('audio.convert')}
+          </Button>
+          <span className="text-xs text-muted-foreground">{t('audio.convertHint')}</span>
+        </div>
+      )}
     </li>
   )
 }

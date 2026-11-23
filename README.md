@@ -313,8 +313,28 @@ wide layout is unchanged) it is about two screens (1610 px):
 - **Phase progress:** the first four phases; a phase that is on track or finished shows no extra line (its final cost is still there).
   "View all" opens the rest.
 - Order is unchanged: the budget tiles, approvals, what needs attention, then payments due, recent payments and phases.
+- **Smaller text** (phone only): card headings 16 px instead of 18, the four figures 16 px, list lines about 15 px with the small grey lines at 12 px,
+  and the project address under the top bar 14 px. `PageHeader` takes an optional `subtitleClassName` for this; nothing changes on other screens.
+
+## A payment row on a phone: short, with the details one tap away
+
+In the narrow list of payments (Ledger, Home, a vendor or phase page) a row says only how it was paid ("Bank transfer"), not which bank or
+account. Tapping the row opens **Payment details** (`src/components/PaymentDetails.tsx`), a bottom sheet with everything: purpose, amount
+and status, the approval note, date, phase, vendor, category, quantity and rate, cash or bank (with the bank, account number or IBAN and
+reference), who paid, who added it, the contract, the note, and the receipt photos this device has. **Edit** at the bottom goes to the edit
+page, and only appears where this person may change the payment (`canChangePayment`). The wide table is unchanged: its purpose still links
+to the edit page, and it still shows the bank line.
+
+## Reports on a phone: the graph, then one report at a time
+
+Reports used to stack seven cards on a phone (3.6 screens). Now the spending graph always stays on top, and under it a row of tabs
+(the same `ViewTabs` the Compare and Statements screens use) picks one report: **Phase, Vendor, Category, Month, Mode (cash or bank), Materials**, always on one line (`ViewTabs` has a `oneLine` option for this, phone only; on a 320 px phone it slides sideways).
+Only the chosen one shows: the old report fades out, then the new one fades in (no jump in height). Tabs no longer show the focus outline after a tap or click, only when the keyboard moves between them. From a small tablet up there are no tabs and every report is on the page as before.
+On a real project: 2950 px for everything; the graph plus one report is about 800 to 1500 px (the material prices are the longest).
 
 ## The Projects screen (`/projects`)
+
+The open project is marked (a ring and a "Current" tag) only when there is more than one project; with a single project nothing is marked.
 
 One card per project, all the same height with their buttons on one line: the picture (nothing drawn over it), then the marks **Current** and
 your role in that project (Investor or Builder), the name and place, **Spent so far** in large type and, when the project has a budget,
@@ -507,6 +527,101 @@ the form asks for the item (the old "Purpose" box, with the items bought before 
   (its photo is changed on the payment, so there is no edit or delete here). A **Source** menu (All photos / Progress photos / Payment
   receipts) shows when both kinds exist, and the phase filter covers both. Receipts of a removed payment are not listed. Built in
   `src/lib/receipts.ts`; check: `npx vite-node scripts/receipts-test.ts`.
+- The tabs and the drop-downs (phase, and photo source or document type) sit straight on the page without an outer box, on every screen size. The tabs use the roomy size (the same height as the drop-downs).
+  On a phone the two drop-downs sit side by side on one line (a lone phase drop-down takes the full width).
+
+## Documents on a payment (PDF, Word, Excel ...)
+
+Add payment used to take photos and videos only. Now **Receipts and proof** also takes documents: **PDF, Word (doc, docx), Excel (xls, xlsx), PowerPoint
+(ppt, pptx), OpenDocument (odt, ods), RTF, text, CSV and ZIP**, up to 40 MB each, together with photos and videos in the same payment. All three ways in work
+for every type, through the same checks (`FileDropzone`, `PAYMENT_ACCEPT` in `src/lib/media.ts`):
+
+- **Browse:** the "Add photo, video or file" button.
+- **Drag and drop** onto the box. A file that arrives with no type (some programs do that) is told apart by its extension.
+- **Paste** (Ctrl+V or ⌘V): copy a file in a folder or a screenshot and paste anywhere on the page; several at once work.
+
+A document is kept exactly as it is, with its own name ("Invoice 114.pdf", cleaned of characters a system refuses) and type; photos are still shrunk. Anything
+that could run (an app, a script, a web page) is turned away, saying which file and why. In the form, photos and videos show as
+small pictures and documents as a line each (name and size) with a remove button.
+
+Where a document shows: **Payment details** (a line that opens a PDF in a new tab and saves the others), the edit screen, and **Files > Documents** (tagged "Payment",
+named after its payment, opens with a link back to it). Photos in Files show only pictures and videos. Documents sync like photos (the same private storage,
+stored as `<project>/<id>.<extension>`), so no database change is needed. The older receipt photos are not affected. Check: `npx vite-node scripts/payment-files-test.ts`.
+
+## Add payment on a phone: tighter, and no empty space under Save
+
+Phone only (the wide layout is unchanged). The form is about 14% shorter (2316 px to 1993 px on a real project): closer sections and fields, smaller headings, the small
+text (labels, hints, notes) 13 px, the amount box 48 px high, and a slimmer Save bar. The add and edit screens hide the bottom bar, but the page still kept about 6 rem for it,
+which showed as an empty strip under the Save button; that room is now only kept on the screens that do show the bottom bar (`src/shell/Shell.tsx`).
+
+## Plot cost, and importing phases from another project
+
+- **Plot cost** (new project and edit project, optional): what the land cost, kept apart from the **construction budget** (that field is now named so, and says the plot is not
+  in it). When both are filled the form shows "Plot and construction budget together". Home then shows a small card with **Plot cost, Construction paid, Total so far**
+  (plot plus the construction payments that count as spent) and **Planned total** (plot plus the construction budget). Without a plot cost nothing changes anywhere. Compare
+  projects lists the plot cost too when either project has one. All the budget bars and percentages still measure the construction only. Pure sums in `src/lib/cost.ts`.
+- **Needs one database step:** run `supabase/schema.sql` once more (it adds `projects.plot_cost`). Until then the plot cost is kept on the phone and the sync tells the server
+  nothing about it (the same way the fee columns were added), and the rest of the project syncs as usual. Clearing the cost is sent as empty so the other phone hears it too.
+- **Import from project** (new project only, shown when you already have a project): next to "Standard house build" and "Blank list". Choose which project; its phases are
+  listed as a preview, and the new project gets the same phase names in the same order. Budgets, fees, finished marks and payments are not imported; the other project is not
+  touched. A standard phase keeps following the app language; a renamed or custom one keeps its name. Check: `npx vite-node scripts/plot-phases-test.ts`.
+
+## New project form on a phone
+
+Phone only: smaller cards, paddings, gaps and text (the thumbnail box is shorter with a 64 px picture; the three phase choices are 40 px high). The **Plot, budget and dates** part is now
+optional on a new project: a switch ("Add plot cost, budget and dates", off at first) opens the plot cost, construction budget and the two dates; with it off the project is created without
+any of them (even something typed before switching it off is not saved) and they can be added later by editing the project. When editing, the part is always shown.
+
+Also on a phone: the cards keep 14 px from the screen edges, the heading and its line are smaller, the thumbnail box is smaller, and Cancel / Create project are a flat bar on the bottom edge (like Add payment) instead of a floating card.
+
+**Focus ring on fields (every screen size):** a text field, text area, date field and drop-down used to get a 3 px outline with a gap around the whole box. Now the border turns to the ring colour and a 1 px line of the same colour sits inside it, so the ring is only 1 px thick. Buttons, links and tabs keep their usual outline for the keyboard. It lives in `src/index.css` next to the general focus rule.
+
+## Smaller buttons on a phone
+
+Phone only (the wide layout keeps its sizes): every button is a little lower and lighter. A normal button is 40 px high (was 44), with less side padding and 13 px text;
+the small one is 40 px (was 44), icon buttons 40 px, the large one 44 px. The choice buttons (Standard / Blank list, Cash / Bank transfer ...) are 40 px high too.
+The change is in `src/components/ui/button.tsx` and `src/components/ui/pill-radio.tsx`, so it reaches every screen at once. The Ledger Filters button stays 44 px so it lines
+up with the search box beside it.
+
+**Equal buttons at the bottom (phone):** where two buttons share a bottom bar (Cancel and Save in every dialog and sheet, the Cancel / Confirm box, the Add payment and New project bars) each is exactly half the width (a filled button has no border and an outlined one has, so a plain "grow" left them 2 px apart; the width is now set from the half). A dialog with one button keeps its size; with three, two share the first line and the third fills the next. Wide screens are unchanged.
+
+## Voice notes on a payment (WhatsApp .ogg, MP3 ...)
+
+Add payment also takes **voice notes**: WhatsApp's `.ogg` and `.opus`, and `mp3, m4a, aac, wav, amr` and webm audio. Browse, drag and drop and paste all work (copy the file out of
+WhatsApp Web or a folder and paste). A voice note is kept exactly as it is, with its own name ("PTT-20261123-WA0001.opus"), like a document, and counts toward the same 40 MB limit.
+
+- **Listen before saving:** each voice note shows in the form with a player (play, seek, volume), its name and size. Playing one stops the others. In the edit screen the notes already saved
+  have the same player.
+- **Listen later:** the player is in **Payment details** (phone) and in **Files > Documents** (a microphone icon, tagged "Payment", with a link back to the payment).
+- **Convert to MP3** (a button under a voice note that is not an MP3): WhatsApp voice notes are Opus in an .ogg. Chrome, Edge, Firefox and Android play that; some phones (older iPhones)
+  do not, and an MP3 plays everywhere. The button decodes the note in the browser and encodes it as a mono 64 kbps MP3 (about 0.5 MB a minute; the 2 s test note went from 39 KB to 20 KB),
+  then replaces it in the form with the same name ending in .mp3. It runs on the device itself, no upload. Because the browser has to decode the note first, it works on a device that can
+  play the note; on one that cannot, a line says so and the original is kept. Nothing converts by itself: the original is kept unless you press the button.
+- The MP3 encoder (`@breezystack/lamejs`, a new dependency, LGPL-3.0) is loaded only when a note is converted, as its own file, so it costs nothing at start. No database change.
+  Check: `npx vite-node scripts/audio-test.ts` (accepted types, names, Files lists, and the encoder makes a real MP3 of the right size).
+
+## Phases on a phone: the not started ones are folded away
+
+Phone only (the wide layout shows every phase). A phase nothing has happened in (no payment paid or planned, no estimate, not finished) that sits together with the others at the **end** of the
+list is hidden, and a button under the list says "Show 9 not started" (and "Hide the not started" once open). A not started phase in the middle of the list stays, and when every phase is
+not started (a new project) nothing is folded. Adding a phase opens the folded ones, so the new phase is not hidden at once. The order is not touched: the rows are only hidden, so dragging
+a phase (it can be dropped anywhere among the ones shown, never past the hidden ones until they are shown) and the arrow keys work as before.
+
+## A phase page on a phone: one menu instead of five buttons
+
+Phone only (from a small tablet up every button stays on the page). The top of a phase page showed Add payment, Mark complete or Reopen, Statement, Edit and Delete as five
+buttons. On a phone only **Add payment** stays; the rest are in a three-dot menu next to it: Mark complete (or Reopen), Statement, Edit and Delete (red). Edit and Delete show only
+to people who may change phases. A box opened from the menu gives the focus back to the three-dot button when it closes, like the menu on a phase row.
+
+The heading (18 px) and the buttons share one line: Add payment is a plus button (its words stay for screen readers) beside the three dots, so the standard phase names
+all fit on one line at 375 px. On a screen narrower than 360 px the buttons go back under the heading. `PageHeader` takes two optional settings for this (`actionsBeside`, `titleClassName`);
+nothing changes on other screens.
+On a phone the parts of a phase page (heading, status, the cards) are 10 px apart instead of 16; from a small tablet up the page keeps its usual gap.
+
+## Budget outlook on a phone: no outer box
+
+On the Phases screen the Budget outlook card has no border, background or padding around it on a phone: the heading, the figures table and the tip sit straight on the page, like
+Ledger and Files. Wide screens keep the card.
 
 ## Corner radius
 
@@ -670,6 +785,9 @@ style questions) and a script that applies their corrections safely. See `docs/u
   draws the text. Vendor and contract statements end with signature lines (received by, signature, date).
 - Also **Export CSV** and **Share** (a plain text summary). Open it from a vendor, a phase or a contract ("Statement").
 - No database change needed. Check: `npx vite-node scripts/statements-test.ts`.
+- On a phone the choices (whole project, vendor, phase, contract tabs on one line, dates, the two checkboxes) sit straight on the page without an
+  outer box, and the "choose Print, then Save as PDF" line is hidden (it stays on wide screens).
+  The text is a little smaller there too (title, list, totals, splits); the date fields keep 16 px so a phone does not zoom in when you tap them.
 
 ## Contracts (`/contracts`)
 

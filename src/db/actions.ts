@@ -1,6 +1,6 @@
 import { db, now, uid } from './db'
 import type { Attachment, Category, Contract, ContractVariation, FeeBasis, PhaseFeeKind, PayMode, Payment, ProjectFile, PaymentPlan, Phase, Project, Role, Settings, Transfer, Vendor } from './types'
-import { extForMime, isVideoType } from '../lib/media'
+import { cleanFileName, extForMime, isAudioName, isDocumentName, isVideoType } from '../lib/media'
 import { addDays, todayISO } from '../lib/format'
 import { approvalFields } from '../lib/approval'
 import { foldMaterials } from '../lib/materials'
@@ -37,7 +37,10 @@ export async function setSetting(key: keyof Settings, value: unknown): Promise<v
 
 export type ProjectInput = Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'currency' | 'type'>
 
-export async function createProject(input: ProjectInput, template: 'standard' | 'blank'): Promise<string> {
+/** The phases a new project starts with: the standard twelve, none, or a copy of another project's phase names and order (not its budgets, fees or progress). */
+export type PhaseTemplate = 'standard' | 'blank' | { copyFrom: string }
+
+export async function createProject(input: ProjectInput, template: PhaseTemplate): Promise<string> {
   const id = uid()
   const t = now()
   await db.transaction('rw', db.projects, db.phases, db.settings, async () => {
@@ -52,6 +55,19 @@ export async function createProject(input: ProjectInput, template: 'standard' | 
         updatedAt: t,
       }))
       await db.phases.bulkAdd(phases)
+    } else if (typeof template === 'object') {
+      // The same names (a standard phase keeps following the app language) in the same order; every phase starts fresh.
+      const source = (await db.phases.where('projectId').equals(template.copyFrom).toArray()).filter((p) => !p.deletedAt).sort((a, b) => a.order - b.order)
+      const phases: Phase[] = source.map((p, i) => ({
+        id: uid(),
+        projectId: id,
+        ...(p.key ? { key: p.key } : {}),
+        ...(p.name ? { name: p.name } : {}),
+        order: i,
+        createdAt: t,
+        updatedAt: t,
+      }))
+      if (phases.length) await db.phases.bulkAdd(phases)
     }
     await db.settings.put({ key: 'currentProjectId', value: id })
   })
@@ -136,6 +152,12 @@ export async function saveVendor(v: Partial<Vendor> & Pick<Vendor, 'name' | 'rol
 
 export type PaymentInput = Omit<Payment, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'> & { id?: string }
 
+/** The name a document or voice note was chosen with, cleaned; undefined for a photo or video (a File with a known document or sound extension). */
+function documentName(blob: Blob): string | undefined {
+  const name = blob instanceof File ? blob.name : ''
+  return name && (isDocumentName(name) || isAudioName(name)) ? cleanFileName(name) : undefined
+}
+
 export async function savePayment(
   input: PaymentInput,
   newFiles: Blob[],
@@ -158,7 +180,8 @@ export async function savePayment(
         paymentId: id,
         projectId: input.projectId,
         blob,
-        name: `${isVideoType(blob.type) ? 'video' : 'receipt'}-${t}-${i + 1}.${extForMime(blob.type)}`,
+        // A document keeps the name it came with ("Invoice 114.pdf"); a photo or video gets a plain generated one.
+        name: documentName(blob) ?? `${isVideoType(blob.type) ? 'video' : 'receipt'}-${t}-${i + 1}.${extForMime(blob.type)}`,
         createdAt: t,
         updatedAt: t,
       }))

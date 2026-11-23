@@ -357,7 +357,7 @@ export function Shell() {
           ref={mainRef}
           id="main"
           tabIndex={-1}
-          className={cn('container-page grid flex-1 content-start gap-4 py-4 outline-none sm:gap-6 sm:py-5 sm:pb-8', 'pb-[calc(5.75rem+env(safe-area-inset-bottom))]')}
+          className={cn('container-page grid flex-1 content-start gap-4 py-4 outline-none sm:gap-6 sm:py-5 sm:pb-8', fullscreen ? 'max-sm:pt-3 max-sm:pb-0' : 'pb-[calc(5.75rem+env(safe-area-inset-bottom))]')}
         >
           {needRefresh && (
             <div role="status" className="flex items-start gap-3 rounded-xl bg-info-soft p-4 text-sm font-semibold text-info">

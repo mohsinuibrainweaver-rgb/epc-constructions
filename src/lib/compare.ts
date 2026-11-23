@@ -5,7 +5,7 @@ import { isSpent } from './stats'
 
 /** One project as the comparison sees it. */
 export interface Side {
-  project: Pick<Project, 'id' | 'name' | 'startDate' | 'coveredArea' | 'budget'>
+  project: Pick<Project, 'id' | 'name' | 'startDate' | 'coveredArea' | 'budget' | 'plotCost'>
   payments: Payment[]
   phases: Phase[]
 }
@@ -97,6 +97,8 @@ export interface SideSummary {
   /** Spent divided by the covered area, or undefined when the area is not known. */
   perArea: number | undefined
   budget: number | undefined
+  /** What the plot cost, or undefined when none was entered. */
+  plotCost: number | undefined
   area: number | undefined
   /** The project's start date, or the day of its first paid payment when it has none. */
   start: string | undefined
@@ -112,6 +114,7 @@ export function summarizeSide(s: Side): SideSummary {
     spent: total,
     perArea: area ? total / area : undefined,
     budget: s.project.budget && s.project.budget > 0 ? s.project.budget : undefined,
+    plotCost: s.project.plotCost && s.project.plotCost > 0 ? s.project.plotCost : undefined,
     area,
     start: s.project.startDate || dates[0],
     lastPaid: dates[dates.length - 1],

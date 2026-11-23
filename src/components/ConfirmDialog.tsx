@@ -47,7 +47,7 @@ export function ConfirmDialog({
             <AlertDialog.Title className="text-lg font-semibold">{title}</AlertDialog.Title>
             <AlertDialog.Description className="text-muted-foreground">{description}</AlertDialog.Description>
           </div>
-          <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2 max-sm:[&>*]:grow max-sm:[&>*]:basis-[calc(50%-0.25rem)]">
             <AlertDialog.Cancel asChild>
               <Button type="button" variant="outline">
                 {t('common.cancel')}

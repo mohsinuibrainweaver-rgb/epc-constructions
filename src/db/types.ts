@@ -95,7 +95,10 @@ export interface Project extends Stamped {
   floors?: number
   startDate?: string
   targetFinish?: string
+  /** The construction budget: what is planned for building. The plot is not in it (see plotCost). */
   budget?: number
+  /** What the plot cost, kept apart from the construction budget. null clears a cost that was synced before. */
+  plotCost?: number | null
   currency: 'PKR'
   type: 'house' | 'benchmark'
 }

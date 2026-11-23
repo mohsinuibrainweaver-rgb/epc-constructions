@@ -24,7 +24,7 @@ export function AttentionCard({ items }: { items: AttentionItem[] }) {
   const hidden = items.length - VISIBLE
   return (
     <Card className="gap-0 overflow-hidden py-0" aria-labelledby="attn-title">
-      <CardHeading icon={TriangleAlert} id="attn-title" className="p-4">
+      <CardHeading icon={TriangleAlert} id="attn-title" className="p-4 max-sm:text-base">
         {t('attn.title')} ({items.length})
       </CardHeading>
       <ul id="attn-list" className="divide-y border-t">
@@ -35,7 +35,7 @@ export function AttentionCard({ items }: { items: AttentionItem[] }) {
               <Badge variant={a.tone === 'info' ? 'neutral' : a.tone} className="size-7 justify-center rounded-full p-0 [&>svg]:size-3.5">
                 {a.tone === 'info' ? <Info aria-hidden="true" /> : <TriangleAlert aria-hidden="true" />}
               </Badge>
-              <span className="min-w-0 flex-1 text-sm font-medium">{t(a.key, a.vars)}</span>
+              <span className="min-w-0 flex-1 text-sm font-medium max-sm:text-[0.8125rem]">{t(a.key, a.vars)}</span>
               <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground rtl:-scale-x-100" />
             </Link>
           </li>
@@ -47,7 +47,7 @@ export function AttentionCard({ items }: { items: AttentionItem[] }) {
           aria-expanded={open}
           aria-controls="attn-list"
           onClick={() => setOpen((o) => !o)}
-          className="min-h-11 w-full border-t px-4 py-3 text-start text-sm font-semibold text-primary transition-colors hover:bg-accent"
+          className="min-h-11 w-full border-t px-4 py-3 text-start text-sm font-semibold text-primary transition-colors hover:bg-accent max-sm:text-[0.8125rem]"
         >
           {open ? t('attn.less') : t('attn.more', { count: hidden })}
         </button>

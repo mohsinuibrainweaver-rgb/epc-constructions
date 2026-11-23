@@ -114,6 +114,16 @@ export function Ledger() {
 
   const all = t('common.all')
 
+  const sortDropdown = (className: string) => (
+    <Dropdown aria-label={t('ledger.sort')} value={sort} onChange={(e) => setSort(e.target.value as LedgerSort)} className={className}>
+      {LEDGER_SORTS.map((s) => (
+        <option key={s} value={s}>
+          {t(`ledger.sort.${s}` as Key)}
+        </option>
+      ))}
+    </Dropdown>
+  )
+
   const filterFields = (
     <>
           <Dropdown aria-label={t('ledger.phase')} value={phase} onChange={(e) => setPhase(e.target.value)}>
@@ -193,7 +203,7 @@ export function Ledger() {
   ].filter(Boolean) as { key: string; label: string; clear: () => void }[]
 
   return (
-    <>
+    <div className="grid gap-6 max-sm:gap-2.5">
       <PageHeader
         title={t('ledger.title')}
         actions={
@@ -204,7 +214,7 @@ export function Ledger() {
         }
       />
 
-      <Card className="p-4">
+      <Card className="p-4 max-sm:border-0 max-sm:bg-transparent max-sm:bg-none max-sm:p-0 max-sm:shadow-none">
         <div role="search" aria-label={t('ledger.filtersLabel')} className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="col-span-full flex gap-2">
             <div className="relative min-w-0 flex-1">
@@ -218,7 +228,7 @@ export function Ledger() {
             <Button
               type="button"
               variant="outline"
-              className="shrink-0 px-3 sm:hidden"
+              className="shrink-0 px-3 max-sm:h-11 sm:hidden"
               aria-haspopup="dialog"
               aria-label={activeFilters > 0 ? `${t('ledger.filters')}: ${t('ledger.filtersOn', { count: activeFilters })}` : t('ledger.filters')}
               onClick={() => setSheet(true)}
@@ -233,7 +243,7 @@ export function Ledger() {
             </Button>
           </div>
           {chips.length > 0 && (
-            <ul aria-label={t('ledger.filters')} className="col-span-full -mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:hidden">
+            <ul aria-label={t('ledger.filters')} className="col-span-full flex gap-2 overflow-x-auto pb-0.5 sm:hidden">
               {chips.map((c) => (
                 <li key={c.key} className="shrink-0">
                   <button
@@ -257,7 +267,7 @@ export function Ledger() {
 
       <Dialog
         open={sheet}
-        title={t('ledger.filters')}
+        title={t('ledger.filtersAndSort')}
         onClose={() => setSheet(false)}
         footer={
           <>
@@ -272,22 +282,23 @@ export function Ledger() {
           </>
         }
       >
-        <div className="grid gap-3">{filterFields}</div>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <span className="text-sm font-semibold">{t('ledger.sort')}</span>
+            {sortDropdown('w-full')}
+          </div>
+          {filterFields}
+        </div>
       </Dialog>
 
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-muted-foreground" role="status" aria-live="polite">
+        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-muted-foreground max-sm:text-sm" role="status" aria-live="polite">
           <span>{t(totals.count === 1 ? 'ledger.shownOne' : 'ledger.shown', { count: totals.count, total: money(totals.paid) })}</span>
           {totals.planned > 0 && <span>{t('ledger.plannedSum', { total: money(totals.planned) })}</span>}
           {totals.awaiting > 0 && <span>{t('ledger.awaitingSum', { total: money(totals.awaiting) })}</span>}
+          {sort !== 'newest' && <span className="sm:hidden">{t(`ledger.sort.${sort}` as Key)}</span>}
         </p>
-        <Dropdown aria-label={t('ledger.sort')} value={sort} onChange={(e) => setSort(e.target.value as LedgerSort)} className="w-auto min-w-36 sm:min-w-44">
-          {LEDGER_SORTS.map((s) => (
-            <option key={s} value={s}>
-              {t(`ledger.sort.${s}` as Key)}
-            </option>
-          ))}
-        </Dropdown>
+        <div className="max-sm:hidden">{sortDropdown('w-auto min-w-44')}</div>
       </div>
 
       <Card className="gap-0 overflow-hidden py-0">
@@ -310,6 +321,6 @@ export function Ledger() {
           <PaymentsTable payments={rows} />
         )}
       </Card>
-    </>
+    </div>
   )
 }

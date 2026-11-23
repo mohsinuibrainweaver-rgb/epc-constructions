@@ -186,7 +186,7 @@ export function Dialog({
           </Button>
         </DialogHeader>
         <div className="grid max-h-[65dvh] gap-4 overflow-y-auto p-4">{children}</div>
-        {footer && <DialogFooter className="flex-row flex-wrap justify-end gap-2 border-t p-4">{footer}</DialogFooter>}
+        {footer && <DialogFooter className="flex-row flex-wrap justify-end gap-2 border-t p-4 max-sm:[&>*:not(:only-child)]:grow max-sm:[&>*:not(:only-child)]:basis-[calc(50%-0.25rem)]">{footer}</DialogFooter>}
       </DialogContent>
     </DialogRoot>
   )
@@ -267,14 +267,14 @@ export function BackLink({ to, label }: { to: string; label: string }) {
   )
 }
 
-export function PageHeader({ title, subtitle, actions, phoneTitleHidden }: { title: string; subtitle?: string; actions?: ReactNode; /** On a phone the app bar already shows this name, so the big heading is kept for screen readers only. */ phoneTitleHidden?: boolean }) {
+export function PageHeader({ title, subtitle, actions, phoneTitleHidden, subtitleClassName, titleClassName, actionsBeside }: { title: string; subtitle?: string; actions?: ReactNode; /** On a phone the app bar already shows this name, so the big heading is kept for screen readers only. */ phoneTitleHidden?: boolean; subtitleClassName?: string; titleClassName?: string; /** On a phone (360 px and wider) keep the buttons on the heading's line (at its end) instead of wrapping under it; a long heading then takes two lines. */ actionsBeside?: boolean }) {
   return (
-    <div className={cn('flex flex-wrap items-center justify-between gap-3', phoneTitleHidden && !subtitle && !actions && 'max-sm:contents')}>
-      <div className="min-w-0">
-        <h1 className={cn('text-2xl font-semibold tracking-tight text-balance sm:text-3xl', phoneTitleHidden && 'max-sm:sr-only')}>{title}</h1>
-        {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+    <div className={cn('flex flex-wrap items-center justify-between gap-3', actionsBeside && 'max-sm:min-[360px]:flex-nowrap', phoneTitleHidden && !subtitle && !actions && 'max-sm:contents')}>
+      <div className={cn('min-w-0', actionsBeside && 'max-sm:min-[360px]:flex-1')}>
+        <h1 className={cn('text-2xl font-semibold tracking-tight text-balance sm:text-3xl', phoneTitleHidden && 'max-sm:sr-only', titleClassName)}>{title}</h1>
+        {subtitle && <p className={cn('text-muted-foreground', subtitleClassName)}>{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className={cn('flex flex-wrap items-center gap-2', actionsBeside && 'max-sm:min-[360px]:shrink-0 max-sm:min-[360px]:flex-nowrap')}>{actions}</div>}
     </div>
   )
 }

@@ -32,7 +32,7 @@ console.log('schema run 2 ok (idempotent)')
 // An older project: the money tables and columns do not exist yet. The updated file must upgrade it in place.
 await db.exec(`
   drop table public.payment_plans, public.transfers, public.materials, public.project_files, public.push_subscriptions, public.push_log, public.contracts;
-  alter table public.projects drop column fee_basis, drop column fee_amount, drop column fee_percent, drop column retainer_amount, drop column retainer_start, drop column retainer_end;
+  alter table public.projects drop column plot_cost, drop column fee_basis, drop column fee_amount, drop column fee_percent, drop column retainer_amount, drop column retainer_start, drop column retainer_end;
   alter table public.phases drop column fee_kind, drop column fee_value, drop column done;
   alter table public.payments drop column plan_id, drop column approval, drop column approved_by, drop column approved_at, drop column reject_reason, drop column contract_id, drop column bank_name, drop column bank_account, drop column bank_ref, drop column quantity, drop column unit;
   alter table public.vendors drop column bank_name;
@@ -98,6 +98,14 @@ await assert.rejects(db.exec(`update phases set fee_kind = 'weekly' where id = '
 assert.equal((await db.query<{ done: boolean }>(`select done from phases where id = '12121212-1212-1212-1212-121212121212'`)).rows[0].done, true)
 assert.equal((await db.query<{ done: boolean }>(`select done from phases where fee_kind is null limit 1`)).rows.length, 0, 'only the phase we gave a fee has one')
 await db.exec(`update projects set fee_basis = 'retainer', retainer_amount = 100000, retainer_start = '2026-11-01' where id = '${P}'`)
+// The plot cost: a project that never had one stays empty (null); one that has it keeps the exact figure, next to the construction budget.
+assert.equal((await db.query<{ plot_cost: string | null }>(`select plot_cost from projects where id = '${P}'`)).rows[0].plot_cost, null, 'no plot cost by default')
+await db.exec(`update projects set budget = 15000000, plot_cost = 8000000 where id = '${P}'`)
+const money = (await db.query<{ budget: string; plot_cost: string }>(`select budget, plot_cost from projects where id = '${P}'`)).rows[0]
+assert.equal(Number(money.plot_cost), 8000000); assert.equal(Number(money.budget), 15000000, 'the construction budget is its own column')
+await db.exec(`update projects set plot_cost = null where id = '${P}'`)
+assert.equal((await db.query<{ plot_cost: string | null }>(`select plot_cost from projects where id = '${P}'`)).rows[0].plot_cost, null, 'clearing it sets it empty')
+console.log('plot cost column: ok')
 await db.exec(`insert into project_invites (project_id, role) values ('${P}','builder')`)
 const inviteCode = (await db.query<{ code: string }>('select code from project_invites')).rows[0].code
 

@@ -132,6 +132,9 @@ alter table public.payments add column if not exists approved_by text;
 alter table public.payments add column if not exists approved_at bigint;
 alter table public.payments add column if not exists reject_reason text;
 
+-- What the plot cost, kept apart from the construction budget (added after the first release).
+alter table public.projects add column if not exists plot_cost bigint;
+
 -- Fee per phase and monthly retainer (added after the first release).
 alter table public.projects add column if not exists retainer_amount bigint;
 alter table public.projects add column if not exists retainer_start date;

@@ -19,9 +19,9 @@ import { computeSettlement } from '@/lib/settlement'
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2">
+    <div className="flex items-baseline justify-between gap-4 py-2 max-sm:py-1.5 max-sm:text-[0.9375rem]">
       <dt className={strong ? 'font-bold' : 'text-muted-foreground'}>{label}</dt>
-      <dd className={`tabular whitespace-nowrap ${strong ? 'text-lg font-extrabold' : 'font-semibold'}`}>{value}</dd>
+      <dd className={`tabular whitespace-nowrap ${strong ? 'text-lg font-extrabold max-sm:text-base' : 'font-semibold'}`}>{value}</dd>
     </div>
   )
 }
@@ -62,7 +62,7 @@ export function Settlement() {
   const phaseLabel = new Map(phases.map((p) => [p.id, phaseName(p)]))
 
   return (
-    <>
+    <div className="grid gap-6 max-sm:gap-3">
       <PageHeader
         title={t('stl.title')}
         actions={
@@ -85,12 +85,12 @@ export function Settlement() {
         {project.name} · {t('stl.statement')} · {t('stl.preparedOn', { date: formatDate(todayISO(), lang) })}
       </p>
 
-      <div className="grid items-start gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2.5 text-lg"><IconTile icon={Scale} />{t('stl.balance')}</CardTitle>
+      <div className="grid items-start gap-6 max-sm:gap-3 md:grid-cols-2">
+        <Card className="max-sm:gap-3 max-sm:py-4">
+          <CardHeader className="max-sm:px-4">
+            <CardTitle className="flex min-w-0 items-center gap-2.5 text-lg max-sm:text-base"><IconTile icon={Scale} />{t('stl.balance')}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-sm:px-4">
             <dl className="divide-y">
               <Row label={t('stl.cost')} value={money(s.constructionCost)} />
               <Row label={t('stl.paidByInvestor')} value={money(s.paidByInvestor)} />
@@ -99,27 +99,27 @@ export function Settlement() {
               <Row label={t('stl.reimbursed')} value={money(s.reimbursed)} />
               <Row label={t('stl.returned')} value={money(s.returned)} />
             </dl>
-            <p role="status" className="mt-3 rounded-xl bg-secondary p-3 font-semibold text-secondary-foreground">
+            <p role="status" className="mt-3 rounded-xl bg-secondary p-3 font-semibold text-secondary-foreground max-sm:mt-2 max-sm:p-2.5 max-sm:text-[0.9375rem]">
               {balanceMsg}
             </p>
-            {pendingTotal > 0 && <p className="mt-3 text-sm text-muted-foreground">{t('stl.pendingNote', { amount: money(pendingTotal) })}</p>}
+            {pendingTotal > 0 && <p className="mt-3 text-sm text-muted-foreground max-sm:mt-2 max-sm:text-[0.8125rem]">{t('stl.pendingNote', { amount: money(pendingTotal) })}</p>}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex-row items-center justify-between gap-3">
-            <CardTitle className="flex items-center gap-2.5 text-lg"><IconTile icon={Percent} />{t('stl.fee')}</CardTitle>
+        <Card className="max-sm:gap-3 max-sm:py-4">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2 max-sm:px-4">
+            <CardTitle className="flex min-w-0 items-center gap-2.5 text-lg max-sm:text-base"><IconTile icon={Percent} />{t('stl.fee')}</CardTitle>
             {can('editFee') && (
-              <Button size="sm" variant="outline" className="print:hidden" onClick={() => setFeeOpen(true)}>
+              <Button size="sm" variant="outline" className="shrink-0 print:hidden" onClick={() => setFeeOpen(true)}>
                 <Pencil aria-hidden="true" />
                 {t('stl.feeEdit')}
               </Button>
             )}
           </CardHeader>
-          <CardContent>
-            <p className="mb-2 font-semibold">{feeBasisText}</p>
+          <CardContent className="max-sm:px-4">
+            <p className="mb-2 font-semibold max-sm:mb-1.5 max-sm:text-[0.9375rem]">{feeBasisText}</p>
             {s.feeEarned === undefined ? (
-              <p className="text-sm text-muted-foreground">{t('stl.totalUndecided')}</p>
+              <p className="text-sm text-muted-foreground max-sm:text-[0.8125rem]">{t('stl.totalUndecided')}</p>
             ) : null}
             <dl className="divide-y">
               <Row label={t('stl.feeEarned')} value={s.feeEarned === undefined ? '—' : money(s.feeEarned)} />
@@ -128,15 +128,15 @@ export function Settlement() {
             </dl>
 
             {s.feeBasis === 'retainer' && s.fee.months !== undefined && (
-              <p className="mt-3 text-sm text-muted-foreground">
+              <p className="mt-3 text-sm text-muted-foreground max-sm:mt-2 max-sm:text-[0.8125rem]">
                 {t('stl.retainerLine', { months: s.fee.months, amount: money(project.retainerAmount ?? 0) })}
                 {project.retainerStart && ` · ${t('stl.retainerSince', { date: formatDate(project.retainerStart, lang) })}`}
                 {project.retainerEnd && ` · ${t('stl.retainerUntil', { date: formatDate(project.retainerEnd, lang) })}`}
               </p>
             )}
             {s.feeBasis === 'perPhase' && (
-              <div className="mt-3 grid gap-2">
-                <h3 className="font-semibold">{t('stl.feeByPhase')}</h3>
+              <div className="mt-3 grid gap-2 max-sm:mt-2">
+                <h3 className="font-semibold max-sm:text-[0.9375rem]">{t('stl.feeByPhase')}</h3>
                 {s.fee.lines.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t('stl.feeNoPhases')}</p>
                 ) : (
@@ -164,37 +164,37 @@ export function Settlement() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2.5 text-lg"><IconTile icon={Banknote} />{t('stl.totalDue')}</CardTitle>
+      <Card className="max-sm:gap-3 max-sm:py-4">
+        <CardHeader className="max-sm:px-4">
+          <CardTitle className="flex min-w-0 items-center gap-2.5 text-lg max-sm:text-base"><IconTile icon={Banknote} />{t('stl.totalDue')}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p role="status" className="text-xl font-extrabold text-balance">
+        <CardContent className="max-sm:px-4">
+          <p role="status" className="text-xl font-extrabold text-balance max-sm:text-lg">
             {totalMsg}
           </p>
-          {s.feeEarned === undefined && <p className="mt-1 text-sm text-muted-foreground">{t('stl.totalUndecided')}</p>}
+          {s.feeEarned === undefined && <p className="mt-1 text-sm text-muted-foreground max-sm:text-[0.8125rem]">{t('stl.totalUndecided')}</p>}
         </CardContent>
       </Card>
 
       <Card className="gap-0 overflow-hidden py-0">
-        <CardHeading icon={ArrowLeftRight} className="p-4">{t('stl.transfers')}</CardHeading>
+        <CardHeading icon={ArrowLeftRight} className="p-4 max-sm:p-3">{t('stl.transfers')}</CardHeading>
         {transfers.length === 0 ? (
           <EmptyState compact icon={ArrowLeftRight} title={t('stl.transferEmpty')} body={t('stl.transferEmptyBody')} />
         ) : (
           <ul className="divide-y border-t">
             {transfers.map((x) => (
-              <li key={x.id} className="flex flex-wrap items-center gap-3 p-4">
+              <li key={x.id} className="flex flex-wrap items-center gap-3 p-4 max-sm:gap-2 max-sm:p-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold">{t(`xfer.${x.kind}` as Key)}</span>
+                    <span className="font-semibold max-sm:text-[0.9375rem]">{t(`xfer.${x.kind}` as Key)}</span>
                     <Badge variant="neutral">{t(x.kind === 'return' ? 'stl.builderToInvestor' : 'stl.investorToBuilder')}</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground max-sm:text-[0.8125rem]">
                     <span className="tabular">{formatDate(x.date, lang)}</span>
                     {x.note && ` · ${x.note}`}
                   </p>
                 </div>
-                <strong className="tabular whitespace-nowrap">{money(x.amount)}</strong>
+                <strong className="tabular whitespace-nowrap max-sm:text-[0.9375rem]">{money(x.amount)}</strong>
                 {can('editTransfers') && <div className="flex gap-1 print:hidden">
                   <Button size="icon" variant="ghost" aria-label={`${t('common.edit')}: ${t(`xfer.${x.kind}` as Key)}`} onClick={() => setEditing(x)}>
                     <Pencil aria-hidden="true" />
@@ -226,6 +226,6 @@ export function Settlement() {
       <TransferDialog open={adding} onClose={() => setAdding(false)} />
       <TransferDialog open={Boolean(editing)} transfer={editing} onClose={() => setEditing(undefined)} />
       <FeeDialog open={feeOpen} onClose={() => setFeeOpen(false)} />
-    </>
+    </div>
   )
 }

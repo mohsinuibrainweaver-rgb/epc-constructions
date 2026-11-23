@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Banknote, HardHat, Landmark, ReceiptText, Wallet } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { StatusPill } from '@/components/common'
+import { PaymentDetails } from '@/components/PaymentDetails'
 import { PhaseIcon } from '@/components/PhaseIcon'
 import { ariaSort, SortButton } from '@/components/SortButton'
 import { nextSort, sortRows, type SortState } from '@/lib/sort'
@@ -62,6 +63,8 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
 
   // Click a heading to sort by it (again for the other way, a third time for the order the page gave). Sorting happens here, in the browser.
   const [sort, setSort] = useState<SortState<Col>>(null)
+  // On a narrow screen a payment's row opens its details in a sheet (the wide table links to the edit page as before).
+  const [detail, setDetail] = useState<Payment>()
   const onSort = (k: Col) => setSort((cur) => nextSort(cur, k))
   const rows = useMemo(() => {
     const today = todayISO()
@@ -184,8 +187,9 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
             // Paid (and approved) is the usual case and needs no label; anything else (waiting, turned down, an advance) is marked.
             const plain = p.status === 'paid' && (!p.approval || p.approval === 'approved')
             return (
-              <li key={p.id}>
-                <Link to={`/payments/${p.id}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-accent active:bg-accent">
+              <li key={p.id} className="relative transition-colors hover:bg-accent active:bg-accent">
+                <div className="flex items-center gap-3 px-4 py-2.5">
+                  <button type="button" aria-haspopup="dialog" aria-label={`${p.purpose}, ${money(p.amount)}`} onClick={() => setDetail(p)} className="absolute inset-0 outline-offset-[-2px]" />
                   {phase ? (
                     <PhaseIcon phase={phase} colour={phaseColour.get(p.phaseId!)} className="size-9 rounded-xl [&>svg]:size-[1.125rem]" />
                   ) : (
@@ -194,20 +198,21 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
                     </span>
                   )}
                   <div className="grid min-w-0 flex-1 gap-0.5">
-                    <span className="line-clamp-2 leading-snug font-semibold [overflow-wrap:anywhere]">{p.purpose}</span>
-                    <span className="truncate text-sm text-muted-foreground">{[formatDate(p.date, lang), phaseName ?? who(p)].filter(Boolean).join(' · ')}</span>
+                    <span className="line-clamp-2 leading-snug font-semibold [overflow-wrap:anywhere] max-sm:text-[0.9375rem]">{p.purpose}</span>
+                    <span className="truncate text-sm text-muted-foreground max-sm:text-xs">{[formatDate(p.date, lang), phaseName ?? who(p)].filter(Boolean).join(' · ')}</span>
                   </div>
                   <div className="grid shrink-0 justify-items-end gap-1">
-                    <span className="tabular leading-snug font-bold whitespace-nowrap">{money(p.amount)}</span>
+                    <span className="tabular leading-snug font-bold whitespace-nowrap max-sm:text-[0.9375rem]">{money(p.amount)}</span>
                     {!plain && <StatusPill payment={p} />}
                   </div>
-                </Link>
+                </div>
               </li>
             )
           }
           return (
-            <li key={p.id}>
-              <Link to={`/payments/${p.id}`} className="grid gap-2 px-4 py-3 transition-colors hover:bg-accent active:bg-accent">
+            <li key={p.id} className="relative transition-colors hover:bg-accent active:bg-accent">
+              <div className="grid gap-2 px-4 py-3">
+                <button type="button" aria-haspopup="dialog" aria-label={`${p.purpose}, ${money(p.amount)}`} onClick={() => setDetail(p)} className="absolute inset-0 outline-offset-[-2px]" />
                 <div className="flex items-start gap-3">
                   {phase && <PhaseIcon phase={phase} colour={phaseColour.get(p.phaseId!)} className="size-10 rounded-xl [&>svg]:size-5" />}
                   <div className="grid min-w-0 flex-1 gap-0.5">
@@ -224,7 +229,7 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
                   <span className="tabular">{formatDate(p.date, lang)}</span>
                   <span className="inline-flex items-center gap-1.5">
                     <ModeIcon mode={p.mode} />
-                    {[t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank'), p.mode === 'bank' ? bankLine(p) : ''].filter(Boolean).join(' · ')}
+                    {t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')}
                   </span>
                   <PaidBy
                     role={p.paidBy}
@@ -236,11 +241,12 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
                     }
                   />
                 </div>
-              </Link>
+              </div>
             </li>
           )
         })}
       </ul>
+      <PaymentDetails payment={detail} onClose={() => setDetail(undefined)} />
     </div>
   )
 }

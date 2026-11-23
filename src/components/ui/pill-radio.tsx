@@ -15,7 +15,7 @@ function PillRadioItem({
   return (
     <RadioGroupPrimitive.Item
       className={cn(
-        'inline-flex h-11 items-center gap-2 rounded-control border border-input bg-background px-4 text-sm font-semibold',
+        'inline-flex h-11 items-center gap-2 rounded-control border border-input bg-background px-4 text-sm font-semibold max-sm:h-10 max-sm:gap-1.5 max-sm:px-3 max-sm:text-[0.8125rem]',
         'transition-colors duration-150 hover:bg-accent',
         'data-[state=checked]:border-primary data-[state=checked]:bg-secondary data-[state=checked]:text-secondary-foreground',
         'disabled:cursor-not-allowed disabled:opacity-50',

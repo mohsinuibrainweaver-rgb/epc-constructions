@@ -112,7 +112,8 @@ export function Projects() {
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-4">
         {projects.map((p) => (
           <li key={p.id} className="min-w-0">
-            <ProjectCard project={p} spent={spentBy(p.id)} current={p.id === project?.id} onDelete={() => setDeleting(p)} />
+            {/* With only one project there is nothing to tell apart, so none is marked; with several, the open one is. */}
+            <ProjectCard project={p} spent={spentBy(p.id)} current={projects.length > 1 && p.id === project?.id} onDelete={() => setDeleting(p)} />
           </li>
         ))}
       </ul>

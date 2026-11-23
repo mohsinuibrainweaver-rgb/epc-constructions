@@ -15,6 +15,7 @@ import { Card } from '@/components/ui/card'
 import { db } from '@/db/db'
 import { useContracts, usePayments, usePhases, useReceiptIds } from '@/db/hooks'
 import { attentionItems } from '@/lib/attention'
+import { costSplit } from '@/lib/cost'
 import { contractAlerts } from '@/lib/contracts'
 import { addDays, formatDate, money, todayISO } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -40,7 +41,7 @@ function Kpi({ label, value, icon: Icon, mesh, to, children, corner, className }
         <span aria-hidden="true" className={cn('grid size-8 shrink-0 place-items-center rounded-lg sm:size-12 sm:rounded-xl', MESH_TILE)}>
           <Icon className="size-[1.125rem] sm:size-6" strokeWidth={1.75} />
         </span>
-        <span className="min-w-0 truncate text-sm font-medium text-muted-foreground sm:hidden">{label}</span>
+        <span className="min-w-0 truncate text-[0.8125rem] font-medium text-muted-foreground sm:hidden">{label}</span>
       </span>
       {corner ? (
         <span className="absolute inset-e-4 top-4 hidden @[13.5rem]:block">{corner}</span>
@@ -52,7 +53,7 @@ function Kpi({ label, value, icon: Icon, mesh, to, children, corner, className }
       )}
       <span className="grid min-w-0 gap-1">
         <span className="text-sm font-medium text-muted-foreground max-sm:hidden">{label}</span>
-        <span className="tabular text-[1.0625rem] font-extrabold whitespace-nowrap sm:text-2xl">{value}</span>
+        <span className="tabular text-base font-extrabold whitespace-nowrap sm:text-2xl">{value}</span>
         {children}
       </span>
     </Link>
@@ -81,6 +82,8 @@ export function Home() {
   const budget = project?.budget
   const left = budget ? budget - spent : undefined
   const tone = budgetTone(budgetState(spent, budget))
+  // Plot cost and construction, each on its own, then the two together. Nothing shows when no plot cost was entered.
+  const split = costSplit(project?.plotCost, spent, budget)
 
   // The phases worth a line (spending or a budget; over budget first); the empty ones are only counted.
   const progress = phaseProgress(phases, payments)
@@ -116,24 +119,24 @@ export function Home() {
   const dueCard = (
     <Card className={cn('gap-0 overflow-hidden py-0 md:order-none md:col-span-6 md:col-start-1 md:row-start-2', urgent ? 'max-md:order-3' : 'max-md:order-7')} aria-labelledby="due-title">
       <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
-        <CardHeading icon={CalendarClock} id="due-title">
+        <CardHeading icon={CalendarClock} id="due-title" className="max-sm:text-base">
           {t('home.due')}
         </CardHeading>
-        <Link to="/plans" aria-label={t('due.manage')} className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
+        <Link to="/plans" aria-label={t('due.manage')} className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline max-sm:text-[0.8125rem]">
           <span className="sm:hidden">{t('due.manageShort')}</span>
           <span className="max-sm:hidden">{t('due.manage')}</span>
         </Link>
       </div>
       {planned.length === 0 ? (
-        <p className="px-4 pb-4 text-sm text-muted-foreground">{t('home.dueEmpty')}</p>
+        <p className="px-4 pb-4 text-sm text-muted-foreground max-sm:text-[0.8125rem]">{t('home.dueEmpty')}</p>
       ) : (
         <ul className="divide-y border-t">
           {planned.slice(0, dueAll ? 8 : 3).map((p) => (
             <li key={p.id} className="grid gap-3 p-4">
               <Link to={`/payments/${p.id}`} className="flex min-w-0 items-start justify-between gap-3">
                 <span className="grid min-w-0 gap-0.5">
-                  <span className="truncate font-semibold">{p.purpose}</span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="truncate font-semibold max-sm:text-[0.9375rem]">{p.purpose}</span>
+                  <span className="text-sm text-muted-foreground max-sm:text-xs">
                     {formatDate(p.date, lang)} · <span className="tabular whitespace-nowrap">{money(p.amount)}</span>
                   </span>
                 </span>
@@ -149,7 +152,7 @@ export function Home() {
           type="button"
           onClick={() => setDueAll((v) => !v)}
           aria-expanded={dueAll}
-          className="min-h-11 border-t px-4 text-start text-sm font-semibold text-primary underline-offset-4 hover:underline"
+          className="min-h-11 border-t px-4 text-start text-sm font-semibold text-primary underline-offset-4 hover:underline max-sm:text-[0.8125rem]"
         >
           {dueAll ? t('home.dueLess') : t('attn.more', { count: Math.min(planned.length, 8) - 3 })}
         </button>
@@ -163,20 +166,20 @@ export function Home() {
         {t('home.budgetUsed', { pct: percent(spent, budget) })}
       </Badge>
     ) : (
-      <span className="text-sm text-muted-foreground">{t('home.budgetUsed', { pct: percent(spent, budget) })}</span>
+      <span className="text-sm text-muted-foreground max-sm:text-xs">{t('home.budgetUsed', { pct: percent(spent, budget) })}</span>
     )
   ) : null
 
   return (
     <>
-      <PageHeader title={project.name} subtitle={project.location || undefined} phoneTitleHidden />
+      <PageHeader title={project.name} subtitle={project.location || undefined} phoneTitleHidden subtitleClassName="max-sm:text-sm" />
 
       <section aria-label={t('home.budget')} className={cn('order-1 grid grid-cols-2 gap-3 md:order-none md:gap-6', showPlanned ? 'md:grid-cols-4' : 'md:grid-cols-3')}>
         <Kpi label={t('home.spent')} value={money(spent)} icon={HandCoins} mesh={0} to="/ledger">
-          {awaiting > 0 && <span className="text-sm text-muted-foreground">{t('home.awaiting', { amount: money(awaiting) })}</span>}
+          {awaiting > 0 && <span className="text-sm text-muted-foreground max-sm:text-xs">{t('home.awaiting', { amount: money(awaiting) })}</span>}
         </Kpi>
         <Kpi label={t('home.budget')} value={budget ? money(budget) : '—'} icon={Target} mesh={1} to={budget || !can('editProject') ? '/phases' : `/projects/${project.id}/edit`}>
-          {!budget && <span className="text-sm text-primary underline underline-offset-4">{t('home.noBudget')}</span>}
+          {!budget && <span className="text-sm text-primary underline underline-offset-4 max-sm:text-xs">{t('home.noBudget')}</span>}
         </Kpi>
         <Kpi label={t('home.left')} value={left === undefined ? '—' : money(left)} icon={Wallet} mesh={2} to="/phases" className={showPlanned ? undefined : 'max-sm:col-span-2'} corner={budget ? usedNote : undefined}>
           {budget ? (
@@ -189,6 +192,26 @@ export function Home() {
         </Kpi>
         {showPlanned && <Kpi label={t('home.planned')} value={money(sum(planned))} icon={CalendarClock} mesh={3} to="/ledger?status=planned" />}
       </section>
+
+      {split && (
+        <section aria-label={t('home.plotAndBuild')} className="order-1 md:order-none">
+          <Card className="gap-0 px-3 py-2.5 md:px-5 md:py-4">
+            <dl className="grid gap-1 md:grid-cols-4 md:gap-6">
+              {[
+                [t('home.plotCost'), split.plot, false],
+                [t('home.constructionSpent'), split.constructionSpent, false],
+                [t('home.totalSoFar'), split.totalSoFar, true],
+                ...(split.totalPlanned !== undefined ? [[t('home.totalPlanned'), split.totalPlanned, false] as const] : []),
+              ].map(([label, value, strong]) => (
+                <div key={String(label)} className={cn('flex items-baseline justify-between gap-3 md:grid md:gap-1', strong && 'border-t border-dashed pt-1 md:border-t-0 md:pt-0')}>
+                  <dt className="text-sm text-muted-foreground max-sm:text-[0.8125rem]">{label}</dt>
+                  <dd className={cn('tabular whitespace-nowrap', strong ? 'font-extrabold md:text-xl' : 'font-semibold md:text-xl md:font-extrabold')}>{money(Number(value))}</dd>
+                </div>
+              ))}
+            </dl>
+          </Card>
+        </section>
+      )}
 
       <div className="order-2 empty:hidden md:order-none">
         <ApprovalsCard payments={live} />
@@ -205,10 +228,10 @@ export function Home() {
 
         <Card className="gap-0 overflow-hidden py-0 max-md:order-6 md:col-span-12 md:col-start-1 md:row-start-1" aria-labelledby="recent-title">
           <div className="flex items-center justify-between gap-3 p-4">
-            <CardHeading icon={ReceiptText} id="recent-title">
+            <CardHeading icon={ReceiptText} id="recent-title" className="max-sm:text-base">
               {t('home.recent')}
             </CardHeading>
-            <Link to="/ledger" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
+            <Link to="/ledger" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline max-sm:text-[0.8125rem]">
               {t('home.viewAll')}
             </Link>
           </div>
@@ -219,17 +242,17 @@ export function Home() {
 
         <Card className="gap-0 overflow-hidden py-0 max-md:order-8 md:col-span-6 md:col-start-7 md:row-start-2" aria-labelledby="ph-title">
           <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
-            <CardHeading icon={Layers3} id="ph-title">
+            <CardHeading icon={Layers3} id="ph-title" className="max-sm:text-base">
               {t('home.phaseProgress')}
             </CardHeading>
-            <Link to="/phases" className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
+            <Link to="/phases" className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline max-sm:text-[0.8125rem]">
               {t('home.viewAll')}
             </Link>
           </div>
           <div className="grid gap-4 border-t p-4">
             {progress.rows.map(({ phase: ph, spent: s, budget: b, pct, done, state }) => (
               <Link key={ph.id} to={`/phases/${ph.id}`} className="grid gap-1.5 rounded-md max-md:nth-[n+5]:hidden">
-                <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-sm">
+                <span className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-sm max-sm:text-[0.8125rem]">
                   <span className="font-semibold">{phaseName(ph)}</span>
                   <span className="tabular ms-auto whitespace-nowrap text-muted-foreground">
                     {done ? `${t('phases.finalCost')}: ${money(s)}` : b ? t('home.phaseOf', { spent: money(s), budget: money(b) }) : money(s)}
@@ -238,16 +261,16 @@ export function Home() {
                 {/* A bar only while an estimate is being measured against; a finished phase shows how it ended. */}
                 {!done && b ? <BudgetBar spent={s} budget={b} label={phaseName(ph)} /> : null}
                 {b ? (
-                  <span className={cn('flex flex-wrap items-center gap-2 text-sm text-muted-foreground', (state === 'ok' || state === 'onEstimate' || state === 'under') && 'max-md:hidden')}>
+                  <span className={cn('flex flex-wrap items-center gap-2 text-sm text-muted-foreground max-sm:text-xs', (state === 'ok' || state === 'onEstimate' || state === 'under') && 'max-md:hidden')}>
                     {!done && state === 'ok' && <span>{t('phases.used', { pct })}</span>}
                     <BudgetChip state={state} spent={s} estimate={b} />
                   </span>
                 ) : (
-                  <span className="text-sm text-muted-foreground">{done ? t('phases.done') : t('home.phaseNoBudget')}</span>
+                  <span className="text-sm text-muted-foreground max-sm:text-xs">{done ? t('phases.done') : t('home.phaseNoBudget')}</span>
                 )}
               </Link>
             ))}
-            {progress.notStarted > 0 && <p className="text-sm text-muted-foreground">{t('home.phasesNotStarted', { count: progress.notStarted })}</p>}
+            {progress.notStarted > 0 && <p className="text-sm text-muted-foreground max-sm:text-xs">{t('home.phasesNotStarted', { count: progress.notStarted })}</p>}
           </div>
         </Card>
       </div>

@@ -77,7 +77,7 @@ function Dropdown({ value, onChange, children, placeholder, tone = 'default', si
           side
             ? 'h-9 border-sidebar-foreground/45 bg-sidebar-accent px-3 text-sm text-sidebar-foreground hover:border-sidebar-foreground/70 data-[state=open]:border-sidebar-ring'
             : cn(
-                'border-input bg-background px-3 text-base text-foreground hover:border-foreground/50 data-[state=open]:border-ring data-[placeholder]:text-muted-foreground',
+                'border-input bg-background px-3 text-base text-foreground hover:border-foreground/50 focus-visible:border-ring data-[state=open]:border-ring data-[placeholder]:text-muted-foreground',
                 size === 'sm' ? 'h-9 text-sm' : 'h-11',
               ),
           className,

@@ -80,14 +80,23 @@ function TabsList({ className, size = 'default', children, ...props }: React.Com
   )
 }
 
-function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+function TabsTrigger({ className, onPointerDown, onBlur, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
+      // A tap or click already shows which tab is chosen (the highlight), so the focus outline only shows when the keyboard moved here.
+      onPointerDown={(e) => {
+        e.currentTarget.dataset.pointer = ''
+        onPointerDown?.(e)
+      }}
+      onBlur={(e) => {
+        delete e.currentTarget.dataset.pointer
+        onBlur?.(e)
+      }}
       className={cn(
         'inline-flex h-11 items-center justify-center gap-1.5 rounded-[calc(var(--radius-control)-2px)] px-4 text-sm font-semibold whitespace-nowrap transition-colors duration-200 sm:h-9',
         'group-data-[size=xs]/tabs-list:gap-1 group-data-[size=xs]/tabs-list:px-3 group-data-[size=xs]/tabs-list:text-[13px] sm:group-data-[size=xs]/tabs-list:h-7',
-        'relative hover:text-foreground disabled:pointer-events-none disabled:opacity-50',
+        'relative hover:text-foreground disabled:pointer-events-none disabled:opacity-50 data-[pointer]:focus-visible:outline-none',
         'data-[state=active]:text-foreground',
         '[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4',
         className,
@@ -122,12 +131,15 @@ function ViewTabs({
   className,
   size = 'xs',
   fill,
+  oneLine,
 }: {
   tabs: ViewTab[]
   /** `xs` is compact (settings, filters); `default` is the roomy one for a form choice. */
   size?: 'default' | 'xs'
   /** Stretch across the width and share it between the tabs equally (a segmented control). */
   fill?: boolean
+  /** On a phone: many short tabs stay on one line, sharing the width with tight padding, and slide sideways only if the screen is too narrow even so. Wider screens are unchanged. */
+  oneLine?: boolean
   /** The name of the group, as text; or `labelledBy`, the id of a visible label (a settings row). */
   label?: string
   labelledBy?: string
@@ -136,11 +148,22 @@ function ViewTabs({
   onValueChange: (v: string) => void
   className?: string
 }) {
+  // On a screen too narrow even for one tight line the list slides sideways: keep the chosen tab in view (only that list moves, never the page).
+  const root = React.useRef<HTMLDivElement>(null)
+  React.useEffect(() => {
+    if (!oneLine) return
+    const list = root.current?.querySelector<HTMLElement>('[data-slot="tabs-list"]')
+    const active = list?.querySelector<HTMLElement>('[role="tab"][data-state="active"]')
+    if (!list || !active || list.scrollWidth <= list.clientWidth) return
+    const a = active.getBoundingClientRect()
+    const b = list.getBoundingClientRect()
+    list.scrollBy({ left: a.left - b.left - (b.width - a.width) / 2, behavior: 'smooth' })
+  }, [oneLine, value])
   return (
-    <Tabs value={value} onValueChange={onValueChange} className={cn('gap-0', className)}>
-      <TabsList size={size} aria-label={label} aria-labelledby={labelledBy} aria-describedby={describedBy} className={cn(!fill && 'flex-wrap', fill && 'w-full')}>
+    <Tabs ref={root} value={value} onValueChange={onValueChange} className={cn('gap-0', className)}>
+      <TabsList size={size} aria-label={label} aria-labelledby={labelledBy} aria-describedby={describedBy} className={cn(!fill && 'flex-wrap', fill && 'w-full', oneLine && 'max-sm:w-full max-sm:flex-nowrap max-sm:gap-0 max-sm:p-0.5 max-sm:justify-start max-sm:overflow-x-auto max-sm:[scrollbar-width:none] max-sm:[&::-webkit-scrollbar]:hidden')}>
         {tabs.map((tab) => (
-          <TabsTrigger key={tab.value} value={tab.value} disabled={tab.disabled} lang={tab.lang} aria-controls={undefined} className={fill ? 'flex-1' : undefined}>
+          <TabsTrigger key={tab.value} value={tab.value} disabled={tab.disabled} lang={tab.lang} aria-controls={undefined} className={cn(fill && 'flex-1', oneLine && 'max-sm:flex-1 max-sm:px-1.5 max-sm:text-xs max-sm:focus-visible:outline-offset-[-2px] max-sm:group-data-[size=xs]/tabs-list:px-1.5 max-sm:group-data-[size=xs]/tabs-list:text-xs')}>
             {tab.label}
           </TabsTrigger>
         ))}

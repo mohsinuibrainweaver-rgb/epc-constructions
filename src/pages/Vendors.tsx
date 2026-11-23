@@ -59,15 +59,15 @@ export function Vendors() {
       />
 
       {vendors.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-0 max-w-md flex-1 basis-60">
+        <div className="flex items-center gap-3 sm:flex-wrap">
+          <div className="relative min-w-0 max-w-md flex-1 sm:basis-60">
             <Search aria-hidden="true" className="pointer-events-none absolute inset-s-3.5 top-1/2 size-[1.125rem] -translate-y-1/2 text-muted-foreground" />
             <label className="sr-only" htmlFor="vq">
               {t('vendors.search')}
             </label>
             <Input id="vq" type="search" className="ps-10" placeholder={t('vendors.search')} value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
-          <Dropdown aria-label={t('vendors.sort')} value={sort} onChange={(e) => setSort(e.target.value as VendorSort)} className="w-auto min-w-44">
+          <Dropdown aria-label={t('vendors.sort')} value={sort} onChange={(e) => setSort(e.target.value as VendorSort)} className="w-36 shrink-0 sm:w-auto sm:min-w-44">
             {VENDOR_SORTS.map((s) => (
               <option key={s} value={s}>
                 {t(`vendors.sort.${s}` as Key)}
@@ -108,17 +108,17 @@ export function Vendors() {
           <ul className="divide-y">
             {rows.map(({ v, f }, i) => (
               <li key={v.id} className="group flex items-stretch transition-colors hover:bg-accent focus-within:bg-accent/60">
-                <Link to={`/vendors/${v.id}`} className="flex min-h-16 min-w-0 flex-1 items-center gap-3 py-3 ps-4 pe-2 outline-offset-[-2px]">
+                <Link to={`/vendors/${v.id}`} className="flex min-h-16 min-w-0 flex-1 items-center gap-3 py-3 ps-4 pe-2 outline-offset-[-2px] max-sm:min-h-14 max-sm:py-2.5">
                   <VendorAvatar colour={colours[i]} role={v.role} className="group-hover:scale-105 group-focus-within:scale-105" />
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold [overflow-wrap:anywhere]">{v.name}</span>
-                    <span className="block text-sm text-muted-foreground">
+                    <span className="block font-semibold [overflow-wrap:anywhere] max-sm:text-[0.9375rem] max-sm:leading-snug">{v.name}</span>
+                    <span className="block text-sm text-muted-foreground max-sm:text-[0.8125rem] max-sm:leading-snug">
                       {[t(`role.${v.role}` as Key), f.lastPaid && t('vendors.lastPaid', { date: formatDate(f.lastPaid, lang) })].filter(Boolean).join(' · ')}
                     </span>
                   </span>
                   <span className="grid shrink-0 justify-items-end gap-0.5">
-                    <strong className="tabular">{money(f.paid)}</strong>
-                    {f.owed > 0 && <span className="tabular text-sm text-muted-foreground">{t('vendors.owed', { amount: money(f.owed) })}</span>}
+                    <strong className="tabular max-sm:text-[0.9375rem]">{money(f.paid)}</strong>
+                    {f.owed > 0 && <span className="tabular text-sm text-muted-foreground max-sm:text-[0.8125rem]">{t('vendors.owed', { amount: money(f.owed) })}</span>}
                   </span>
                   <ChevronRight
                     aria-hidden="true"

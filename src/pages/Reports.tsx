@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChartColumn } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { EmptyState, PageHeader } from '@/components/common'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { ViewTabs } from '@/components/ui/tabs'
 import { usePayments, usePhases, useVendors } from '@/db/hooks'
 import type { Key } from '@/i18n/en'
 import { formatMonth, money, monthKey, todayISO } from '@/lib/format'
@@ -65,6 +66,8 @@ function Breakdown({ title, rows }: { title: string; rows: Row[] }) {
   )
 }
 
+type View = 'phase' | 'vendor' | 'category' | 'month' | 'mode' | 'materials'
+
 function group<T>(items: T[], key: (x: T) => string, amount: (x: T) => number): Row[] {
   const m = new Map<string, number>()
   for (const i of items) m.set(key(i), (m.get(key(i)) ?? 0) + amount(i))
@@ -80,6 +83,39 @@ export function Reports() {
   const vendors = useVendors(project?.id)
   const prices = useMemo(() => priceRows(everything), [everything])
   const coverage = useMemo(() => priceCoverage(everything), [everything])
+
+  // On a phone the spending graph stays on top and the tabs under it choose which breakdown shows; from `sm` up every report is on the page as before.
+  const views: { value: View; label: string }[] = [
+    { value: 'phase', label: t('reports.tabPhase') },
+    { value: 'vendor', label: t('reports.tabVendor') },
+    { value: 'category', label: t('reports.tabCategory') },
+    { value: 'month', label: t('reports.tabMonth') },
+    { value: 'mode', label: t('reports.tabMode') },
+    { value: 'materials', label: t('reports.tabMaterials') },
+  ]
+  const [view, setView] = useState<View>('phase')
+  // The tab highlight moves at once; the report below fades out, then the next one fades in, so the card does not jump in height.
+  const [shown, setShown] = useState<View>(view)
+  const [fading, setFading] = useState(false)
+  useEffect(() => {
+    if (view === shown) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShown(view)
+      return
+    }
+    setFading(true)
+    const id = window.setTimeout(() => {
+      setShown(view)
+      setFading(false)
+    }, 110)
+    return () => window.clearTimeout(id)
+  }, [view, shown])
+  const only = (v: View) =>
+    cn(
+      'min-w-0',
+      shown !== v && 'max-sm:hidden',
+      shown === v && (fading ? 'max-sm:opacity-0 max-sm:transition-opacity max-sm:duration-100' : 'max-sm:motion-safe:animate-in max-sm:motion-safe:fade-in-0 max-sm:motion-safe:duration-200'),
+    )
 
   const data = useMemo(() => {
     const phaseMap = new Map(phases.map((p) => [p.id, phaseName(p)]))
@@ -107,15 +143,36 @@ export function Reports() {
           <EmptyState icon={ChartColumn} title={t('reports.empty')} body={t('reports.emptyBody')} />
         </Card>
       ) : (
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
-          {trend.length > 0 && <TrendChart points={trend} budget={project?.budget} />}
-          <Breakdown title={t('reports.byPhase')} rows={data.phase} />
-          <Breakdown title={t('reports.byVendor')} rows={data.vendor} />
-          <Breakdown title={t('reports.byCategory')} rows={data.category} />
-          <Breakdown title={t('reports.byMonth')} rows={data.month} />
-          <Breakdown title={t('reports.byMode')} rows={data.mode} />
-          <MaterialPrices rows={prices} coverage={coverage} className="grid gap-3 md:col-span-2" />
-        </div>
+        <>
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
+            {trend.length > 0 && (
+              <div className="min-w-0">
+                <TrendChart points={trend} budget={project?.budget} />
+              </div>
+            )}
+            <div className="min-w-0 sm:hidden">
+              <ViewTabs oneLine label={t('reports.title')} value={view} onValueChange={(v) => setView(v as View)} tabs={views} />
+            </div>
+            <div className={only('phase')}>
+              <Breakdown title={t('reports.byPhase')} rows={data.phase} />
+            </div>
+            <div className={only('vendor')}>
+              <Breakdown title={t('reports.byVendor')} rows={data.vendor} />
+            </div>
+            <div className={only('category')}>
+              <Breakdown title={t('reports.byCategory')} rows={data.category} />
+            </div>
+            <div className={only('month')}>
+              <Breakdown title={t('reports.byMonth')} rows={data.month} />
+            </div>
+            <div className={only('mode')}>
+              <Breakdown title={t('reports.byMode')} rows={data.mode} />
+            </div>
+            <div className={cn(only('materials'), 'md:col-span-2')}>
+              <MaterialPrices rows={prices} coverage={coverage} className="grid gap-3" />
+            </div>
+          </div>
+        </>
       )}
     </>
   )

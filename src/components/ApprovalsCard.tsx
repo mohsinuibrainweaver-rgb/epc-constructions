@@ -30,7 +30,7 @@ export function ApprovalsCard({ payments }: { payments: Payment[] }) {
   return (
     <Card className="gap-0 overflow-hidden py-0" aria-labelledby="appr-title">
       <div className="flex flex-wrap items-center justify-between gap-2 p-4">
-        <CardHeading icon={ClipboardCheck} id="appr-title">
+        <CardHeading icon={ClipboardCheck} id="appr-title" className="max-sm:text-base">
           {t(investor ? 'approval.title' : 'approval.titleBuilder')} ({waiting.length + turnedDown.length})
         </CardHeading>
         {investor && waiting.length > 1 && (
@@ -47,17 +47,17 @@ export function ApprovalsCard({ payments }: { payments: Payment[] }) {
           </Button>
         )}
       </div>
-      {waiting.length > 0 && <p className="px-4 pb-3 text-sm text-muted-foreground">{t(investor ? 'approval.total' : 'approval.totalBuilder', { amount: money(sum(waiting)) })}</p>}
+      {waiting.length > 0 && <p className="px-4 pb-3 text-sm text-muted-foreground max-sm:text-xs">{t(investor ? 'approval.total' : 'approval.totalBuilder', { amount: money(sum(waiting)) })}</p>}
       <ul className="divide-y border-t">
         {[...waiting, ...turnedDown].map((p) => (
           <li key={p.id} className="grid gap-3 p-4">
             <Link to={`/payments/${p.id}`} className="flex min-w-0 items-start justify-between gap-3">
               <span className="grid min-w-0 gap-0.5">
-                <span className="truncate font-semibold">{p.purpose}</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="truncate font-semibold max-sm:text-[0.9375rem]">{p.purpose}</span>
+                <span className="text-sm text-muted-foreground max-sm:text-xs">
                   {formatDate(p.date, lang)} · <span className="tabular whitespace-nowrap">{money(p.amount)}</span> · {t('approval.addedBy', { name: p.addedBy || '—' })}
                 </span>
-                {p.approval === 'rejected' && p.rejectReason && <span className="text-sm text-danger">{p.rejectReason}</span>}
+                {p.approval === 'rejected' && p.rejectReason && <span className="text-sm text-danger max-sm:text-xs">{p.rejectReason}</span>}
               </span>
               <StatusPill payment={p} />
             </Link>

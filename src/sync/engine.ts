@@ -5,7 +5,7 @@ import { BUCKET, supabase } from './supabase'
 import { TABLES, type TableDef } from './mapping'
 import { recordConflicts, staleIds } from './conflicts'
 import { fillDefaults } from './payload'
-import { extForMime, mimeForPath } from '../lib/media'
+import { mimeForPath, storageExt } from '../lib/media'
 
 export type SyncState = 'off' | 'signedOut' | 'idle' | 'syncing' | 'offline' | 'error'
 
@@ -106,7 +106,7 @@ async function push(): Promise<void> {
     if (def.name === 'attachments') {
       for (const a of rows as Attachment[]) {
         if (a.blob && !a.path && !a.deletedAt) {
-          const path = `${a.projectId}/${a.id}.${extForMime(a.blob.type)}`
+          const path = `${a.projectId}/${a.id}.${storageExt(a)}`
           await upload(path, a.blob, mimeForPath(path))
           a.path = path
           await remoteTx([db.attachments], () => db.attachments.update(a.id, { path }).then(() => undefined))

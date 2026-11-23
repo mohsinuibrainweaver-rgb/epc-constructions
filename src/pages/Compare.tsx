@@ -201,6 +201,7 @@ function CompareBody({
       ? [{ label: t('compare.perArea'), a: t('compare.perSqft', { amount: moneyRate(sumA.perArea) }), b: t('compare.perSqft', { amount: moneyRate(sumB.perArea) }), d: delta(sumA.perArea, sumB.perArea) }]
       : []),
     { label: t('compare.budget'), a: sumA.budget ? money(sumA.budget) : '—', b: sumB.budget ? money(sumB.budget) : '—' },
+    ...(sumA.plotCost || sumB.plotCost ? [{ label: t('compare.plotCost'), a: sumA.plotCost ? money(sumA.plotCost) : '—', b: sumB.plotCost ? money(sumB.plotCost) : '—' }] : []),
     { label: t('compare.area'), a: sqft(sumA.area), b: sqft(sumB.area) },
     { label: t('compare.started'), a: date(sumA.start), b: date(sumB.start) },
     { label: t('compare.duration'), a: monthsText(paceA.length), b: monthsText(paceB.length) },

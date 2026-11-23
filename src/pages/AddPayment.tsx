@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ElementType, type ReactNode } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Banknote, ClipboardList, Clock, ImagePlus, Loader2, Paperclip, ReceiptText, Store, Trash2, TriangleAlert, Wallet } from 'lucide-react'
+import { Banknote, ClipboardList, Clock, Loader2, Paperclip, ReceiptText, Store, Trash2, TriangleAlert, Wallet } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { Field, GroupField } from '@/components/common'
 import { useToast } from '@/components/Toast'
@@ -35,12 +35,13 @@ import { approvalFields, needsApproval } from '@/lib/approval'
 import { openContracts, previewPayment } from '@/lib/contracts'
 import { formatDate, groupDigits, money, moneyRate, parseAmount, todayISO } from '@/lib/format'
 import { compressImage } from '@/lib/image'
-import { isVideoType, MAX_ATTACHMENT_BYTES, mimeForPath } from '@/lib/media'
+import { convertToMp3 } from '@/lib/audio'
+import { extForMime, isAudio, isAudioName, isAudioType, isDocumentName, isDocumentType, isPictureOrVideo, isVideoType, MAX_ATTACHMENT_BYTES, mimeForPath, PAYMENT_ACCEPT } from '@/lib/media'
 import { itemKey, knownItems, parseDecimal, rateOf, solveEntry } from '@/lib/materials'
 import { lastPaymentTo, possibleDouble, vendorDefaults } from '@/lib/recent'
 import { BankSelect } from '@/components/BankSelect'
 import { FileDropzone } from '@/components/FileDropzone'
-import { FileThumb } from '@/components/FilePreview'
+import { AudioNote, FileChip, FileThumb } from '@/components/FilePreview'
 import { RecentPayments } from '@/components/RecentPayments'
 import { bankFromVendor } from '@/lib/bank'
 import { budgetTone, isSpent, previewPhaseBudget, sum } from '@/lib/stats'
@@ -56,6 +57,19 @@ function StoredReceipt({ attachment, label, onRemove }: { attachment: Attachment
     if (!known) void ensureAttachmentBlob(attachment).then(setFetched)
   }, [known, attachment])
   return <FileThumb blob={known ?? fetched} removeLabel={label} onRemove={onRemove} />
+}
+
+/** The name of a document chosen for this payment (a File; the picture and video blobs are never shown by name). */
+const docName = (b: Blob): string => (b instanceof File ? b.name : '')
+
+/** A voice note that is already stored. One another phone uploaded is downloaded the first time it is shown. */
+function StoredVoice({ attachment, label, onRemove }: { attachment: Attachment; label: string; onRemove: () => void }) {
+  const known = attachment.blob
+  const [fetched, setFetched] = useState<Blob>()
+  useEffect(() => {
+    if (!known) void ensureAttachmentBlob(attachment).then(setFetched)
+  }, [known, attachment])
+  return <AudioNote blob={known ?? fetched} name={attachment.name} removeLabel={label} onRemove={onRemove} />
 }
 
 /** The category used last, so a run of labour payments does not open on Material every time. */
@@ -80,8 +94,8 @@ const rememberCategory = (c: Category) => {
 function FormSection({ icon, title, children }: { icon: ElementType; title: string; children: ReactNode }) {
   const id = useId()
   return (
-    <section aria-labelledby={id} className="grid gap-4 border-t pt-7">
-      <h2 id={id} className="flex items-center gap-2.5 text-base font-semibold">
+    <section aria-labelledby={id} className="grid gap-4 border-t pt-7 max-sm:gap-3 max-sm:pt-4">
+      <h2 id={id} className="flex items-center gap-2.5 text-base font-semibold max-sm:text-[0.9375rem]">
         <IconTile icon={icon} />
         {title}
       </h2>
@@ -195,6 +209,26 @@ export function AddPayment() {
   }, [existing, loaded])
 
   const visibleExisting = useMemo(() => existingFiles.filter((a) => !removed.includes(a.id)), [existingFiles, removed])
+  // Photos and videos show as pictures; documents as a line each (name and size).
+  const storedPictures = visibleExisting.filter((a) => isPictureOrVideo(a))
+  const storedVoices = visibleExisting.filter((a) => isAudio(a))
+  const storedDocs = visibleExisting.filter((a) => !isPictureOrVideo(a) && !isAudio(a))
+  const newVoices = newFiles.filter((f) => f.blob instanceof File && isAudioName(f.blob.name))
+  const newPictures = newFiles.filter((f) => !(f.blob instanceof File && (isDocumentName(f.blob.name) || isAudioName(f.blob.name))))
+  const newDocs = newFiles.filter((f) => f.blob instanceof File && isDocumentName(f.blob.name))
+
+  /** Turns a voice note chosen for this payment into an MP3 (plays on every phone); on failure it stays as it was. */
+  const convertVoice = async (key: number) => {
+    const item = newFiles.find((x) => x.key === key)
+    if (!item || !(item.blob instanceof File)) return
+    try {
+      const mp3 = await convertToMp3(item.blob)
+      setNewFiles((xs) => xs.map((x) => (x.key === key ? { key, blob: mp3 } : x)))
+      toast.show({ kind: 'success', message: t('audio.converted') })
+    } catch {
+      toast.show({ kind: 'error', message: t('audio.convertFailed') })
+    }
+  }
 
   /** Open contracts, plus the one this payment is already linked to even if it was closed since. */
   const choosable = useMemo(() => contracts.filter((c) => c.status === 'active' || c.id === (existing?.contractId ?? contractId)), [contracts, existing?.contractId, contractId])
@@ -331,9 +365,19 @@ export function AddPayment() {
   const addFiles = async (list: File[]) => {
     const out: { key: number; blob: Blob }[] = []
     for (const f of list) {
-      // A video is kept as it is (it cannot be shrunk on the phone); give it its type when the system left it out. A photo is shrunk.
+      // A document (PDF, Word, Excel ...) and a video are kept exactly as they are, with their own type; a photo is shrunk.
       const type = f.type || mimeForPath(f.name) || ''
-      const blob = isVideoType(type) ? (f.type ? f : new Blob([f], { type })) : await compressImage(f)
+      let blob: Blob
+      if (isDocumentName(f.name) || isDocumentType(f.type)) {
+        const name = isDocumentName(f.name) ? f.name : `${f.name || 'document'}.${extForMime(type)}`
+        blob = f.type === type && name === f.name ? f : new File([f], name, { type })
+      } else if (isAudioName(f.name) || isAudioType(f.type)) {
+        // A voice note (WhatsApp's .ogg or .opus, an MP3 ...) is kept as it is, with its name and a sound type (some systems call an .ogg a video).
+        const name = isAudioName(f.name) ? f.name : `${f.name || 'voice-note'}.${extForMime(type)}`
+        const audioType = isAudioType(f.type) ? f.type : (mimeForPath(name) ?? type)
+        blob = f.type === audioType && name === f.name ? f : new File([f], name, { type: audioType })
+      } else if (isVideoType(type)) blob = f.type ? f : new Blob([f], { type })
+      else blob = await compressImage(f)
       out.push({ key: Date.now() + out.length, blob })
     }
     setNewFiles((xs) => [...xs, ...out])
@@ -476,7 +520,7 @@ export function AddPayment() {
     <div className="@container w-full">
       <div className="mx-auto grid w-full max-w-2xl items-start gap-6 @4xl:max-w-[61.5rem] @4xl:grid-cols-[minmax(0,1fr)_18rem]">
     <form
-      className="grid w-full gap-7"
+      className="grid w-full gap-7 max-sm:gap-5 max-sm:[&_.text-sm]:text-[0.8125rem]"
       onSubmit={(e) => {
         e.preventDefault()
         void submit()
@@ -484,7 +528,7 @@ export function AddPayment() {
       noValidate
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{edit ? t('pay.edit') : t('pay.add')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight max-sm:text-xl sm:text-3xl">{edit ? t('pay.edit') : t('pay.add')}</h1>
         {edit && (
           <Button type="button" variant="destructive" size="sm" disabled={locked} onClick={() => void remove()}>
             <Trash2 aria-hidden="true" />
@@ -502,28 +546,25 @@ export function AddPayment() {
 
       <GroupField label={t('pay.kind')}>
         {(labelId) => (
-          <>
-            <ViewTabs
-              fill
-              size="default"
-              labelledBy={labelId}
-              value={misc ? 'misc' : 'standard'}
-              onValueChange={(v) => setMisc(v === 'misc')}
-              tabs={[
-                { value: 'standard', label: t('pay.standard') },
-                { value: 'misc', label: t('pay.misc') },
-              ]}
-            />
-            {misc && <p className="text-sm text-muted-foreground">{t('pay.miscHint')}</p>}
-          </>
+          <ViewTabs
+            fill
+            size="default"
+            labelledBy={labelId}
+            value={misc ? 'misc' : 'standard'}
+            onValueChange={(v) => setMisc(v === 'misc')}
+            tabs={[
+              { value: 'standard', label: t('pay.standard') },
+              { value: 'misc', label: t('pay.misc') },
+            ]}
+          />
         )}
       </GroupField>
 
       <FormSection icon={Banknote} title={t('pay.sec.amount')}>
-        <div className="grid items-start gap-4 sm:grid-cols-[minmax(0,1fr)_13rem]">
+        <div className="grid items-start gap-4 max-sm:gap-3 sm:grid-cols-[minmax(0,1fr)_13rem]">
           <Field label={t('pay.amount')} htmlFor="amount" error={errors.amount}>
             <Input
-              className="tabular h-14 text-2xl font-extrabold"
+              className="tabular h-14 text-2xl font-extrabold max-sm:h-12 max-sm:text-xl"
               inputMode="numeric"
               autoComplete="off"
               value={amount}
@@ -537,7 +578,7 @@ export function AddPayment() {
       </FormSection>
 
       <FormSection icon={ClipboardList} title={t('pay.sec.what')}>
-        <div className="grid items-start gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 max-sm:gap-3 sm:grid-cols-2">
           <Field
             label={misc ? t('pay.purposeMisc') : isMaterial ? t('mat.item') : t('pay.purpose')}
             htmlFor="purpose"
@@ -608,7 +649,7 @@ export function AddPayment() {
           )}
 
           {isMaterial && (
-            <div className="grid grid-cols-2 gap-4 sm:col-span-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 max-sm:gap-3 sm:col-span-2 sm:grid-cols-3">
               <Field label={t('mat.quantity')} htmlFor="quantity" error={errors.quantity}>
                 <Input className="tabular" inputMode="decimal" autoComplete="off" value={quantity} onChange={(e) => entry('quantity', e.target.value)} />
               </Field>
@@ -645,7 +686,7 @@ export function AddPayment() {
       </FormSection>
 
       <FormSection icon={Store} title={t('pay.sec.who')}>
-        <div className="grid items-start gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 max-sm:gap-3 sm:grid-cols-2">
           {suggestedVendor && (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-info-soft px-3 py-2 text-sm sm:col-span-2">
               <span className="font-medium text-info">{t('pay.vendorNudge', { name: suggestedVendor.name })}</span>
@@ -786,7 +827,7 @@ export function AddPayment() {
           </p>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 max-sm:gap-3 sm:grid-cols-2">
           <GroupField label={t('pay.mode')}>
             {(labelId) => (
               <ViewTabs
@@ -838,15 +879,42 @@ export function AddPayment() {
       <FormSection icon={Paperclip} title={t('pay.sec.proof')}>
         <div className="grid gap-2">
           <span className="text-sm font-semibold">{t('pay.receipts')}</span>
-          <FileDropzone accept="image/*,video/*" maxBytes={MAX_ATTACHMENT_BYTES} multiple icon={ImagePlus} browseLabel={t('pay.addReceipt')} instruction={t('drop.media')} hint={t('pay.attachHint')} onFiles={addFiles}>
+          <FileDropzone accept={PAYMENT_ACCEPT} maxBytes={MAX_ATTACHMENT_BYTES} multiple icon={Paperclip} browseLabel={t('pay.addReceipt')} instruction={t('drop.media')} hint={t('pay.attachHint')} onFiles={addFiles}>
             {(visibleExisting.length > 0 || newFiles.length > 0) && (
-              <div className="flex flex-wrap gap-2">
-                {visibleExisting.map((a) => (
-                  <StoredReceipt key={a.id} attachment={a} label={t('pay.removePhoto')} onRemove={() => setRemoved((r) => [...r, a.id])} />
-                ))}
-                {newFiles.map((f) => (
-                  <FileThumb key={f.key} blob={f.blob} removeLabel={t('pay.removePhoto')} onRemove={() => setNewFiles((xs) => xs.filter((x) => x.key !== f.key))} />
-                ))}
+              <div className="grid gap-2">
+                {(storedPictures.length > 0 || newPictures.length > 0) && (
+                  <div className="flex flex-wrap gap-2">
+                    {storedPictures.map((a) => (
+                      <StoredReceipt key={a.id} attachment={a} label={t('pay.removePhoto')} onRemove={() => setRemoved((r) => [...r, a.id])} />
+                    ))}
+                    {newPictures.map((f) => (
+                      <FileThumb key={f.key} blob={f.blob} removeLabel={t('pay.removePhoto')} onRemove={() => setNewFiles((xs) => xs.filter((x) => x.key !== f.key))} />
+                    ))}
+                  </div>
+                )}
+                {(storedVoices.length > 0 || newVoices.length > 0 || storedDocs.length > 0 || newDocs.length > 0) && (
+                  <ul className="grid gap-1.5">
+                    {storedVoices.map((a) => (
+                      <StoredVoice key={a.id} attachment={a} label={t('drop.remove', { name: a.name })} onRemove={() => setRemoved((r) => [...r, a.id])} />
+                    ))}
+                    {newVoices.map((f) => (
+                      <AudioNote
+                        key={f.key}
+                        blob={f.blob}
+                        name={docName(f.blob)}
+                        removeLabel={t('drop.remove', { name: docName(f.blob) })}
+                        onRemove={() => setNewFiles((xs) => xs.filter((x) => x.key !== f.key))}
+                        onConvert={() => convertVoice(f.key)}
+                      />
+                    ))}
+                    {storedDocs.map((a) => (
+                      <FileChip key={a.id} name={a.name} size={a.blob?.size} removeLabel={t('drop.remove', { name: a.name })} onRemove={() => setRemoved((r) => [...r, a.id])} />
+                    ))}
+                    {newDocs.map((f) => (
+                      <FileChip key={f.key} name={docName(f.blob)} size={f.blob.size} removeLabel={t('drop.remove', { name: docName(f.blob) })} onRemove={() => setNewFiles((xs) => xs.filter((x) => x.key !== f.key))} />
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
           </FileDropzone>
@@ -881,8 +949,8 @@ export function AddPayment() {
         </Button>
       )}
 
-      <div className="sticky inset-x-0 bottom-0 -mx-4 flex justify-end gap-3 border-t bg-background px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pt-6 sm:pb-0">
-        <Button type="button" variant="outline" onClick={goBack}>
+      <div className="sticky inset-x-0 bottom-0 -mx-4 flex justify-end gap-3 border-t bg-background px-4 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pt-6 sm:pb-0">
+        <Button type="button" variant="outline" className="max-sm:grow max-sm:basis-[calc(50%-0.375rem)]" onClick={goBack}>
           {t('common.cancel')}
         </Button>
         {!edit && (
@@ -890,7 +958,7 @@ export function AddPayment() {
             {t('pay.saveAdd')}
           </Button>
         )}
-        <Button type="submit" disabled={busy || locked} className="max-sm:flex-1">
+        <Button type="submit" disabled={busy || locked} className="max-sm:grow max-sm:basis-[calc(50%-0.375rem)]">
           {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
           {t('pay.save')}
         </Button>

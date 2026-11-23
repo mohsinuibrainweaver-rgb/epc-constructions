@@ -116,7 +116,7 @@ export function BudgetOutlookCard({ phases, payments }: { phases: Phase[]; payme
   const short = o.headroom !== undefined && o.headroom < 0
 
   return (
-    <Card className="gap-3 p-4">
+    <Card className="gap-3 p-4 max-sm:border-0 max-sm:bg-transparent max-sm:bg-none max-sm:p-0 max-sm:shadow-none">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <CardHeading icon={Gauge}>{t('outlook.title')}</CardHeading>
         <span className="text-sm text-muted-foreground">{t('outlook.done', { done: o.done, total: o.total })}</span>

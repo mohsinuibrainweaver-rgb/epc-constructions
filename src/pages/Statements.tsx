@@ -175,12 +175,15 @@ export function Statements() {
             </>
           }
         />
-        <p className="mt-2 text-sm text-muted-foreground">{t('stmt.pdfHint')}</p>
+        <p className="mt-2 text-sm text-muted-foreground max-sm:hidden">{t('stmt.pdfHint')}</p>
       </div>
 
-      <Card className="grid gap-4 p-4 print:hidden">
-        <div className="grid items-start gap-3 md:grid-cols-[auto_1fr]">
+      <Card className="grid gap-4 p-4 max-sm:gap-3 max-sm:border-0 max-sm:bg-transparent max-sm:bg-none max-sm:p-0 max-sm:shadow-none print:hidden">
+        <div className="grid min-w-0 items-start gap-3 md:grid-cols-[auto_1fr]">
           <ViewTabs
+            oneLine
+            size="default"
+            className="min-w-0"
             label={t('stmt.scope')}
             value={scope}
             onValueChange={(v) => setScope(v as StatementScope)}
@@ -219,13 +222,13 @@ export function Statements() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="grid min-w-0 gap-1.5">
-            <Label htmlFor="stmt-from" className="text-sm font-semibold">
+            <Label htmlFor="stmt-from" className="text-sm font-semibold max-sm:text-[0.8125rem]">
               {t('stmt.from')}
             </Label>
             <Input id="stmt-from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
           </div>
           <div className="grid min-w-0 gap-1.5">
-            <Label htmlFor="stmt-to" className="text-sm font-semibold">
+            <Label htmlFor="stmt-to" className="text-sm font-semibold max-sm:text-[0.8125rem]">
               {t('stmt.to')}
             </Label>
             <Input id="stmt-to" type="date" value={to} min={from || undefined} max={todayISO()} onChange={(e) => setTo(e.target.value)} />
@@ -234,11 +237,11 @@ export function Statements() {
         <div className="grid gap-2">
           <label className="flex min-h-11 items-center gap-3">
             <Checkbox checked={includePlanned} onCheckedChange={(c) => setIncludePlanned(c === true)} />
-            <span>{t('stmt.includePlanned')}</span>
+            <span className="max-sm:text-sm">{t('stmt.includePlanned')}</span>
           </label>
           <label className="flex min-h-11 items-center gap-3">
             <Checkbox checked={includePending} onCheckedChange={(c) => setIncludePending(c === true)} />
-            <span>{t('stmt.includePending')}</span>
+            <span className="max-sm:text-sm">{t('stmt.includePending')}</span>
           </label>
         </div>
       </Card>
@@ -250,21 +253,21 @@ export function Statements() {
       ) : (
         <article
           aria-label={`${project.name} — ${title}`}
-          className="grid gap-6 rounded-2xl border bg-card p-3.5 sm:p-8 print:gap-4 print:rounded-none print:border-0 print:p-0 print:shadow-none"
+          className="grid gap-6 rounded-2xl border bg-card p-3.5 max-sm:gap-4 sm:p-8 print:gap-4 print:rounded-none print:border-0 print:p-0 print:shadow-none"
         >
-          <header className="grid gap-1 border-b pb-4">
-            <p className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">{t('stmt.heading')}</p>
-            <h2 className="text-2xl font-semibold text-balance">{title}</h2>
-            <p className="font-semibold">{project.name}</p>
-            {project.location && <p className="text-muted-foreground">{project.location}</p>}
-            <p className="text-sm text-muted-foreground">
+          <header className="grid gap-1 border-b pb-4 max-sm:pb-3">
+            <p className="text-sm font-semibold tracking-wide text-muted-foreground uppercase max-sm:text-xs">{t('stmt.heading')}</p>
+            <h2 className="text-2xl font-semibold text-balance max-sm:text-xl">{title}</h2>
+            <p className="font-semibold max-sm:text-[0.9375rem]">{project.name}</p>
+            {project.location && <p className="text-muted-foreground max-sm:text-sm">{project.location}</p>}
+            <p className="text-sm text-muted-foreground max-sm:text-xs">
               {period} · {t('stmt.preparedOn', { date: formatDate(todayISO(), lang) })}
               {settings.userName ? ` · ${t('stmt.preparedBy', { name: settings.userName })}` : ''}
             </p>
           </header>
 
           {cs && contract && (
-            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <dl className="grid grid-cols-2 gap-4 max-sm:gap-3 sm:grid-cols-4">
               {[
                 [t('contract.original'), money(contract.amount)],
                 [t('contract.variationsTotal'), `${cs.total - contract.amount > 0 ? '+' : ''}${money(cs.total - contract.amount)}`],
@@ -273,8 +276,8 @@ export function Statements() {
                 [cs.state === 'overpaid' ? t('contract.overpaid') : t('contract.remaining'), money(cs.state === 'overpaid' ? cs.over : cs.remaining)],
               ].map(([k, v]) => (
                 <div key={k} className="grid gap-0.5">
-                  <dt className="text-sm font-medium text-muted-foreground">{k}</dt>
-                  <dd className="tabular font-extrabold">{v}</dd>
+                  <dt className="text-sm font-medium text-muted-foreground max-sm:text-xs">{k}</dt>
+                  <dd className="tabular font-extrabold max-sm:text-[0.9375rem]">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -287,15 +290,15 @@ export function Statements() {
               {/* Narrow screens: a list. Wide screens and paper: a table. */}
               <ul className="divide-y rounded-xl border md:hidden print:hidden">
                 {rows.map((p) => (
-                  <li key={p.id} className="flex items-start justify-between gap-3 p-3">
+                  <li key={p.id} className="flex items-start justify-between gap-3 p-3 max-sm:p-2.5">
                     <span className="grid min-w-0 gap-0.5">
-                      <span className="font-semibold break-words">{p.purpose}</span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="font-semibold break-words max-sm:text-[0.9375rem] max-sm:leading-snug">{p.purpose}</span>
+                      <span className="text-sm text-muted-foreground max-sm:text-xs">
                         {[formatDate(p.date, lang), who(p) !== '—' && who(p), p.phaseId && phaseLabel.get(p.phaseId), t(`mode.${p.mode}` as Key)].filter(Boolean).join(' · ')}
                       </span>
-                      {(isPlanned(p) || isAwaitingApproval(p) || p.status === 'advance') && <span className="text-sm font-semibold">{stateLabel(p)}</span>}
+                      {(isPlanned(p) || isAwaitingApproval(p) || p.status === 'advance') && <span className="text-sm font-semibold max-sm:text-xs">{stateLabel(p)}</span>}
                     </span>
-                    <span className="tabular font-bold whitespace-nowrap">{money(p.amount)}</span>
+                    <span className="tabular font-bold whitespace-nowrap max-sm:text-[0.9375rem]">{money(p.amount)}</span>
                   </li>
                 ))}
               </ul>
@@ -336,40 +339,40 @@ export function Statements() {
               </table>
 
               <dl className="grid gap-2 border-t-2 pt-3 break-inside-avoid">
-                <div className="flex items-baseline justify-between gap-4 text-lg font-extrabold">
+                <div className="flex items-baseline justify-between gap-4 text-lg font-extrabold max-sm:text-base">
                   <dt>{t('stmt.total')}</dt>
                   <dd className="tabular">{money(result.total)}</dd>
                 </div>
                 {includePlanned && result.plannedTotal > 0 && (
-                  <div className="flex items-baseline justify-between gap-4 text-muted-foreground">
+                  <div className="flex items-baseline justify-between gap-4 text-muted-foreground max-sm:text-sm">
                     <dt>{t('stmt.plannedTotal')}</dt>
                     <dd className="tabular">{money(result.plannedTotal)}</dd>
                   </div>
                 )}
                 {includePending && result.pendingTotal > 0 && (
-                  <div className="flex items-baseline justify-between gap-4 text-muted-foreground">
+                  <div className="flex items-baseline justify-between gap-4 text-muted-foreground max-sm:text-sm">
                     <dt>{t('stmt.pendingTotal')}</dt>
                     <dd className="tabular">{money(result.pendingTotal)}</dd>
                   </div>
                 )}
               </dl>
 
-              <div className="grid gap-4 sm:grid-cols-2 break-inside-avoid">
+              <div className="grid gap-4 max-sm:gap-3 sm:grid-cols-2 break-inside-avoid">
                 <section aria-label={t('stmt.byMode')} className="grid content-start gap-1">
-                  <h3 className="font-semibold">{t('stmt.byMode')}</h3>
-                  <p className="flex justify-between text-sm"><span>{t('mode.cash')}</span><span className="tabular">{money(result.byMode.cash)}</span></p>
-                  <p className="flex justify-between text-sm"><span>{t('mode.bank')}</span><span className="tabular">{money(result.byMode.bank)}</span></p>
+                  <h3 className="font-semibold max-sm:text-[0.9375rem]">{t('stmt.byMode')}</h3>
+                  <p className="flex justify-between text-sm max-sm:text-[0.8125rem]"><span>{t('mode.cash')}</span><span className="tabular">{money(result.byMode.cash)}</span></p>
+                  <p className="flex justify-between text-sm max-sm:text-[0.8125rem]"><span>{t('mode.bank')}</span><span className="tabular">{money(result.byMode.bank)}</span></p>
                 </section>
                 <section aria-label={t('stmt.byPaidBy')} className="grid content-start gap-1">
-                  <h3 className="font-semibold">{t('stmt.byPaidBy')}</h3>
-                  <p className="flex justify-between text-sm"><span>{t('paidBy.investor')}</span><span className="tabular">{money(result.byPaidBy.investor)}</span></p>
-                  <p className="flex justify-between text-sm"><span>{t('paidBy.builder')}</span><span className="tabular">{money(result.byPaidBy.builder)}</span></p>
+                  <h3 className="font-semibold max-sm:text-[0.9375rem]">{t('stmt.byPaidBy')}</h3>
+                  <p className="flex justify-between text-sm max-sm:text-[0.8125rem]"><span>{t('paidBy.investor')}</span><span className="tabular">{money(result.byPaidBy.investor)}</span></p>
+                  <p className="flex justify-between text-sm max-sm:text-[0.8125rem]"><span>{t('paidBy.builder')}</span><span className="tabular">{money(result.byPaidBy.builder)}</span></p>
                 </section>
                 {scope !== 'phase' && result.byPhase.length > 1 && (
                   <section aria-label={t('stmt.byPhase')} className="grid content-start gap-1 sm:col-span-2">
-                    <h3 className="font-semibold">{t('stmt.byPhase')}</h3>
+                    <h3 className="font-semibold max-sm:text-[0.9375rem]">{t('stmt.byPhase')}</h3>
                     {result.byPhase.map((b) => (
-                      <p key={b.phaseId || 'none'} className="flex justify-between text-sm">
+                      <p key={b.phaseId || 'none'} className="flex justify-between text-sm max-sm:text-[0.8125rem]">
                         <span>{(b.phaseId && phaseLabel.get(b.phaseId)) || t('reports.noPhase')}</span>
                         <span className="tabular">{money(b.amount)}</span>
                       </p>
@@ -384,7 +387,7 @@ export function Statements() {
             <div className="mt-6 grid gap-8 break-inside-avoid sm:grid-cols-3">
               {(['stmt.receivedBy', 'stmt.signature', 'stmt.signDate'] as const).map((k) => (
                 <div key={k} className="grid gap-8">
-                  <span className="text-sm text-muted-foreground">{t(k)}</span>
+                  <span className="text-sm text-muted-foreground max-sm:text-xs">{t(k)}</span>
                   <span className="border-b border-foreground/40" />
                 </div>
               ))}

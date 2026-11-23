@@ -77,7 +77,7 @@ assert.deepEqual(cats.map((c) => [c.category, c.a, c.b]), [['material', 400, 500
 
 // ---- summary
 const sum = summarizeSide(side('A', { area: 2000, budget: 5000, payments: [pay({ date: '2026-03-05', amount: 600 }), pay({ date: '2026-02-01', amount: 400 }), pay({ date: '2026-04-01', amount: 1, status: 'planned' })] }))
-assert.deepEqual(sum, { spent: 1000, perArea: 0.5, budget: 5000, area: 2000, start: '2026-02-01', lastPaid: '2026-03-05' }, 'with no start date the first paid day is the start')
+assert.deepEqual(sum, { spent: 1000, perArea: 0.5, budget: 5000, plotCost: undefined, area: 2000, start: '2026-02-01', lastPaid: '2026-03-05' }, 'with no start date the first paid day is the start')
 assert.equal(summarizeSide(side('A', { start: '2026-01-01', payments: [pay({ date: '2026-03-05' })] })).start, '2026-01-01')
 assert.equal(summarizeSide(side('A', {})).perArea, undefined)
 

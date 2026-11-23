@@ -51,6 +51,8 @@ export const TABLES: TableDef[] = [
       start_date: nul(p.startDate),
       target_finish: nul(p.targetFinish),
       budget: nul(p.budget),
+      // Newer column: sent only once a plot cost was set (or cleared).
+      ...(p.plotCost !== undefined ? { plot_cost: nul(p.plotCost) } : {}),
       currency: p.currency,
       type: p.type,
       thumbnail_path: nul(p.thumbnailPath),
@@ -74,6 +76,7 @@ export const TABLES: TableDef[] = [
       startDate: und(r.start_date),
       targetFinish: und(r.target_finish),
       budget: und(r.budget === null ? null : Number(r.budget)),
+      plotCost: r.plot_cost === null || r.plot_cost === undefined ? undefined : Number(r.plot_cost),
       currency: r.currency,
       type: r.type,
       thumbnailPath: und(r.thumbnail_path),

@@ -308,6 +308,8 @@ export function Phases() {
   const phaseColour = useMemo(() => colourMap(phases.map((p) => p.id)), [phases])
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
   const [adding, setAdding] = useState(false)
+  // Phone only: the phases nothing has happened in yet are folded away at the end of the list; this opens them.
+  const [showUntouched, setShowUntouched] = useState(false)
   const [editing, setEditing] = useState<Phase>()
   const [deleting, setDeleting] = useState<Phase>()
   const [toggling, setToggling] = useState<Phase>()
@@ -346,7 +348,7 @@ export function Phases() {
       for (const p of shownRef.current) {
         if (p.id === dragId) continue
         const r = rows.current.get(p.id)?.getBoundingClientRect()
-        if (r && centre > r.top + r.height / 2) to++
+        if (r && r.height > 0 && centre > r.top + r.height / 2) to++
       }
       toRef.current = to
       setDrag((d) => (d && (d.to !== to || d.y !== pointerY.current) ? { ...d, to, y: pointerY.current } : d))
@@ -419,13 +421,28 @@ export function Phases() {
   if (drag && dragged) slots.splice(drag.to, 0, 'slot')
   const canDrag = editable && shown.length > 1
 
+  // A phase nothing has happened in: no payment (paid or planned), no estimate, not finished. On a phone those that sit together at the end of the list
+  // are folded away (and counted on a button), so the page starts with the work that is going on. The order is untouched: the rows are only hidden,
+  // so dragging and the arrow keys behave as before. When every phase is untouched (a new project) nothing folds.
+  const untouched = (p: Phase) => !p.done && !p.budget && !payments.some((x) => x.phaseId === p.id && (isSpent(x) || isPlanned(x)))
+  let cut = shown.length
+  while (cut > 0 && untouched(shown[cut - 1])) cut--
+  const foldedIds = new Set(!showUntouched && cut > 0 ? shown.slice(cut).map((p) => p.id) : [])
+  const foldable = cut > 0 ? shown.length - cut : 0
+
   return (
     <>
       <PageHeader
         title={t('phases.title')}
         actions={
           editable && (
-            <Button variant="secondary" onClick={() => setAdding(true)}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowUntouched(true)
+                setAdding(true)
+              }}
+            >
               <Plus aria-hidden="true" />
               {t('phases.add')}
             </Button>
@@ -454,6 +471,7 @@ export function Phases() {
                     if (el) rows.current.set(s.ph.id, el)
                     else rows.current.delete(s.ph.id)
                   }}
+                  className={cn(foldedIds.has(s.ph.id) && 'max-sm:hidden')}
                 >
                   <PhaseRow
                     ph={s.ph}
@@ -471,6 +489,11 @@ export function Phases() {
               ),
             )}
           </ul>
+          {foldable > 0 && (
+            <Button type="button" variant="outline" aria-expanded={showUntouched} className="w-full sm:hidden" onClick={() => setShowUntouched((v) => !v)}>
+              {showUntouched ? t('phases.hideNotStarted') : t('phases.showNotStarted', { count: foldable })}
+            </Button>
+          )}
           {drag && dragged && meta.current && (
             <div
               aria-hidden="true"
@@ -527,6 +550,16 @@ export function PhaseDetail() {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [confirmDone, setConfirmDone] = useState(false)
+  // The phone menu (three dots): like the one on a phase row, a dialog opened from it starts after the menu is gone and gives the focus back to its button.
+  const menuTrigger = useRef<HTMLButtonElement>(null)
+  const launching = useRef(false)
+  const launch = (open: () => void) => {
+    launching.current = true
+    setTimeout(() => {
+      menuTrigger.current?.focus()
+      open()
+    }, 0)
+  }
   const phase = phases.find((p) => p.id === id)
   if (!phase) return null
   const fig = phaseFigures(payments, phase.budget)
@@ -538,21 +571,26 @@ export function PhaseDetail() {
   const where = spentBy(payments, (p) => (p.vendorId && vendorName.get(p.vendorId)) || p.payeeName || t('reports.noVendor'))
 
   return (
-    <>
+    // The parts of a phase page sit a little closer on a phone (10 px instead of 16); from a small tablet up the gap is the page's usual one.
+    <div className="grid min-w-0 gap-2.5 sm:gap-6">
       <div className="grid gap-1">
         <BackLink to="/phases" label={t('phases.title')} />
         <PageHeader
           title={phaseName(phase)}
+          titleClassName="max-sm:text-lg max-sm:leading-snug"
+          actionsBeside
           actions={
             <>
-              <Button variant="secondary" asChild>
+              {/* On a phone a plus button (the words are kept for screen readers), so the heading has the room to stay on one line. */}
+              <Button variant="secondary" asChild className="max-sm:w-10 max-sm:px-0">
                 <Link to={`/add?phase=${phase.id}`}>
                   <Plus aria-hidden="true" />
-                  {t('pay.add')}
+                  <span className="max-sm:sr-only">{t('pay.add')}</span>
                 </Link>
               </Button>
               <Button
                 variant="outline"
+                className="max-sm:hidden"
                 onClick={(e) => {
                   e.currentTarget.focus()
                   setConfirmDone(true)
@@ -561,7 +599,7 @@ export function PhaseDetail() {
                 {phase.done ? <RotateCcw aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
                 {phase.done ? t('phases.reopen') : t('phases.markDone')}
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="max-sm:hidden">
                 <Link to={`/statements?phase=${phase.id}`}>
                   <FileText aria-hidden="true" />
                   {t('stmt.open')}
@@ -569,16 +607,55 @@ export function PhaseDetail() {
               </Button>
               {editable && (
                 <>
-                  <Button variant="outline" onClick={() => setEditing(true)}>
+                  <Button variant="outline" className="max-sm:hidden" onClick={() => setEditing(true)}>
                     <Pencil aria-hidden="true" />
                     {t('common.edit')}
                   </Button>
-                  <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
+                  <Button variant="destructive" className="max-sm:hidden" onClick={() => setConfirmDelete(true)}>
                     <Trash2 aria-hidden="true" />
                     {t('common.delete')}
                   </Button>
                 </>
               )}
+              {/* On a phone the other actions are in one menu, so the top of the page is not a wall of buttons. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button ref={menuTrigger} size="icon" variant="outline" className="sm:hidden" aria-label={t('phases.moreNamed', { name: phaseName(phase) })}>
+                    <EllipsisVertical aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  onCloseAutoFocus={(e) => {
+                    if (launching.current) {
+                      e.preventDefault()
+                      launching.current = false
+                    }
+                  }}
+                >
+                  <DropdownMenuItem onSelect={() => launch(() => setConfirmDone(true))}>
+                    {phase.done ? <RotateCcw aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
+                    {phase.done ? t('phases.reopen') : t('phases.markDone')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={`/statements?phase=${phase.id}`}>
+                      <FileText aria-hidden="true" />
+                      {t('stmt.open')}
+                    </Link>
+                  </DropdownMenuItem>
+                  {editable && (
+                    <>
+                      <DropdownMenuItem onSelect={() => launch(() => setEditing(true))}>
+                        <Pencil aria-hidden="true" />
+                        {t('common.edit')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem destructive onSelect={() => launch(() => setConfirmDelete(true))}>
+                        <Trash2 aria-hidden="true" />
+                        {t('common.delete')}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           }
         />
@@ -696,6 +773,6 @@ export function PhaseDetail() {
       >
         <p>{phaseName(phase)}</p>
       </Dialog>
-    </>
+    </div>
   )
 }

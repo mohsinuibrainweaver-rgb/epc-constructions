@@ -250,6 +250,13 @@
     outline: 3px solid var(--ring);
     outline-offset: 2px;
   }
+  input:not([type='checkbox'], [type='radio'], [type='file'], [type='range']):focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [data-slot='dropdown']:focus-visible {
+    outline: 1px solid var(--ring);
+    outline-offset: -1px;
+  }
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
