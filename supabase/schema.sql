@@ -56,6 +56,7 @@ create unique index if not exists project_invites_unique
 alter table public.project_invites alter column email drop not null;
 alter table public.project_invites add column if not exists code text;
 alter table public.project_invites add column if not exists expires_at timestamptz;
+alter table public.project_invites add column if not exists accepted_by uuid references auth.users (id) on delete set null;
 update public.project_invites set code = upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)) where code is null;
 alter table public.project_invites alter column code set default upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12));
 alter table public.project_invites alter column expires_at set default (now() + interval '7 days');
@@ -553,7 +554,7 @@ begin
     insert into public.project_members (project_id, user_id, role, email)
     values (r.project_id, auth.uid(), r.role, auth.jwt() ->> 'email')
     on conflict do nothing;
-    update public.project_invites set accepted_at = now() where id = r.id;
+    update public.project_invites set accepted_at = now(), accepted_by = auth.uid() where id = r.id;
     claimed := claimed + 1;
   end loop;
   return claimed;
@@ -576,7 +577,10 @@ begin
   end if;
   select * into inv from public.project_invites
   where upper(code) = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'))
-    and accepted_at is null and (expires_at is null or expires_at > now())
+    and (
+      (accepted_at is null and (expires_at is null or expires_at > now()))
+      or accepted_by = auth.uid()
+    )
   for update;
   if not found then
     raise exception 'invalid_code' using errcode = 'P0001';
@@ -584,12 +588,67 @@ begin
   insert into public.project_members (project_id, user_id, role, email)
   values (inv.project_id, auth.uid(), inv.role, auth.jwt() ->> 'email')
   on conflict do nothing;
-  update public.project_invites set accepted_at = now() where id = inv.id;
+  update public.project_invites set accepted_at = coalesce(accepted_at, now()), accepted_by = auth.uid() where id = inv.id;
   return inv.project_id;
 end;
 $$;
+
+-- Lets the public account-creation screen check a link before asking Auth to create the user. This only reveals whether
+-- the caller's high-entropy, one-time code is currently usable; project and member details remain private.
+create or replace function public.signup_invite_is_valid(p_code text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.project_invites
+    where upper(code) = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'))
+      and accepted_at is null
+      and (expires_at is null or expires_at > now())
+  );
+$$;
+
+-- A shared signup link sends its one-time code in Auth metadata. Claim it in the same transaction that creates the account,
+-- so the first authenticated sync already sees the project and the invited role; no manual Join screen is needed. If that
+-- code is invalid, expired or already used, raising here rolls back the auth.users insert too: no orphan account is created.
+create or replace function public.accept_signup_invite()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  inv record;
+  signup_code text;
+begin
+  signup_code := new.raw_user_meta_data ->> 'invite_code';
+  if signup_code is null or signup_code = '' then return new; end if;
+
+  select * into inv from public.project_invites
+  where upper(code) = upper(regexp_replace(signup_code, '[^A-Za-z0-9]', '', 'g'))
+    and accepted_at is null and (expires_at is null or expires_at > now())
+  for update;
+  if not found then
+    raise exception 'invite_invalid_or_expired' using errcode = 'P0001';
+  end if;
+
+  insert into public.project_members (project_id, user_id, role, email)
+  values (inv.project_id, new.id, inv.role, new.email)
+  on conflict do nothing;
+  update public.project_invites set accepted_at = now(), accepted_by = new.id where id = inv.id;
+  return new;
+end;
+$$;
+
+drop trigger if exists auth_user_accept_project_invite on auth.users;
+create trigger auth_user_accept_project_invite after insert on auth.users
+for each row execute function public.accept_signup_invite();
 grant execute on function public.claim_invites() to authenticated;
 grant execute on function public.join_project(text) to authenticated;
+revoke all on function public.signup_invite_is_valid(text) from public;
+grant execute on function public.signup_invite_is_valid(text) to anon, authenticated;
 grant execute on function public.role_of(uuid) to authenticated;
 grant execute on function public.is_member(uuid) to authenticated;
 

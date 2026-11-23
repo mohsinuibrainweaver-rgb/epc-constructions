@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs'
 const stubs = `
 create role anon nologin; create role authenticated nologin;
 create schema auth; create schema storage;
-create table auth.users (id uuid primary key, email text, email_confirmed_at timestamptz);
+create table auth.users (id uuid primary key, email text, email_confirmed_at timestamptz, raw_user_meta_data jsonb default '{}'::jsonb);
 create function auth.uid() returns uuid language sql stable as $$ select nullif((coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb) ->> 'sub', '')::uuid $$;
 create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
 create table storage.buckets (id text primary key, name text, public boolean);
@@ -82,7 +82,9 @@ await assert.rejects(db.exec(`select join_project('')`), /invalid_code/)
 const joined = await one<{ join_project: string }>(`select join_project('${code.slice(0, 4)}-${code.slice(4, 8).toLowerCase()}-${code.slice(8)}')`)
 assert.equal(joined.join_project, P, 'the code works in lower case and with dashes')
 assert.equal((await one<{ role: string }>(`select role from project_members where user_id = '${BLD}'`)).role, 'builder', 'and gives the role the invitation named')
-await assert.rejects(db.exec(`select join_project('${code}')`), /invalid_code/, 'a code works once')
+assert.equal((await one<{ join_project: string }>(`select join_project('${code}')`)).join_project, P, 'the joining account may safely retry its link')
+await asStranger()
+await assert.rejects(db.exec(`select join_project('${code}')`), /invalid_code/, 'another account cannot reuse the code')
 await asInvestor()
 await db.exec(`insert into project_invites (project_id, role, expires_at) values ('${P}','builder', now() - interval '1 minute')`)
 const expired = (await one<{ code: string }>(`select code from project_invites where expires_at < now()`)).code
@@ -92,6 +94,26 @@ await asInvestor()
 const own = await invite('investor')
 await db.exec(`select join_project('${own}')`) // an investor using a code keeps the role they have
 assert.equal((await one<{ role: string }>(`select role from project_members where user_id = '${INV}'`)).role, 'investor')
+
+// A shared signup link sends the code with the account payload. The auth trigger assigns membership before first sign-in.
+const signupCode = await invite('builder')
+const LINK = 'eeeeeeee-0000-0000-0000-000000000005'
+await db.exec('reset role')
+await db.exec(`insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values ('${LINK}','link@x.com',now(),' {"invite_code":"${signupCode}"}')`)
+assert.equal((await one<{ role: string }>(`select role from project_members where user_id = '${LINK}'`)).role, 'builder', 'signup payload assigns the invited role')
+assert.equal((await one<{ accepted_by: string }>(`select accepted_by from project_invites where code = '${signupCode}'`)).accepted_by, LINK, 'signup consumes the invite for that account')
+
+const EXPIRED_SIGNUP = '00000000-0000-4000-8000-00000000000b'
+const expiredSignupCode = (await one<{ code: string }>(`insert into project_invites (project_id, role, expires_at) values ('${P}','builder', now() - interval '1 minute') returning code`)).code
+await assert.rejects(
+  db.exec(`insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values ('${EXPIRED_SIGNUP}','expired-link@x.com',now(),' {"invite_code":"${expiredSignupCode}"}')`),
+  /invite_invalid_or_expired/,
+  'an expired signup invite rejects the auth account insert',
+)
+assert.equal((await one<{ n: number }>(`select count(*)::int as n from auth.users where id = '${EXPIRED_SIGNUP}'`)).n, 0, 'expired invite leaves no account behind')
+await as(LINK, 'link@x.com')
+assert.equal((await one<{ join_project: string }>(`select join_project('${signupCode}')`)).join_project, P, 'the same account may safely finish an already claimed link')
+await asInvestor()
 console.log('invitations by code: ok')
 
 // ---------------------------------------------------------------- the builder sees everything

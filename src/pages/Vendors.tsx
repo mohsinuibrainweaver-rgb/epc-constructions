@@ -288,7 +288,7 @@ export function VendorDetail() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 max-lg:[&>:last-child:nth-child(odd)]:col-span-2 lg:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] lg:gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] lg:gap-4">
         <StatCard
           icon={CircleCheck}
           mesh={0}
@@ -298,6 +298,7 @@ export function VendorDetail() {
           pressed={view === 'paid'}
           onPress={() => toggle('paid')}
           controls="vendor-payments"
+          compactMobile
         />
         <StatCard
           icon={CalendarClock}
@@ -308,6 +309,7 @@ export function VendorDetail() {
           pressed={view === 'planned'}
           onPress={() => toggle('planned')}
           controls="vendor-payments"
+          compactMobile
         />
         {lastPayment ? (
           <StatCard
@@ -317,9 +319,10 @@ export function VendorDetail() {
             value={formatDate(lastPayment.date, lang)}
             sub={money(lastPayment.amount)}
             to={`/payments/${lastPayment.id}`}
+            compactMobile
           />
         ) : (
-          <StatCard icon={CalendarCheck} mesh={2} label={t('vendors.lastPaidStat')} value="—" sub={t('vendors.stat.noneYet')} />
+          <StatCard icon={CalendarCheck} mesh={2} label={t('vendors.lastPaidStat')} value="—" sub={t('vendors.stat.noneYet')} compactMobile />
         )}
         {activeContracts.length > 0 && (
           <StatCard
@@ -329,6 +332,7 @@ export function VendorDetail() {
             value={money(fig.owed)}
             sub={t('vendors.stat.contracts', { n: activeContracts.length })}
             onGo={() => document.getElementById('vendor-contracts')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })}
+            compactMobile
           />
         )}
       </div>

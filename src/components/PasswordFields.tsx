@@ -56,9 +56,9 @@ export function PasswordStrength({ id, check }: { id: string; check: PasswordChe
   const { t } = useApp()
   const none = check.strength === 'none'
   return (
-    <div id={id} className="grid gap-3 rounded-xl bg-muted/60 p-3">
-      <div className="grid gap-1.5">
-        <div className="flex items-baseline justify-between gap-3 text-sm">
+    <div id={id} className="grid gap-2 rounded-xl bg-muted/60 p-2.5">
+      <div className="grid gap-1">
+        <div className="flex items-baseline justify-between gap-3 text-xs">
           <span className="font-semibold">{t('auth.strength')}</span>
           <span role="status" className={cn('font-semibold', !none && TEXT[check.strength])}>
             {none ? null : t(`auth.strength.${check.strength}` as Key)}
@@ -66,7 +66,7 @@ export function PasswordStrength({ id, check }: { id: string; check: PasswordChe
         </div>
         <div aria-hidden="true" className="grid grid-cols-4 gap-1.5">
           {STRENGTH_STEPS.map((s, i) => (
-            <span key={s} className={cn('h-2 rounded-full transition-colors duration-200 motion-reduce:transition-none', i < check.bars ? BAR[check.strength] : 'bg-foreground/20')} />
+            <span key={s} className={cn('h-1.5 rounded-full transition-colors duration-200 motion-reduce:transition-none', i < check.bars ? BAR[check.strength] : 'bg-foreground/20')} />
           ))}
         </div>
         {check.common && check.ok && <p className="text-sm font-semibold text-warning">{t('auth.common')}</p>}
@@ -74,10 +74,10 @@ export function PasswordStrength({ id, check }: { id: string; check: PasswordChe
 
       {/* No visible heading: the four lines say what is needed. The list still has a name for screen readers. */}
       <div className="grid gap-1.5">
-        <ul aria-label={t('auth.rules')} className="grid gap-1 text-sm">
+        <ul aria-label={t('auth.rules')} className="grid gap-1 text-xs leading-tight sm:grid-cols-2 sm:gap-x-4">
           {check.rules.map((r) => (
-            <li key={r.id} className={cn('flex items-start gap-2', r.met ? 'text-success' : 'text-muted-foreground')}>
-              {r.met ? <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" strokeWidth={2.5} /> : <Circle aria-hidden="true" className="mt-0.5 size-4 shrink-0" />}
+            <li key={r.id} className={cn('flex items-start gap-1.5', r.met ? 'text-success' : 'text-muted-foreground')}>
+              {r.met ? <Check aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.5} /> : <Circle aria-hidden="true" className="size-3.5 shrink-0" />}
               <span>
                 {t(`auth.rule.${r.id}` as Key)}
                 <span className="sr-only">{`: ${r.met ? t('auth.rule.met') : t('auth.rule.unmet')}`}</span>

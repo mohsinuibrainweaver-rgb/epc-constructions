@@ -26,6 +26,7 @@ export function JoinProject() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const back = projects.length > 0 ? '/projects' : '/welcome'
+  const joiningFromLink = isCompleteInviteCode(linkedCode)
 
   const join = useCallback(async () => {
     if (busy) return
@@ -66,6 +67,18 @@ export function JoinProject() {
   const submit = (e: FormEvent) => {
     e.preventDefault()
     void join()
+  }
+
+  // A shared link joins automatically. Keep the manual code form only for someone who opened Join from inside the app.
+  if (joiningFromLink) {
+    return (
+      <main className="grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center">
+        <div role="status" className="grid justify-items-center gap-3 text-sm font-semibold text-muted-foreground">
+          <Loader2 className="size-8 animate-spin text-primary" aria-hidden="true" />
+          {t('join.joining')}
+        </div>
+      </main>
+    )
   }
 
   return (

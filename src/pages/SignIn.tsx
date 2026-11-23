@@ -34,7 +34,7 @@ export function SignIn() {
   const [confirm, setConfirm] = useState('')
   const [confirmTouched, setConfirmTouched] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirm?: string }>({})
+  const [errors, setErrors] = useState<{ form?: string; name?: string; email?: string; password?: string; confirm?: string }>({})
   const [notice, setNotice] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
   const uid = useId()
@@ -75,14 +75,28 @@ export function SignIn() {
     setBusy(true)
     const creds = { email: email.trim(), password }
     if (create) {
+      if (invited) {
+        const { data: validInvite, error: inviteError } = await supabase.rpc('signup_invite_is_valid', { p_code: invite })
+        if (inviteError || validInvite !== true) {
+          setErrors({ form: t('auth.inviteInvalid') })
+          setBusy(false)
+          return
+        }
+      }
       const { data, error } = await supabase.auth.signUp({
         ...creds,
         options: {
-          data: { name: name.trim() },
+          data: { name: name.trim(), ...(invited ? { invite_code: invite } : {}) },
           ...(invited ? { emailRedirectTo: inviteLink(window.location.origin, invite) } : {}),
         },
       })
-      if (error) setErrors({ password: error.message })
+      if (error) {
+        // The database trigger is the final, atomic guard. The invite can become unavailable between the pre-check and signup.
+        if (invited) {
+          const { data: stillValid } = await supabase.rpc('signup_invite_is_valid', { p_code: invite })
+          setErrors(stillValid === false ? { form: t('auth.inviteInvalid') } : { password: error.message })
+        } else setErrors({ password: error.message })
+      }
       // With "Confirm email" on, an email that already has an account comes back without an error and with no identities.
       else if (data.user && data.user.identities?.length === 0) setErrors({ email: t('auth.exists') })
       else {
@@ -97,21 +111,24 @@ export function SignIn() {
   }
 
   return (
-    <main className="relative grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center auth-bg sm:rounded-2xl sm:border px-4 py-8 max-sm:pt-20">
+    <main className="relative grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center auth-bg px-4 py-4 sm:rounded-2xl sm:border max-sm:pt-16">
       <LanguageSwitcher />
-      <div className="grid w-full max-w-lg justify-items-start gap-5 rounded-2xl border bg-card p-6 shadow-sm sm:p-10">
+      <div className="grid w-full max-w-lg justify-items-start gap-4 rounded-2xl border bg-card p-6 shadow-sm sm:p-7">
         <BrandLogo className="h-auto w-[min(55%,9.5rem)] justify-self-center" alt={t('app.full')} />
-        <Tabs value={mode} onValueChange={switchMode} className="w-full">
+        <Tabs value={mode} onValueChange={switchMode} className="w-full gap-4">
           <TabsList aria-label={t('auth.mode')} className="w-full">
             <TabsTrigger value="signin" className="flex-1 px-2 sm:px-4">{t('auth.signIn')}</TabsTrigger>
             <TabsTrigger value="create" className="flex-1 px-2 sm:px-4">{t('auth.createAccount')}</TabsTrigger>
           </TabsList>
-          <TabsContent value={mode} className="grid gap-5">
+          <TabsContent value={mode} className="grid gap-4">
         <h1 className="text-3xl font-semibold tracking-tight">{create ? t('auth.createTitle') : t('auth.title')}</h1>
 
-        {invited && <p className="rounded-xl bg-info-soft p-3 text-sm font-semibold text-info">{t('auth.invite')}</p>}
-
-        <form ref={formRef} className="grid w-full gap-4" onSubmit={(e) => void submit(e)} noValidate>
+        <form ref={formRef} className="grid w-full gap-3" onSubmit={(e) => void submit(e)} noValidate>
+          {errors.form && (
+            <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+              {errors.form}
+            </p>
+          )}
           {create && (
             <Field label={t('set.name')} error={errors.name}>
               <Input autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
