@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Copy, MessageCircle, Trash2, UserMinus, Users } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
-import { Dialog } from '@/components/common'
-import { PermissionEditor } from '@/components/PermissionEditor'
+import { ProjectInviteDialog, type ProjectInvite } from '@/components/ProjectInviteDialog'
 import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDate } from '@/lib/format'
 import { groupInviteCode, inviteLink } from '@/lib/invite'
-import { EMPTY_PERMISSIONS, type Action, type PermissionMap } from '@/lib/permissions'
 import { useSync } from '@/sync/SyncProvider'
 import { supabase } from '@/sync/supabase'
 
@@ -18,12 +16,7 @@ interface Member {
   email: string | null
   display_name: string | null
 }
-interface Invite {
-  id: string
-  code: string
-  permissions: PermissionMap
-  expires_at: string | null
-}
+type Invite = ProjectInvite
 
 /**
  * Who is on this project, and invitations. An invitation is a one-time code the investor sends (WhatsApp, say); the other
@@ -37,9 +30,6 @@ export function People() {
   const [members, setMembers] = useState<Member[]>([])
   const [invites, setInvites] = useState<Invite[]>([])
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [permissions, setPermissions] = useState<PermissionMap>({ ...EMPTY_PERMISSIONS })
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
   const [removing, setRemoving] = useState<string>()
   const manage = can('managePeople')
 
@@ -59,27 +49,6 @@ export function People() {
   useEffect(() => {
     void load()
   }, [load])
-
-  const create = async () => {
-    setError('')
-    if (!supabase || !project || !session) return
-    setBusy(true)
-    const { data, error: err } = await supabase
-      .from('project_invites')
-      .insert({ project_id: project.id, role: 'builder', permissions })
-      .select('id, code, permissions, expires_at')
-      .single()
-    setBusy(false)
-    if (err) {
-      // Row level security rejects this until the project has reached the server.
-      setError(err.code === '42501' ? t('people.syncFirst') : err.message)
-      return
-    }
-    if (data) setInvites((current) => [data as Invite, ...current])
-    setInviteOpen(false)
-    setPermissions({ ...EMPTY_PERMISSIONS })
-    toast.show({ kind: 'success', message: t('people.sent') })
-  }
 
   const withdraw = async (id: string) => {
     await supabase?.from('project_invites').delete().eq('id', id)
@@ -194,26 +163,14 @@ export function People() {
           <div className="grid gap-3">
             <h3 className="text-sm font-semibold">{t('people.inviteTitle')}</h3>
             <p className="text-sm text-muted-foreground">{t('people.inviteHelp')}</p>
-            {error && (
-              <p role="alert" className="text-sm font-semibold text-danger">
-                {error}
-              </p>
-            )}
-            <Button className="w-fit" disabled={busy} onClick={() => setInviteOpen(true)}>
+            <Button className="w-fit" onClick={() => setInviteOpen(true)}>
               {t('people.createCode')}
             </Button>
           </div>
         )}
       </CardContent>
-      <Dialog open={inviteOpen} title={t('people.permissionsTitle')} description={t('people.permissionsHelp')} onClose={() => setInviteOpen(false)}
-        footer={<><Button variant="outline" onClick={() => setInviteOpen(false)}>{t('common.cancel')}</Button><Button disabled={busy} onClick={() => void create()}>{t('people.createCode')}</Button></>}>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => setPermissions(Object.fromEntries(Object.keys(EMPTY_PERMISSIONS).map((key) => [key, true])) as PermissionMap)}>{t('people.selectAll')}</Button>
-          <Button size="sm" variant="ghost" onClick={() => setPermissions({ ...EMPTY_PERMISSIONS })}>{t('people.clearAll')}</Button>
-        </div>
-        <PermissionEditor compact values={permissions} onChange={(permission: Action, enabled) => setPermissions((current) => ({ ...current, [permission]: enabled }))} />
-        {error && <p role="alert" className="text-sm font-semibold text-danger">{error}</p>}
-      </Dialog>
+      {project && <ProjectInviteDialog open={inviteOpen} project={project} onClose={() => setInviteOpen(false)}
+        onCreated={(invite) => setInvites((current) => [invite, ...current])} />}
     </Card>
   )
 }

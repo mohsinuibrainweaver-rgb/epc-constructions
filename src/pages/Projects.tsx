@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Building2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Building2, Pencil, Plus, Trash2, UserPlus } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { BudgetBar, PageHeader } from '@/components/common'
 import { DeleteProjectDialog } from '@/components/DeleteProjectDialog'
+import { ProjectInviteDialog } from '@/components/ProjectInviteDialog'
+import { Drawer, DrawerBody, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -15,13 +17,14 @@ import { money } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
 import { budgetState, budgetTone, isSpent, percent, sum } from '@/lib/stats'
 import { cn } from '@/lib/utils'
+import { ProjectForm } from '@/pages/ProjectForm'
 
 /**
  * One project: the picture with the "Current" mark, the name and place, how much is spent (against the budget when there is one),
  * and the actions. Every card is the same height: the picture is always 16:9, and the name, the place and the budget part always take the
  * same room, so there is no empty gap in any card.
  */
-function ProjectCard({ project, spent, current, onDelete }: { project: Project; spent: number; current: boolean; onDelete: () => void }) {
+function ProjectCard({ project, spent, current, onDelete, onInvite, onEdit }: { project: Project; spent: number; current: boolean; onDelete: () => void; onInvite: () => void; onEdit: () => void }) {
   const { t, can, isOwner } = useApp()
   const mine = can('editProject', project.id)
   const url = useObjectUrl(project.thumbnail)
@@ -62,10 +65,13 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
           </Button>
           {mine && (
             <>
-              <Button asChild variant="outline" size="icon" aria-label={`${t('common.edit')}: ${project.name}`} title={t('common.edit')}>
-                <Link to={`/projects/${project.id}/edit`}>
-                  <Pencil aria-hidden="true" />
-                </Link>
+              {isOwner(project.id) && (
+                <Button variant="outline" size="icon" onClick={onInvite} aria-label={`${t('people.inviteTitle')}: ${project.name}`} title={t('people.inviteTitle')}>
+                  <UserPlus aria-hidden="true" />
+                </Button>
+              )}
+              <Button variant="outline" size="icon" onClick={onEdit} aria-label={`${t('common.edit')}: ${project.name}`} title={t('common.edit')}>
+                <Pencil aria-hidden="true" />
               </Button>
               <Button
                 variant="outline"
@@ -88,6 +94,8 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
 export function Projects() {
   const { t, projects, project } = useApp()
   const [deleting, setDeleting] = useState<Project>()
+  const [inviting, setInviting] = useState<Project>()
+  const [editing, setEditing] = useState<Project>()
   const all = useLiveQuery(() => db.payments.toArray(), []) ?? []
   const spentBy = (id: string) => sum(all.filter((p) => p.projectId === id && isSpent(p)))
   return (
@@ -108,15 +116,29 @@ export function Projects() {
           </>
         }
       />
-      <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))] gap-4">
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),22rem))] gap-5">
         {projects.map((p) => (
           <li key={p.id} className="min-w-0">
             {/* With only one project there is nothing to tell apart, so none is marked; with several, the open one is. */}
-            <ProjectCard project={p} spent={spentBy(p.id)} current={projects.length > 1 && p.id === project?.id} onDelete={() => setDeleting(p)} />
+            <ProjectCard project={p} spent={spentBy(p.id)} current={projects.length > 1 && p.id === project?.id} onDelete={() => setDeleting(p)} onInvite={() => setInviting(p)} onEdit={() => setEditing(p)} />
           </li>
         ))}
       </ul>
       {deleting && <DeleteProjectDialog open project={deleting} onClose={() => setDeleting(undefined)} />}
+      {inviting && <ProjectInviteDialog open project={inviting} onClose={() => setInviting(undefined)} />}
+      <Drawer open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(undefined)}>
+        {editing && (
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle className="truncate text-lg font-semibold">{t('pf.edit')}</DrawerTitle>
+              <DrawerDescription className="truncate text-sm text-muted-foreground">{editing.name}</DrawerDescription>
+            </DrawerHeader>
+            <DrawerBody>
+              <ProjectForm projectId={editing.id} embedded onClose={() => setEditing(undefined)} onSaved={() => setEditing(undefined)} />
+            </DrawerBody>
+          </DrawerContent>
+        )}
+      </Drawer>
     </>
   )
 }

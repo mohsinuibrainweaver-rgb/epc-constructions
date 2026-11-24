@@ -20,6 +20,7 @@ import { groupDigits, money, moneyRate, parseAmount } from '@/lib/format'
 import { compressImage, useObjectUrl } from '@/lib/image'
 import { costSplit } from '@/lib/cost'
 import { budgetPerSqft, plannedDays, plannedSpan } from '@/lib/project-plan'
+import { cn } from '@/lib/utils'
 
 /** One section of the form: a card with a title, a line saying what it is for, and the fields. */
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
@@ -37,8 +38,9 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 }
 
 /** New project (zero state) or edit. Standalone page so it also works before any project exists. */
-export function ProjectForm() {
-  const { id } = useParams()
+export function ProjectForm({ projectId, embedded = false, onClose, onSaved }: { projectId?: string; embedded?: boolean; onClose?: () => void; onSaved?: () => void } = {}) {
+  const { id: routeId } = useParams()
+  const id = projectId ?? routeId
   const edit = Boolean(id)
   const { t, projects, can, phaseName } = useApp()
   const nav = useNavigate()
@@ -136,7 +138,8 @@ export function ProjectForm() {
         await createProject(data, chosen)
         toast.show({ kind: 'success', message: t('pf.created') })
       }
-      nav('/')
+      if (edit && onSaved) onSaved()
+      else nav('/')
     } finally {
       setBusy(false)
     }
@@ -145,18 +148,18 @@ export function ProjectForm() {
   // Only an investor changes a project's details (the server holds the same rule). A builder who opens this address is told so.
   if (edit && id && !can('editProject', id)) {
     return (
-      <main className="mx-auto grid w-full max-w-2xl gap-4 px-1 py-4 max-sm:px-3.5 sm:py-8">
-        <BackLink to="/projects" label={t('common.back')} />
+      <main className={cn('grid w-full gap-4 py-4', embedded ? 'px-4 sm:px-5' : 'mx-auto max-w-2xl px-1 max-sm:px-3.5 sm:py-8')}>
+        {!embedded && <BackLink to="/projects" label={t('common.back')} />}
         <PageHeader title={t('pf.edit')} subtitle={t('perm.investorOnly')} />
       </main>
     )
   }
 
   return (
-    <main className="mx-auto grid w-full max-w-2xl gap-4 px-1 py-4 max-sm:gap-3 max-sm:px-3.5 max-sm:pt-3 max-sm:pb-0 max-sm:[&_h1]:text-lg max-sm:[&_h1+p]:text-[0.8125rem] sm:py-8">
+    <main className={cn('grid w-full gap-4 py-4 max-sm:gap-3 max-sm:[&_h1]:text-lg max-sm:[&_h1+p]:text-[0.8125rem]', embedded ? 'max-w-none px-4 sm:px-5' : 'mx-auto max-w-2xl px-1 max-sm:px-3.5 max-sm:pt-3 max-sm:pb-0 sm:py-8')}>
       {!edit && projects.length === 0 && <BrandLogo className="h-auto w-28" alt={t('app.full')} />}
-      <BackLink to={cancelTo} label={t('common.back')} />
-      <PageHeader title={edit ? t('pf.edit') : t('pf.new')} subtitle={edit ? t('pf.editSub') : t('pf.newSub')} />
+      {!embedded && <BackLink to={cancelTo} label={t('common.back')} />}
+      {!embedded && <PageHeader title={edit ? t('pf.edit') : t('pf.new')} subtitle={edit ? t('pf.editSub') : t('pf.newSub')} />}
 
       <form className="grid gap-4 max-sm:gap-3 max-sm:[&_.text-sm]:text-[0.8125rem]" onSubmit={(e) => void submit(e)} noValidate>
         <Section title={t('pf.secBasics')}>
@@ -290,7 +293,7 @@ export function ProjectForm() {
         )}
 
         <div className="sticky bottom-0 z-10 -mx-3.5 flex justify-end gap-2 border-t bg-background px-3.5 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
-          <Button type="button" variant="outline" className="max-sm:grow max-sm:basis-[calc(50%-0.25rem)]" onClick={() => nav(cancelTo)}>
+          <Button type="button" variant="outline" className="max-sm:grow max-sm:basis-[calc(50%-0.25rem)]" onClick={() => onClose ? onClose() : nav(cancelTo)}>
             {t('common.cancel')}
           </Button>
           <Button type="submit" disabled={busy} className="max-sm:grow max-sm:basis-[calc(50%-0.25rem)]">
