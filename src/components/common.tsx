@@ -150,6 +150,7 @@ export function Dialog({
   onClose,
   children,
   footer,
+  contentClassName,
 }: {
   open: boolean
   title: string
@@ -157,6 +158,7 @@ export function Dialog({
   onClose: () => void
   children: ReactNode
   footer?: ReactNode
+  contentClassName?: string
 }) {
   const { t } = useApp()
   const opener = useRef<HTMLElement | null>(null)
@@ -174,7 +176,7 @@ export function Dialog({
           }
         }}
         showCloseButton={false}
-        className="max-h-[calc(100dvh-1rem)] gap-0 overflow-hidden p-0 sm:p-0 max-sm:top-auto max-sm:bottom-0 max-sm:max-w-none max-sm:translate-y-0 max-sm:rounded-b-none max-sm:data-[state=open]:slide-in-from-bottom"
+        className={cn("max-h-[calc(100dvh-1rem)] gap-0 overflow-hidden p-0 sm:p-0 max-sm:top-auto max-sm:bottom-0 max-sm:max-w-none max-sm:translate-y-0 max-sm:rounded-b-none max-sm:data-[state=open]:slide-in-from-bottom", contentClassName)}
       >
         <DialogHeader className="flex-row items-center justify-between space-y-0 border-b p-4 text-start">
           <div className="grid gap-1">

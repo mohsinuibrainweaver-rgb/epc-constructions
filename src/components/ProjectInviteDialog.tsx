@@ -88,6 +88,7 @@ export function ProjectInviteDialog({ open, project, onClose, onCreated }: {
       title={created ? t('people.inviteTitle') : t('people.permissionsTitle')}
       description={created ? project.name : t('people.permissionsHelp')}
       onClose={onClose}
+      contentClassName="sm:max-w-2xl"
       footer={created ? (
         <Button onClick={onClose}>{t('common.close')}</Button>
       ) : (

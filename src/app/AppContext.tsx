@@ -31,6 +31,26 @@ interface AppCtx {
 
 const Ctx = createContext<AppCtx | null>(null)
 
+/** Old versions stored these app-provided phase labels as English names. Keep custom names as written, but localize known defaults. */
+const LEGACY_PHASE_NAMES: Record<string, Key> = {
+  'planning and approvals': 'phase.planning',
+  'site preparation': 'phase.site',
+  'excavation and foundation': 'phase.foundation',
+  'grey structure': 'phase.grey',
+  'gray structure': 'phase.grey',
+  'brown structure': 'phase.brownStructure',
+  'rough services': 'phase.services',
+  'windows, doors and gates': 'phase.windows',
+  'ceiling and walls': 'phase.ceiling',
+  'flooring and tiles': 'phase.flooring',
+  'woodwork and kitchen': 'phase.woodwork',
+  'paint and polish': 'phase.paint',
+  'fixtures and finishing': 'phase.finishing',
+  'utilities and handover': 'phase.handover',
+  'electricity meter': 'phase.electricityMeter',
+  'water boring': 'phase.waterBoring',
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const rows = useLiveQuery(() => db.settings.toArray(), [])
   const projects = useLiveQuery(
@@ -131,8 +151,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [project?.id, role, roleIn, permissionsOf, ownerOf])
 
   const phaseName = useCallback(
-    (p: Phase) => p.name || (p.key ? t(`phase.${p.key}` as Key) : ''),
-    [t],
+    (p: Phase) => {
+      if (!p.name) return p.key ? t(`phase.${p.key}` as Key) : ''
+      const legacy = lang === 'ur' ? LEGACY_PHASE_NAMES[p.name.trim().toLowerCase()] : undefined
+      return legacy ? t(legacy) : p.name
+    },
+    [lang, t],
   )
 
   const value = useMemo<AppCtx>(

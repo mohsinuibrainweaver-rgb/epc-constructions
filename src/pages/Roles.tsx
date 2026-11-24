@@ -15,7 +15,7 @@ interface Member { user_id: string; email: string | null; display_name: string |
 
 /** Individual project-member permissions. The project owner always bypasses these rows. */
 export function Roles() {
-  const { project, isOwner } = useApp()
+  const { project, isOwner, t } = useApp()
   const [members, setMembers] = useState<Member[]>([])
   const [selected, setSelected] = useState('')
   const [values, setValues] = useState<Record<string, PermissionMap>>({})
@@ -71,27 +71,27 @@ export function Roles() {
     <div className="grid gap-5 max-sm:gap-2.5 md:h-[calc(100dvh-8.5rem)] md:grid-rows-[auto_minmax(0,1fr)_auto] md:overflow-hidden">
       <div className={mobileOpen ? 'max-md:hidden' : undefined}>
         <PageHeader
-          title="People and permissions"
-          subtitle="Choose exactly what each person can do. The project owner always has full access."
+          title={t('roles.title')}
+          subtitle={t('roles.subtitle')}
           titleClassName="max-sm:text-[1.375rem] max-sm:leading-tight"
           subtitleClassName="max-sm:mt-1 max-sm:text-sm max-sm:leading-relaxed"
         />
       </div>
       {members.length <= 1 ? (
-        <Card><CardContent className="p-5 text-sm text-muted-foreground">Invite someone from Project settings, then their permissions will appear here.</CardContent></Card>
+        <Card><CardContent className="p-5 text-sm text-muted-foreground">{t('roles.empty')}</CardContent></Card>
       ) : (
         <>
           <div className="md:hidden">
             {!mobileOpen ? (
               <div className="grid gap-2.5">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="font-semibold">Project members</h2>
-                  <span className="text-xs text-muted-foreground">{members.length} people</span>
+                  <h2 className="font-semibold">{t('roles.members')}</h2>
+                  <span className="text-xs text-muted-foreground">{t('roles.peopleCount', { count: members.length })}</span>
                 </div>
                 <ul className="grid gap-2">
                   {members.map((member) => {
                     const owner = member.user_id === project.ownerId
-                    const secondary = member.display_name && member.email ? member.email : owner ? 'Full access' : 'Custom access'
+                    const secondary = member.display_name && member.email ? member.email : owner ? t('roles.fullAccess') : t('roles.customAccess')
                     return (
                       <li key={member.user_id}>
                         <button type="button" onClick={() => { setSelected(member.user_id); setMobileOpen(true) }}
@@ -103,7 +103,7 @@ export function Roles() {
                             <span className="truncate font-semibold">{label(member)}</span>
                             <span className="truncate text-xs text-muted-foreground">{secondary}</span>
                           </span>
-                          {owner && <Badge variant="neutral" className="px-1.5 text-[0.625rem]">Owner</Badge>}
+                          {owner && <Badge variant="neutral" className="px-1.5 text-[0.625rem]">{t('people.owner')}</Badge>}
                           <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
                         </button>
                       </li>
@@ -115,7 +115,7 @@ export function Roles() {
               <div className="grid gap-3">
                 <Button type="button" size="sm" variant="ghost" className="-ms-2 w-fit px-2" onClick={() => setMobileOpen(false)}>
                     <ArrowLeft aria-hidden="true" className="rtl:rotate-180" />
-                    Project members
+                    {t('roles.members')}
                 </Button>
                 <div className="flex items-center gap-3 rounded-control border bg-card p-3 shadow-sm">
                   <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-control bg-muted text-foreground">
@@ -124,17 +124,17 @@ export function Roles() {
                   <div className="grid min-w-0 flex-1 gap-0.5">
                     <h1 className="truncate text-lg font-semibold">{label(selectedMember)}</h1>
                     <p className="truncate text-xs text-muted-foreground">
-                      {selectedMember.user_id === project.ownerId ? 'Project owner · Full access' : selectedMember.email || 'Custom access'}
+                      {selectedMember.user_id === project.ownerId ? t('roles.ownerFull') : selectedMember.email || t('roles.customAccess')}
                     </p>
                   </div>
-                  <Badge variant="neutral">{selectedMember.user_id === project.ownerId ? 'Owner' : 'Custom access'}</Badge>
+                  <Badge variant="neutral">{selectedMember.user_id === project.ownerId ? t('people.owner') : t('roles.customAccess')}</Badge>
                 </div>
                 <div className="flex items-end justify-between gap-3 px-0.5">
                   <div>
-                    <h2 className="font-semibold">Permissions</h2>
-                    <p className="text-xs text-muted-foreground">Choose what this person can see and do.</p>
+                    <h2 className="font-semibold">{t('roles.permissions')}</h2>
+                    <p className="text-xs text-muted-foreground">{t('roles.choose')}</p>
                   </div>
-                  {selectedMember.user_id !== project.ownerId && <span className="shrink-0 text-[0.6875rem] text-muted-foreground">Saved automatically</span>}
+                  {selectedMember.user_id !== project.ownerId && <span className="shrink-0 text-[0.6875rem] text-muted-foreground">{t('roles.saved')}</span>}
                 </div>
                 <div className="overflow-hidden rounded-control border bg-card px-3">
                   <PermissionEditor compact neutral mobileDense values={values[selectedMember.user_id] ?? EMPTY_PERMISSIONS}
@@ -152,14 +152,14 @@ export function Roles() {
                 <UsersRound className="size-[1.125rem]" />
               </span>
               <div className="grid min-w-0 flex-1 gap-0.5">
-                <h2 className="font-semibold">Project members</h2>
-                <p className="text-xs text-muted-foreground">{members.length} people</p>
+                <h2 className="font-semibold">{t('roles.members')}</h2>
+                <p className="text-xs text-muted-foreground">{t('roles.peopleCount', { count: members.length })}</p>
               </div>
             </div>
-            <TabsList aria-label="Project members" className="h-auto w-fit max-w-full justify-start gap-1 overflow-x-auto rounded-md bg-muted p-1 md:flex md:w-full md:flex-col md:items-stretch md:justify-start md:gap-1.5 md:overflow-visible md:rounded-none md:bg-transparent md:p-2.5 md:[&>[data-slot=tabs-indicator]]:hidden">
+            <TabsList aria-label={t('roles.members')} className="h-auto w-fit max-w-full justify-start gap-1 overflow-x-auto rounded-md bg-muted p-1 md:flex md:w-full md:flex-col md:items-stretch md:justify-start md:gap-1.5 md:overflow-visible md:rounded-none md:bg-transparent md:p-2.5 md:[&>[data-slot=tabs-indicator]]:hidden">
               {members.map((member) => {
                 const owner = member.user_id === project.ownerId
-                const secondary = member.display_name && member.email ? member.email : owner ? 'Full access' : 'Custom access'
+                const secondary = member.display_name && member.email ? member.email : owner ? t('roles.fullAccess') : t('roles.customAccess')
                 return (
                   <TabsTrigger key={member.user_id} value={member.user_id} className="group/member max-w-44 shrink-0 gap-2 px-2 py-2 md:h-auto md:w-full md:max-w-none md:min-w-0 md:justify-start md:rounded-control md:border md:border-transparent md:px-2.5 md:py-2.5 md:text-start md:shadow-none md:hover:bg-muted/70 md:data-[state=active]:border-border md:data-[state=active]:bg-muted md:data-[state=active]:text-foreground">
                     <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-full bg-background text-muted-foreground shadow-sm md:size-8 md:group-data-[state=active]/member:text-foreground">
@@ -169,7 +169,7 @@ export function Roles() {
                       <span className="truncate">{label(member)}</span>
                       <span className="hidden truncate text-xs font-normal text-muted-foreground md:block">{secondary}</span>
                     </span>
-                    {owner && <Badge variant="neutral" className="px-1.5 text-[0.625rem] max-md:ms-1">Owner</Badge>}
+                    {owner && <Badge variant="neutral" className="px-1.5 text-[0.625rem] max-md:ms-1">{t('people.owner')}</Badge>}
                   </TabsTrigger>
                 )
               })}
@@ -186,7 +186,7 @@ export function Roles() {
                     </span>
                     <div className="grid min-w-0 flex-1 gap-0.5">
                       <h2 className="truncate text-lg font-semibold">{label(member)}</h2>
-                      <p className="text-sm text-muted-foreground">{owner ? 'Project owner · Full access' : 'Choose exactly what this person can see and do.'}</p>
+                      <p className="text-sm text-muted-foreground">{owner ? t('roles.ownerFull') : t('roles.chooseExact')}</p>
                     </div>
                   </div>
                   <div className="pt-0 sm:px-5 sm:pb-5 md:overflow-y-auto md:px-6 md:pb-6 md:[scrollbar-color:color-mix(in_oklab,var(--foreground)_25%,transparent)_transparent] md:[scrollbar-width:thin] md:[&::-webkit-scrollbar]:w-1.5 md:[&::-webkit-scrollbar-thumb]:rounded-full md:[&::-webkit-scrollbar-thumb]:bg-foreground/20 md:[&::-webkit-scrollbar-track]:bg-transparent">
