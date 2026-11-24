@@ -26,7 +26,7 @@ export interface StatementResult {
   plannedTotal: number
   pendingTotal: number
   byMode: { cash: number; bank: number }
-  byPaidBy: { investor: number; builder: number }
+  byPaidBy: { payer: string; amount: number }[]
   /** Counted amount per phase id ('' for no phase), largest first. */
   byPhase: { phaseId: string; amount: number }[]
   countedCount: number
@@ -48,6 +48,8 @@ export function buildStatement(payments: Payment[], f: StatementFilter): Stateme
 
   const byPhase = new Map<string, number>()
   for (const p of counted) byPhase.set(p.phaseId ?? '', (byPhase.get(p.phaseId ?? '') ?? 0) + p.amount)
+  const byPayer = new Map<string, number>()
+  for (const p of counted) byPayer.set(p.paidBy, (byPayer.get(p.paidBy) ?? 0) + p.amount)
 
   return {
     rows: [...counted, ...planned, ...pending].sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt),
@@ -55,7 +57,7 @@ export function buildStatement(payments: Payment[], f: StatementFilter): Stateme
     plannedTotal: sum(planned),
     pendingTotal: sum(pending),
     byMode: { cash: sum(counted.filter((p) => p.mode === 'cash')), bank: sum(counted.filter((p) => p.mode === 'bank')) },
-    byPaidBy: { investor: sum(counted.filter((p) => p.paidBy === 'investor')), builder: sum(counted.filter((p) => p.paidBy === 'builder')) },
+    byPaidBy: [...byPayer].map(([payer, amount]) => ({ payer, amount })).sort((a, b) => b.amount - a.amount),
     byPhase: [...byPhase].map(([phaseId, amount]) => ({ phaseId, amount })).sort((a, b) => b.amount - a.amount),
     countedCount: counted.length,
   }

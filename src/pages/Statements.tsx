@@ -20,6 +20,7 @@ import { nextSort, sortRows, type SortState } from '@/lib/sort'
 import { csvEscape, download, formatDate, money, todayISO } from '@/lib/format'
 import { buildStatement, type StatementScope } from '@/lib/statements'
 import { isAwaitingApproval, isPlanned } from '@/lib/stats'
+import { payerLabel } from '@/lib/members'
 
 function initialScope(sp: URLSearchParams): StatementScope {
   if (sp.get('vendor')) return 'vendor'
@@ -31,7 +32,8 @@ function initialScope(sp: URLSearchParams): StatementScope {
 type StmtCol = 'date' | 'purpose' | 'payee' | 'phase' | 'mode' | 'paidBy' | 'status' | 'amount'
 
 export function Statements() {
-  const { t, lang, project, settings, phaseName, can } = useApp()
+  const { t, lang, project, settings, phaseName, can, membersOf } = useApp()
+  const members = membersOf(project?.id)
   const toast = useToast()
   const [sp] = useSearchParams()
   const payments = usePayments(project?.id)
@@ -93,7 +95,7 @@ export function Statements() {
             case 'mode':
               return t(`mode.${p.mode}` as Key)
             case 'paidBy':
-              return t(`paidBy.${p.paidBy}` as Key)
+              return payerLabel(p.paidBy, members, t)
             case 'status':
               return stateLabel(p)
             case 'amount':
@@ -330,7 +332,7 @@ export function Statements() {
                       <td className="px-2 py-2">{who(p)}</td>
                       <td className="px-2 py-2">{(p.phaseId && phaseLabel.get(p.phaseId)) || '—'}</td>
                       <td className="px-2 py-2">{t(`mode.${p.mode}` as Key)}</td>
-                      <td className="px-2 py-2">{t(`paidBy.${p.paidBy}` as Key)}</td>
+                      <td className="px-2 py-2">{payerLabel(p.paidBy, members, t)}</td>
                       <td className="px-2 py-2">{stateLabel(p)}</td>
                       <td className="tabular px-2 py-2 text-end font-semibold whitespace-nowrap">{money(p.amount)}</td>
                     </tr>
@@ -365,8 +367,9 @@ export function Statements() {
                 </section>
                 <section aria-label={t('stmt.byPaidBy')} className="grid content-start gap-1">
                   <h3 className="font-semibold max-sm:text-[0.9375rem]">{t('stmt.byPaidBy')}</h3>
-                  <p className="flex justify-between text-sm max-sm:text-[0.8125rem]"><span>{t('paidBy.investor')}</span><span className="tabular">{money(result.byPaidBy.investor)}</span></p>
-                  <p className="flex justify-between text-sm max-sm:text-[0.8125rem]"><span>{t('paidBy.builder')}</span><span className="tabular">{money(result.byPaidBy.builder)}</span></p>
+                  {result.byPaidBy.map((row) => (
+                    <p key={row.payer} className="flex justify-between text-sm max-sm:text-[0.8125rem]"><span>{payerLabel(row.payer, members, t)}</span><span className="tabular">{money(row.amount)}</span></p>
+                  ))}
                 </section>
                 {scope !== 'phase' && result.byPhase.length > 1 && (
                   <section aria-label={t('stmt.byPhase')} className="grid content-start gap-1 sm:col-span-2">

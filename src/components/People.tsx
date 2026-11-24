@@ -1,26 +1,27 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Copy, MessageCircle, Trash2, UserMinus, Users } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
+import { Dialog } from '@/components/common'
+import { PermissionEditor } from '@/components/PermissionEditor'
 import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
-import type { Role } from '@/db/types'
 import { formatDate } from '@/lib/format'
 import { groupInviteCode, inviteLink } from '@/lib/invite'
+import { EMPTY_PERMISSIONS, type Action, type PermissionMap } from '@/lib/permissions'
 import { useSync } from '@/sync/SyncProvider'
 import { supabase } from '@/sync/supabase'
 
 interface Member {
   user_id: string
-  role: Role
   email: string | null
+  display_name: string | null
 }
 interface Invite {
   id: string
   code: string
-  role: Role
+  permissions: PermissionMap
   expires_at: string | null
 }
 
@@ -35,7 +36,8 @@ export function People() {
   const toast = useToast()
   const [members, setMembers] = useState<Member[]>([])
   const [invites, setInvites] = useState<Invite[]>([])
-  const [role, setRole] = useState<Role>('builder')
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [permissions, setPermissions] = useState<PermissionMap>({ ...EMPTY_PERMISSIONS })
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [removing, setRemoving] = useState<string>()
@@ -44,9 +46,9 @@ export function People() {
   const load = useCallback(async () => {
     if (!supabase || !project) return
     const [m, i] = await Promise.all([
-      supabase.from('project_members').select('user_id, role, email').eq('project_id', project.id),
+      supabase.from('project_members').select('user_id, email, display_name').eq('project_id', project.id),
       manage
-        ? supabase.from('project_invites').select('id, code, role, expires_at').eq('project_id', project.id).is('accepted_at', null)
+        ? supabase.from('project_invites').select('id, code, permissions, expires_at').eq('project_id', project.id).is('accepted_at', null)
         : Promise.resolve({ data: [] }),
     ])
     setMembers((m.data as Member[]) ?? [])
@@ -64,8 +66,8 @@ export function People() {
     setBusy(true)
     const { data, error: err } = await supabase
       .from('project_invites')
-      .insert({ project_id: project.id, role })
-      .select('id, code, role, expires_at')
+      .insert({ project_id: project.id, role: 'builder', permissions })
+      .select('id, code, permissions, expires_at')
       .single()
     setBusy(false)
     if (err) {
@@ -74,6 +76,8 @@ export function People() {
       return
     }
     if (data) setInvites((current) => [data as Invite, ...current])
+    setInviteOpen(false)
+    setPermissions({ ...EMPTY_PERMISSIONS })
     toast.show({ kind: 'success', message: t('people.sent') })
   }
 
@@ -95,7 +99,7 @@ export function People() {
 
   const whatsapp = (i: Invite) => {
     const link = linkFor(i.code)
-    const text = t('people.shareText', { project: project?.name ?? '', role: roleLabel(i.role), link, code: groupInviteCode(i.code) })
+    const text = t('people.shareText', { project: project?.name ?? '', link, code: groupInviteCode(i.code) })
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
   }
 
@@ -110,8 +114,6 @@ export function People() {
     toast.show({ kind: 'success', message: t('people.removed') })
     void load()
   }
-
-  const roleLabel = (r: Role) => t(r === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')
 
   return (
     <Card>
@@ -131,10 +133,9 @@ export function People() {
             return (
               <li key={m.user_id} className="flex items-center gap-3 p-3">
                 <span className="min-w-0 flex-1 truncate font-semibold">
-                  {m.email ?? m.user_id.slice(0, 8)}
+                  {m.display_name || m.email || m.user_id.slice(0, 8)}
                   {me && <span className="font-normal text-muted-foreground"> ({t('people.you')})</span>}
                 </span>
-                <Badge variant="secondary">{roleLabel(m.role)}</Badge>
                 {owner && <Badge variant="neutral">{t('people.owner')}</Badge>}
                 {manage && !me && !owner &&
                   (removing === m.user_id ? (
@@ -153,7 +154,7 @@ export function People() {
           })}
         </ul>
 
-        {!manage && <p className="text-sm text-muted-foreground">{t('people.onlyInvestor')}</p>}
+        {!manage && <p className="text-sm text-muted-foreground">{t('people.onlyOwner')}</p>}
 
         {manage && invites.length > 0 && (
           <div className="grid gap-2">
@@ -165,7 +166,7 @@ export function People() {
                     <code className="tabular rounded-lg bg-muted px-2 py-1 text-base font-semibold tracking-wider" dir="ltr">
                       {groupInviteCode(i.code)}
                     </code>
-                    <Badge variant="neutral">{roleLabel(i.role)}</Badge>
+                    <Badge variant="neutral">{Object.values(i.permissions ?? {}).filter(Boolean).length} permissions</Badge>
                     {i.expires_at && <span className="text-sm text-muted-foreground">{t('people.ends', { date: formatDate(i.expires_at.slice(0, 10), lang) })}</span>}
                   </div>
                   <p className="break-all text-xs text-muted-foreground" dir="ltr">{linkFor(i.code)}</p>
@@ -193,24 +194,26 @@ export function People() {
           <div className="grid gap-3">
             <h3 className="text-sm font-semibold">{t('people.inviteTitle')}</h3>
             <p className="text-sm text-muted-foreground">{t('people.inviteHelp')}</p>
-            <PillRadioGroup aria-label={t('people.role')} value={role} onValueChange={(v) => setRole(v as Role)}>
-              {(['builder', 'investor'] as Role[]).map((r) => (
-                <PillRadioItem key={r} value={r}>
-                  {roleLabel(r)}
-                </PillRadioItem>
-              ))}
-            </PillRadioGroup>
             {error && (
               <p role="alert" className="text-sm font-semibold text-danger">
                 {error}
               </p>
             )}
-            <Button className="w-fit" disabled={busy} onClick={() => void create()}>
+            <Button className="w-fit" disabled={busy} onClick={() => setInviteOpen(true)}>
               {t('people.createCode')}
             </Button>
           </div>
         )}
       </CardContent>
+      <Dialog open={inviteOpen} title={t('people.permissionsTitle')} description={t('people.permissionsHelp')} onClose={() => setInviteOpen(false)}
+        footer={<><Button variant="outline" onClick={() => setInviteOpen(false)}>{t('common.cancel')}</Button><Button disabled={busy} onClick={() => void create()}>{t('people.createCode')}</Button></>}>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => setPermissions(Object.fromEntries(Object.keys(EMPTY_PERMISSIONS).map((key) => [key, true])) as PermissionMap)}>{t('people.selectAll')}</Button>
+          <Button size="sm" variant="ghost" onClick={() => setPermissions({ ...EMPTY_PERMISSIONS })}>{t('people.clearAll')}</Button>
+        </div>
+        <PermissionEditor compact values={permissions} onChange={(permission: Action, enabled) => setPermissions((current) => ({ ...current, [permission]: enabled }))} />
+        {error && <p role="alert" className="text-sm font-semibold text-danger">{error}</p>}
+      </Dialog>
     </Card>
   )
 }

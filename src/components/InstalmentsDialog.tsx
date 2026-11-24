@@ -7,10 +7,11 @@ import { Dropdown } from '@/components/ui/dropdown'
 import { Input } from '@/components/ui/input'
 import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
 import { planInstalments } from '@/db/actions'
-import { CATEGORIES, type Category, type Contract, type PayMode, type Payment, type Role } from '@/db/types'
+import { CATEGORIES, type Category, type Contract, type PayMode, type Payment } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { addDays, formatDate, groupDigits, money, parseAmount, todayISO } from '@/lib/format'
 import { EVERY, firstInstalmentDay, proposeInstalments, type Every, type InstalmentRow } from '@/lib/schedule'
+import { memberLabel } from '@/lib/members'
 
 const MAX_COUNT = 12
 
@@ -40,7 +41,8 @@ export function InstalmentsDialog({
   payments: Payment[]
   onClose: () => void
 }) {
-  const { t, lang, settings } = useApp()
+  const { t, lang, settings, project, userId, membersOf } = useApp()
+  const members = membersOf(project?.id)
   const toast = useToast()
   // One payment (the usual) or several in instalments.
   const [kind, setKind] = useState<'one' | 'several'>('one')
@@ -50,7 +52,7 @@ export function InstalmentsDialog({
   const [every, setEvery] = useState<Every>('month')
   const [category, setCategory] = useState<Category>('labour')
   const [mode, setMode] = useState<PayMode>('cash')
-  const [paidBy, setPaidBy] = useState<Role>('investor')
+  const [paidBy, setPaidBy] = useState(userId ?? settings.role)
   const [rows, setRows] = useState<InstalmentRow[]>([])
   const [error, setError] = useState('')
 
@@ -68,9 +70,9 @@ export function InstalmentsDialog({
     setEvery('month')
     setCategory(usualCategory(payments))
     setMode(payments.find((p) => !p.deletedAt)?.mode ?? 'cash')
-    setPaidBy(settings.role)
+    setPaidBy(userId ?? settings.role)
     setError('')
-  }, [open, unplanned, payments, settings.role, latest])
+  }, [open, unplanned, payments, settings.role, userId, latest])
 
   // The rows follow the choices above; once a row is edited by hand they stay until a choice above changes again.
   useEffect(() => {
@@ -257,10 +259,10 @@ export function InstalmentsDialog({
         </div>
         <GroupField label={t('pay.paidBy')}>
           {(labelId) => (
-            <PillRadioGroup aria-labelledby={labelId} value={paidBy} onValueChange={(v) => setPaidBy(v as Role)}>
-              {(['investor', 'builder'] as Role[]).map((r) => (
-                <PillRadioItem key={r} value={r}>
-                  {t(`paidBy.${r}` as Key)}
+            <PillRadioGroup aria-labelledby={labelId} value={paidBy} onValueChange={setPaidBy}>
+              {(members.length ? members : [{ userId: userId ?? settings.role, name: settings.userName || undefined }]).map((member) => (
+                <PillRadioItem key={member.userId} value={member.userId}>
+                  {memberLabel(member)}
                 </PillRadioItem>
               ))}
             </PillRadioGroup>

@@ -174,7 +174,7 @@ export function Dialog({
           }
         }}
         showCloseButton={false}
-        className="max-h-[calc(100dvh-1rem)] gap-0 overflow-hidden p-0 max-sm:top-auto max-sm:bottom-0 max-sm:max-w-none max-sm:translate-y-0 max-sm:rounded-b-none max-sm:data-[state=open]:slide-in-from-bottom"
+        className="max-h-[calc(100dvh-1rem)] gap-0 overflow-hidden p-0 sm:p-0 max-sm:top-auto max-sm:bottom-0 max-sm:max-w-none max-sm:translate-y-0 max-sm:rounded-b-none max-sm:data-[state=open]:slide-in-from-bottom"
       >
         <DialogHeader className="flex-row items-center justify-between space-y-0 border-b p-4 text-start">
           <div className="grid gap-1">
@@ -185,7 +185,7 @@ export function Dialog({
             <X aria-hidden="true" />
           </Button>
         </DialogHeader>
-        <div className="grid max-h-[65dvh] gap-4 overflow-y-auto p-4">{children}</div>
+        <div className="grid max-h-[65dvh] gap-4 overflow-y-auto p-4 [scrollbar-color:color-mix(in_oklab,var(--foreground)_35%,transparent)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-foreground/25 [&::-webkit-scrollbar-track]:bg-transparent">{children}</div>
         {footer && <DialogFooter className="flex-row flex-wrap justify-end gap-2 border-t p-4 max-sm:[&>*:not(:only-child)]:grow max-sm:[&>*:not(:only-child)]:basis-[calc(50%-0.25rem)]">{footer}</DialogFooter>}
       </DialogContent>
     </DialogRoot>

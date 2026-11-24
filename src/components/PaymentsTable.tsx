@@ -1,21 +1,23 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Banknote, HardHat, Landmark, ReceiptText, Wallet } from 'lucide-react'
+import { Banknote, Landmark, Paperclip, ReceiptText, UserRound } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { StatusPill } from '@/components/common'
 import { PaymentDetails } from '@/components/PaymentDetails'
+import { PaymentAttachmentsDialog } from '@/components/PaymentAttachmentsDialog'
 import { PhaseIcon } from '@/components/PhaseIcon'
 import { ariaSort, SortButton } from '@/components/SortButton'
 import { nextSort, sortRows, type SortState } from '@/lib/sort'
 import { colourMap } from '@/lib/avatarColours'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { usePhases, useVendors } from '@/db/hooks'
+import { usePhases, useProjectAttachments, useVendors } from '@/db/hooks'
 import type { Payment } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { bankLine } from '@/lib/bank'
 import { addDays, formatDate, money, moneyRate, todayISO } from '@/lib/format'
 import { hasQuantity, num, rateOf } from '@/lib/materials'
 import { cn } from '@/lib/utils'
+import { payerLabel } from '@/lib/members'
 
 type Col = 'date' | 'purpose' | 'phase' | 'mode' | 'paidBy' | 'amount' | 'status'
 
@@ -36,11 +38,10 @@ function ModeIcon({ mode }: { mode: Payment['mode'] }) {
 }
 
 /** Who paid: the investor (a wallet) or the builder (a hard hat). Words always come with it. */
-function PaidBy({ role, label }: { role: Payment['paidBy']; label: React.ReactNode }) {
-  const Icon = role === 'builder' ? HardHat : Wallet
+function PaidBy({ label }: { label: React.ReactNode }) {
   return (
     <span className="inline-flex items-center gap-2">
-      <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+      <UserRound aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
       {label}
     </span>
   )
@@ -51,20 +52,28 @@ function PaidBy({ role, label }: { role: Payment['paidBy']; label: React.ReactNo
  * container's width (container query), so they also work inside a side panel or a dialog.
  * `compact` is for a glance (the Home screen): when narrow, a payment is one short line and the list stops at five.
  */
-export function PaymentsTable({ payments, showPhase = true, compact = false }: { payments: Payment[]; showPhase?: boolean; compact?: boolean }) {
-  const { t, lang, project, phaseName, can } = useApp()
+export function PaymentsTable({ payments, showPhase = true, compact = false, showAttachments = false }: { payments: Payment[]; showPhase?: boolean; compact?: boolean; showAttachments?: boolean }) {
+  const { t, lang, project, phaseName, can, membersOf } = useApp()
+  const members = membersOf(project?.id)
   const vendors = useVendors(project?.id)
   const phases = usePhases(project?.id)
+  const attachments = useProjectAttachments(showAttachments ? project?.id : undefined)
   const vendorMap = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
   const phaseMap = useMemo(() => new Map(phases.map((p) => [p.id, phaseName(p)])), [phases, phaseName])
   const phaseById = useMemo(() => new Map(phases.map((p) => [p.id, p])), [phases])
   // The same colour a phase has on the Phases page: worked out once from the phases in their order.
   const phaseColour = useMemo(() => colourMap(phases.map((p) => p.id)), [phases])
+  const attachmentCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const attachment of attachments) counts.set(attachment.paymentId, (counts.get(attachment.paymentId) ?? 0) + 1)
+    return counts
+  }, [attachments])
 
   // Click a heading to sort by it (again for the other way, a third time for the order the page gave). Sorting happens here, in the browser.
   const [sort, setSort] = useState<SortState<Col>>(null)
   // On a narrow screen a payment's row opens its details in a sheet (the wide table links to the edit page as before).
   const [detail, setDetail] = useState<Payment>()
+  const [attachmentPayment, setAttachmentPayment] = useState<Payment>()
   const onSort = (k: Col) => setSort((cur) => nextSort(cur, k))
   const rows = useMemo(() => {
     const today = todayISO()
@@ -82,7 +91,7 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
           case 'mode':
             return t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')
           case 'paidBy':
-            return t(`paidBy.${p.paidBy}` as Key)
+            return payerLabel(p.paidBy, members, t)
           case 'amount':
             return p.amount
           case 'status':
@@ -101,6 +110,23 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
       : hasQuantity(p)
         ? t('mat.at', { qty: num(p.quantity), unit: t(`unit.${p.unit}` as Key), rate: moneyRate(rateOf(p)) })
         : ''
+
+  const attachmentBadge = (p: Payment) => {
+    const count = attachmentCounts.get(p.id) ?? 0
+    if (!showAttachments || count === 0) return null
+    return (
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-label={t('ledger.viewAttachments', { count })}
+        onClick={() => setAttachmentPayment(p)}
+        className="relative z-10 inline-flex min-h-6 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[0.6875rem] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      >
+        <Paperclip aria-hidden="true" className="size-3.5" />
+        {count}
+      </button>
+    )
+  }
 
   return (
     <div className="@container">
@@ -143,6 +169,7 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
                   </Link>
                   {who(p) && <div className="text-sm text-muted-foreground">{who(p)}</div>}
                   {sub(p) && <div className="text-sm text-muted-foreground">{sub(p)}</div>}
+                  {attachmentCounts.has(p.id) && <div className="mt-1.5 flex">{attachmentBadge(p)}</div>}
                 </TableCell>
                 {showPhase && (
                   <TableCell>
@@ -164,7 +191,7 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
                   {p.mode === 'bank' && bankLine(p) && <div className="ps-6 text-sm text-muted-foreground">{can('viewBankDetails') ? bankLine(p) : '••••••••'}</div>}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
-                  <PaidBy role={p.paidBy} label={t(`paidBy.${p.paidBy}` as Key)} />
+                  <PaidBy label={payerLabel(p.paidBy, members, t)} />
                 </TableCell>
                 <TableCell className="tabular text-end font-bold whitespace-nowrap">{money(p.amount)}</TableCell>
                 <TableCell>
@@ -199,7 +226,10 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
                   )}
                   <div className="grid min-w-0 flex-1 gap-0.5">
                     <span className="line-clamp-2 leading-snug font-semibold [overflow-wrap:anywhere] max-sm:text-[0.9375rem]">{p.purpose}</span>
-                    <span className="truncate text-sm text-muted-foreground max-sm:text-xs">{[formatDate(p.date, lang), phaseName ?? who(p)].filter(Boolean).join(' · ')}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-sm text-muted-foreground max-sm:text-xs">{[formatDate(p.date, lang), phaseName ?? who(p)].filter(Boolean).join(' · ')}</span>
+                      {attachmentBadge(p)}
+                    </span>
                   </div>
                   <div className="grid shrink-0 justify-items-end gap-1">
                     <span className="tabular leading-snug font-bold whitespace-nowrap max-sm:text-[0.9375rem]">{money(p.amount)}</span>
@@ -232,14 +262,14 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
                     {t(p.mode === 'cash' ? 'mode.cash' : 'mode.bank')}
                   </span>
                   <PaidBy
-                    role={p.paidBy}
                     label={
                       <>
                         <span className="sr-only">{`${t('pay.paidBy')}: `}</span>
-                        {t(`paidBy.${p.paidBy}` as Key)}
+                        {payerLabel(p.paidBy, members, t)}
                       </>
                     }
                   />
+                  {attachmentBadge(p)}
                 </div>
               </div>
             </li>
@@ -247,6 +277,7 @@ export function PaymentsTable({ payments, showPhase = true, compact = false }: {
         })}
       </ul>
       <PaymentDetails payment={detail} onClose={() => setDetail(undefined)} />
+      <PaymentAttachmentsDialog payment={attachmentPayment} onClose={() => setAttachmentPayment(undefined)} />
     </div>
   )
 }

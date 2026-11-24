@@ -25,7 +25,7 @@ export type Action =
   | 'editFee'
   | 'managePlans'
   | 'manageFiles'
-  /** Invite people, change their role, remove them. */
+  /** Invite people, change their permissions, remove them. */
   | 'managePeople'
 
 export interface PermissionDefinition {
@@ -38,7 +38,7 @@ export interface PermissionDefinition {
 /** Stable keys shared by the UI and supabase/schema.sql. Never rename a key after release. */
 export const PERMISSIONS: PermissionDefinition[] = [
   { key: 'addPayments', group: 'payments', label: 'Add payments', description: 'Create paid, planned and advance entries.' },
-  { key: 'editPayments', group: 'payments', label: 'Edit payments', description: 'Change payment entries this role is allowed to change.' },
+  { key: 'editPayments', group: 'payments', label: 'Edit payments', description: 'Change payment entries this person is allowed to change.' },
   { key: 'deletePayments', group: 'payments', label: 'Delete payments', description: 'Move payment entries to the bin.' },
   { key: 'approvePayments', group: 'payments', label: 'Approve payments', description: 'Approve or reject entries waiting for review.' },
   { key: 'viewBankDetails', group: 'payments', label: 'View bank details', description: 'See account numbers, IBANs and bank references.' },
@@ -49,10 +49,10 @@ export const PERMISSIONS: PermissionDefinition[] = [
   { key: 'completePhases', group: 'project', label: 'Complete phases', description: 'Mark phases complete or reopen them.' },
   { key: 'editContracts', group: 'money', label: 'Manage contracts', description: 'Add, edit and delete contracts and variations.' },
   { key: 'editTransfers', group: 'money', label: 'Manage transfers', description: 'Record advances, reimbursements, returns and fees.' },
-  { key: 'editFee', group: 'money', label: 'Set builder fee', description: 'Change how the builder fee is calculated.' },
+  { key: 'editFee', group: 'money', label: 'Set project fee', description: 'Change how the project fee is calculated.' },
   { key: 'managePlans', group: 'money', label: 'Manage payment plans', description: 'Add, edit, pause and delete recurring payments.' },
   { key: 'manageFiles', group: 'project', label: 'Manage files', description: 'Upload, edit and remove project files and receipts.' },
-  { key: 'managePeople', group: 'people', label: 'Manage people', description: 'Invite members, change roles and remove members.' },
+  { key: 'managePeople', group: 'people', label: 'Manage people', description: 'Invite members, change permissions and remove members.' },
 ]
 
 export type PermissionMap = Partial<Record<Action, boolean>>
@@ -68,8 +68,11 @@ export const DEFAULT_PERMISSIONS: Record<Role, Record<Action, boolean>> = {
   },
 }
 
-export const permissionValue = (role: Role, action: Action, overrides?: PermissionMap): boolean =>
-  overrides?.[action] ?? DEFAULT_PERMISSIONS[role][action]
+export const EMPTY_PERMISSIONS = Object.fromEntries(PERMISSIONS.map((p) => [p.key, false])) as Record<Action, boolean>
+export const FULL_PERMISSIONS = Object.fromEntries(PERMISSIONS.map((p) => [p.key, true])) as Record<Action, boolean>
+
+/** Permissions now belong to one project member. Missing keys are denied; the project owner bypasses this map. */
+export const permissionValue = (_role: Role, action: Action, overrides?: PermissionMap): boolean => overrides?.[action] === true
 
 export const can = (role: Role, action: Action, overrides?: PermissionMap, owner = false): boolean =>
   owner || permissionValue(role, action, overrides)

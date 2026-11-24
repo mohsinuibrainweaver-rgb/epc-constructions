@@ -61,7 +61,7 @@ function Kpi({ label, value, icon: Icon, mesh, to, children, corner, className }
 }
 
 export function Home() {
-  const { t, lang, project, phaseName, settings, can } = useApp()
+  const { t, lang, project, phaseName, can } = useApp()
   // Due and upcoming starts with the three that are first in line; the rest open on request (up to eight).
   const [dueAll, setDueAll] = useState(false)
   const payments = usePayments(project?.id)
@@ -90,7 +90,7 @@ export function Home() {
 
   // Budgets over their limit, contracts overpaid, and the tidy-up items; due payments and approvals have their own cards.
   const attention = attentionItems(
-    [...buildAlerts(project, phases, payments, phaseName, todayISO(), settings.role), ...contractAlerts(contracts, payments)],
+    [...buildAlerts(project, phases, payments, phaseName, todayISO(), can('approvePayments') ? 'investor' : 'builder'), ...contractAlerts(contracts, payments)],
     payments,
     receiptIds,
     fullPhases(phases, payments).map((ph) => phaseName(ph)),

@@ -318,7 +318,7 @@ export function Ledger() {
             />
           )
         ) : (
-          <PaymentsTable payments={rows} />
+          <PaymentsTable payments={rows} showAttachments />
         )}
       </Card>
     </div>

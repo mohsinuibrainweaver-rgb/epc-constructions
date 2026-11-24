@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { ConfirmStatus, PasswordInput, PasswordStrength } from '@/components/PasswordFields'
 import { checkPassword } from '@/lib/password'
-import { cleanInviteCode, inviteLink, isCompleteInviteCode } from '@/lib/invite'
+import { cleanInviteCode, inviteJoinLink, isCompleteInviteCode } from '@/lib/invite'
 import { supabase } from '@/sync/supabase'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -87,7 +87,7 @@ export function SignIn() {
         ...creds,
         options: {
           data: { name: name.trim(), ...(invited ? { invite_code: invite } : {}) },
-          ...(invited ? { emailRedirectTo: inviteLink(window.location.origin, invite) } : {}),
+          ...(invited ? { emailRedirectTo: inviteJoinLink(window.location.origin, invite) } : {}),
         },
       })
       if (error) {

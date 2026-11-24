@@ -2,6 +2,7 @@
 // synced to a backend later without changing the shape.
 export type Lang = 'en' | 'ur'
 export type Role = 'investor' | 'builder'
+export interface ProjectMemberIdentity { userId: string; name?: string; email?: string }
 
 export type Category = 'material' | 'labour' | 'machinery' | 'fees' | 'misc'
 export type MiscType =
@@ -144,7 +145,8 @@ export interface Payment extends Stamped {
   purpose: string
   status: PayStatus
   mode: PayMode
-  paidBy: Role
+  /** Project member id for new rows; legacy rows contain "investor" or "builder". */
+  paidBy: string
   note?: string
   addedBy: string
   /** Set on a payment that a weekly plan created. */
@@ -191,7 +193,7 @@ export interface PaymentPlan extends Stamped {
   phaseId?: string
   category: Category
   mode: PayMode
-  paidBy: Role
+  paidBy: string
   startDate: string
   /** The last date for which a payment was created, so none is created twice. */
   generatedThrough?: string

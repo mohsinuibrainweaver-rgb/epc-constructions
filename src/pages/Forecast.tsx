@@ -14,10 +14,12 @@ import { useContracts, usePayments, usePhases, usePlans, useTransfers, useVendor
 import { cashAdvice, forecast, type ForecastItem } from '@/lib/forecast'
 import { formatDate, formatDayShort, money, todayISO } from '@/lib/format'
 import { computeSettlement } from '@/lib/settlement'
+import { payerLabel } from '@/lib/members'
 
 /** What the coming weeks will cost: week by week, who pays, and what has no day yet. */
 export function Forecast() {
-  const { t, lang, project } = useApp()
+  const { t, lang, project, membersOf } = useApp()
+  const members = membersOf(project?.id)
   const payments = usePayments(project?.id)
   const plans = usePlans(project?.id)
   const contracts = useContracts(project?.id)
@@ -28,7 +30,7 @@ export function Forecast() {
   const [picked, setPicked] = useState<number | null>(null)
   const { hash } = useLocation()
 
-  const f = useMemo(() => forecast({ payments, plans, contracts, today }), [payments, plans, contracts, today])
+  const f = useMemo(() => forecast({ payments, plans, contracts, today, ownerId: project?.ownerId }), [payments, plans, contracts, today, project?.ownerId])
   const settlement = useMemo(() => (project ? computeSettlement(project, payments, transfers, phases, today) : undefined), [project, payments, transfers, phases, today])
   const advice = settlement ? cashAdvice(settlement.builderBalance, f.builderNext30) : undefined
   const vendorName = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
@@ -171,7 +173,7 @@ export function Forecast() {
                     <span className="min-w-0 flex-1">
                       <span className="block font-semibold [overflow-wrap:anywhere]">{i.purpose}</span>
                       <span className="block text-sm text-muted-foreground">
-                        {[formatDate(i.date, lang), vendor, i.paidBy === 'builder' ? t('forecast.builderTag') : undefined].filter(Boolean).join(' · ')}
+                        {[formatDate(i.date, lang), vendor, payerLabel(i.paidBy, members, t)].filter(Boolean).join(' · ')}
                       </span>
                     </span>
                     <span className="grid shrink-0 justify-items-end gap-1">

@@ -33,7 +33,7 @@ export interface Settlement {
 const total = (ts: Transfer[], kinds: Transfer['kind'][]): number =>
   ts.filter((t) => !t.deletedAt && kinds.includes(t.kind)).reduce((s, t) => s + t.amount, 0)
 
-type FeeProject = Pick<Project, 'feeBasis' | 'feeAmount' | 'feePercent'> & Partial<Pick<Project, 'retainerAmount' | 'retainerStart' | 'retainerEnd'>>
+type FeeProject = Pick<Project, 'feeBasis' | 'feeAmount' | 'feePercent'> & Partial<Pick<Project, 'ownerId' | 'retainerAmount' | 'retainerStart' | 'retainerEnd'>>
 
 /** One phase's share of a per-phase fee. */
 export interface FeeLine {
@@ -105,7 +105,7 @@ export function computeSettlement(
 ): Settlement {
   const spent = payments.filter(isSpent)
   const constructionCost = sum(spent)
-  const paidByBuilder = sum(spent.filter((p) => p.paidBy === 'builder'))
+  const paidByBuilder = sum(spent.filter((p) => p.paidBy !== 'investor' && p.paidBy !== project.ownerId))
   const paidByInvestor = constructionCost - paidByBuilder
   const advances = total(transfers, ['advance', 'topup'])
   const reimbursed = total(transfers, ['reimbursement'])

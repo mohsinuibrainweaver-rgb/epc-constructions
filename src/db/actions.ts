@@ -1,5 +1,5 @@
 import { db, now, uid } from './db'
-import type { Attachment, Category, Contract, ContractVariation, FeeBasis, PhaseFeeKind, PayMode, Payment, ProjectFile, PaymentPlan, Phase, Project, Role, Settings, Transfer, Vendor } from './types'
+import type { Attachment, Category, Contract, ContractVariation, FeeBasis, PhaseFeeKind, PayMode, Payment, ProjectFile, PaymentPlan, Phase, Project, Settings, Transfer, Vendor } from './types'
 import { cleanFileName, extForMime, isAudioName, isDocumentName, isVideoType } from '../lib/media'
 import { addDays, todayISO } from '../lib/format'
 import { approvalFields } from '../lib/approval'
@@ -193,11 +193,11 @@ export async function savePayment(
 }
 
 /** A planned payment becomes Paid. When the builder does it, it waits for the investor like any other builder entry. */
-export async function markPaid(id: string, role?: Role): Promise<void> {
+export async function markPaid(id: string, canApprove?: boolean): Promise<void> {
   const p = await db.payments.get(id)
   await db.payments.update(id, {
     status: 'paid',
-    ...(role && p ? approvalFields(role, 'paid', p) : {}),
+    ...(canApprove !== undefined && p ? approvalFields(canApprove, 'paid', p) : {}),
     updatedAt: now(),
   })
 }
@@ -599,7 +599,7 @@ export async function removeVariation(contractId: string, variationId: string): 
 export async function planInstalments(
   contract: Contract,
   rows: { date: string; amount: number }[],
-  opts: { category: Category; mode: PayMode; paidBy: Role; addedBy: string; firstNumber: number; purpose: (n: number) => string },
+  opts: { category: Category; mode: PayMode; paidBy: string; addedBy: string; firstNumber: number; purpose: (n: number) => string },
 ): Promise<number> {
   const t = now()
   const made: Payment[] = rows

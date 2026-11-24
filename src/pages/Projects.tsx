@@ -22,12 +22,11 @@ import { cn } from '@/lib/utils'
  * same room, so there is no empty gap in any card.
  */
 function ProjectCard({ project, spent, current, onDelete }: { project: Project; spent: number; current: boolean; onDelete: () => void }) {
-  const { t, can, isOwner, roleOf } = useApp()
+  const { t, can, isOwner } = useApp()
   const mine = can('editProject', project.id)
   const url = useObjectUrl(project.thumbnail)
   const tone = budgetTone(budgetState(spent, project.budget))
   const pct = percent(spent, project.budget)
-  const role = roleOf(project.id)
   return (
     <Card
       className={cn('h-full gap-0 overflow-hidden py-0 transition-colors hover:border-foreground/30', current && 'ring-2 ring-primary')}
@@ -41,7 +40,6 @@ function ProjectCard({ project, spent, current, onDelete }: { project: Project; 
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             {current && <Badge variant="secondary">{t('projects.current')}</Badge>}
-            <Badge variant="neutral">{t(role === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')}</Badge>
             {isOwner(project.id) && <Badge variant="secondary">{t('people.owner')}</Badge>}
           </div>
           <h2 className="line-clamp-2 min-h-[2lh] text-lg leading-snug font-semibold [overflow-wrap:anywhere]">{project.name}</h2>

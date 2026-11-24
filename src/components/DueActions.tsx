@@ -11,7 +11,7 @@ import { formatDate, todayISO } from '@/lib/format'
 
 /** Pay, move or skip a planned payment (for example this week's foreman payment). */
 export function DueActions({ payment }: { payment: Payment }) {
-  const { t, lang, settings, can } = useApp()
+  const { t, lang, can } = useApp()
   const toast = useToast()
   const [moving, setMoving] = useState(false)
   const [skipping, setSkipping] = useState(false)
@@ -27,7 +27,7 @@ export function DueActions({ payment }: { payment: Payment }) {
           variant="secondary"
           size="sm"
           onClick={() => {
-            void markPaid(payment.id, settings.role)
+            void markPaid(payment.id, can('approvePayments'))
             toast.show({ kind: 'success', message: t('pay.updated') })
           }}
         >

@@ -38,6 +38,8 @@ create table if not exists public.project_members (
   created_at timestamptz not null default now(),
   primary key (project_id, user_id)
 );
+update public.project_members m set display_name = u.raw_user_meta_data ->> 'name'
+from auth.users u where u.id = m.user_id and m.display_name is null and u.raw_user_meta_data ->> 'name' is not null;
 
 create table if not exists public.project_invites (
   id uuid primary key default gen_random_uuid(),
@@ -74,6 +76,20 @@ create table if not exists public.role_permissions (
   updated_at timestamptz not null default now(),
   primary key (project_id, role, permission)
 );
+
+-- Permissions belong to an individual project member. The role table above stays temporarily so old deployments can be
+-- migrated without losing their configured access; application authorization reads this table only.
+create table if not exists public.member_permissions (
+  project_id uuid not null,
+  user_id uuid not null,
+  permission text not null,
+  enabled boolean not null default false,
+  updated_at timestamptz not null default now(),
+  primary key (project_id, user_id, permission),
+  foreign key (project_id, user_id) references public.project_members (project_id, user_id) on delete cascade
+);
+alter table public.project_invites add column if not exists permissions jsonb not null default '{"addPayments":true,"editPayments":true,"deletePayments":true,"approvePayments":false,"viewBankDetails":false,"manageVendors":true,"editProject":false,"deleteProject":false,"editPhases":false,"completePhases":true,"editContracts":false,"editTransfers":false,"editFee":false,"managePlans":true,"manageFiles":true,"managePeople":false}'::jsonb;
+alter table public.project_invites alter column permissions set default '{"addPayments":true,"editPayments":true,"deletePayments":true,"approvePayments":false,"viewBankDetails":false,"manageVendors":true,"editProject":false,"deleteProject":false,"editPhases":false,"completePhases":true,"editContracts":false,"editTransfers":false,"editFee":false,"managePlans":true,"manageFiles":true,"managePeople":false}'::jsonb;
 
 -- Soft references (no foreign keys) so rows can arrive in any order during a sync.
 create table if not exists public.phases (
@@ -180,6 +196,50 @@ create table if not exists public.payment_plans (
   deleted_at bigint,
   server_updated_at timestamptz not null default now()
 );
+
+-- New clients store the paying member's user id. Convert unambiguous legacy role values so existing payments and
+-- recurring plans show the same real member names as new entries. An old "investor" always means the project owner.
+-- An old "builder" is converted only when there is exactly one non-owner member; with several people, keeping the
+-- legacy value is safer than attributing somebody else's payment to the wrong person.
+update public.payments p
+set paid_by = pr.owner_id::text,
+    updated_at = greatest(p.updated_at, (extract(epoch from now()) * 1000)::bigint)
+from public.projects pr
+where p.project_id = pr.id and lower(p.paid_by) = 'investor';
+
+update public.payment_plans pp
+set paid_by = pr.owner_id::text,
+    updated_at = greatest(pp.updated_at, (extract(epoch from now()) * 1000)::bigint)
+from public.projects pr
+where pp.project_id = pr.id and lower(pp.paid_by) = 'investor';
+
+with sole_non_owner as (
+  select pm.project_id, min(pm.user_id::text) as user_id
+  from public.project_members pm
+  join public.projects pr on pr.id = pm.project_id
+  where pm.user_id <> pr.owner_id
+  group by pm.project_id
+  having count(*) = 1
+)
+update public.payments p
+set paid_by = s.user_id,
+    updated_at = greatest(p.updated_at, (extract(epoch from now()) * 1000)::bigint)
+from sole_non_owner s
+where p.project_id = s.project_id and lower(p.paid_by) = 'builder';
+
+with sole_non_owner as (
+  select pm.project_id, min(pm.user_id::text) as user_id
+  from public.project_members pm
+  join public.projects pr on pr.id = pm.project_id
+  where pm.user_id <> pr.owner_id
+  group by pm.project_id
+  having count(*) = 1
+)
+update public.payment_plans pp
+set paid_by = s.user_id,
+    updated_at = greatest(pp.updated_at, (extract(epoch from now()) * 1000)::bigint)
+from sole_non_owner s
+where pp.project_id = s.project_id and lower(pp.paid_by) = 'builder';
 
 create table if not exists public.transfers (
   id uuid primary key,
@@ -351,6 +411,38 @@ as $$
   end;
 $$;
 
+-- One-time compatibility migration: every existing non-owner keeps exactly the access their old project role provided.
+insert into public.member_permissions (project_id, user_id, permission, enabled)
+select m.project_id, m.user_id, p.permission,
+       coalesce(rp.enabled, public.default_role_permission(m.role, p.permission))
+from public.project_members m
+cross join (values
+  ('addPayments'), ('editPayments'), ('deletePayments'), ('approvePayments'), ('viewBankDetails'),
+  ('manageVendors'), ('editProject'), ('deleteProject'), ('editPhases'), ('completePhases'),
+  ('editContracts'), ('editTransfers'), ('editFee'), ('managePlans'), ('manageFiles'), ('managePeople')
+) as p(permission)
+left join public.role_permissions rp
+  on rp.project_id = m.project_id and rp.role = m.role and rp.permission = p.permission
+on conflict (project_id, user_id, permission) do nothing;
+
+-- Pending links created before user permissions existed retain the access their selected legacy role represented.
+update public.project_invites i
+set permissions = q.permissions
+from (
+  select i2.id, jsonb_object_agg(p.permission, coalesce(rp.enabled, public.default_role_permission(i2.role, p.permission))) as permissions
+  from public.project_invites i2
+  cross join (values
+    ('addPayments'), ('editPayments'), ('deletePayments'), ('approvePayments'), ('viewBankDetails'),
+    ('manageVendors'), ('editProject'), ('deleteProject'), ('editPhases'), ('completePhases'),
+    ('editContracts'), ('editTransfers'), ('editFee'), ('managePlans'), ('manageFiles'), ('managePeople')
+  ) as p(permission)
+  left join public.role_permissions rp
+    on rp.project_id = i2.project_id and rp.role = i2.role and rp.permission = p.permission
+  where i2.accepted_at is null and i2.permissions = '{}'::jsonb
+  group by i2.id
+) q
+where i.id = q.id;
+
 create or replace function public.has_permission(pid uuid, permission_key text)
 returns boolean
 language sql
@@ -361,9 +453,9 @@ as $$
   select case
     when public.is_project_owner(pid) then true
     else coalesce(
-      (select rp.enabled from public.role_permissions rp
-       where rp.project_id = pid and rp.role = public.role_of(pid) and rp.permission = permission_key),
-      public.default_role_permission(public.role_of(pid), permission_key)
+      (select mp.enabled from public.member_permissions mp
+       where mp.project_id = pid and mp.user_id = auth.uid() and mp.permission = permission_key),
+      false
     )
   end;
 $$;
@@ -425,7 +517,7 @@ begin
   elsif tg_table_name in ('attachments', 'project_files') then
     if public.has_permission(pid, 'manageFiles') then return new; else return null; end if;
   elsif tg_table_name = 'payments' then
-    if public.role_of(pid) = 'builder' and o is not null and (o ->> 'status') in ('paid', 'advance') and
+    if not public.has_permission(pid, 'approvePayments') and o is not null and (o ->> 'status') in ('paid', 'advance') and
        coalesce(o ->> 'approval', '') not in ('pending', 'rejected') and not public.has_permission(pid, 'approvePayments') then
       return null;
     end if;
@@ -438,10 +530,9 @@ begin
     elsif not public.has_permission(pid, 'editPayments') then
       return null;
     end if;
-    if public.role_of(pid) = 'builder' and (n ->> 'status') in ('paid', 'advance') and
-       not public.has_permission(pid, 'approvePayments') then
+    if (n ->> 'status') in ('paid', 'advance') and not public.has_permission(pid, 'approvePayments') then
       new.approval := 'pending'; new.approved_by := null; new.approved_at := null; new.reject_reason := null;
-    elsif public.role_of(pid) = 'builder' and not public.has_permission(pid, 'approvePayments') and o is not null then
+    elsif not public.has_permission(pid, 'approvePayments') and o is not null then
       new.approval := o ->> 'approval'; new.approved_by := o ->> 'approved_by';
       new.approved_at := (o ->> 'approved_at')::bigint; new.reject_reason := o ->> 'reject_reason';
     end if;
@@ -520,8 +611,9 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.project_members (project_id, user_id, role, email)
-  values (new.id, new.owner_id, 'investor', auth.jwt() ->> 'email')
+  insert into public.project_members (project_id, user_id, role, email, display_name)
+  values (new.id, new.owner_id, 'investor', auth.jwt() ->> 'email',
+    (select u.raw_user_meta_data ->> 'name' from auth.users u where u.id = new.owner_id))
   on conflict do nothing;
   return new;
 end;
@@ -551,9 +643,13 @@ begin
     where accepted_at is null and email is not null and lower(email) = lower(auth.jwt() ->> 'email')
       and (expires_at is null or expires_at > now())
   loop
-    insert into public.project_members (project_id, user_id, role, email)
-    values (r.project_id, auth.uid(), r.role, auth.jwt() ->> 'email')
+    insert into public.project_members (project_id, user_id, role, email, display_name)
+    values (r.project_id, auth.uid(), 'builder', auth.jwt() ->> 'email',
+      (select u.raw_user_meta_data ->> 'name' from auth.users u where u.id = auth.uid()))
     on conflict do nothing;
+    insert into public.member_permissions (project_id, user_id, permission, enabled)
+    select r.project_id, auth.uid(), p.key, p.value::boolean from jsonb_each_text(coalesce(r.permissions, '{}'::jsonb)) p
+    on conflict (project_id, user_id, permission) do update set enabled = excluded.enabled, updated_at = now();
     update public.project_invites set accepted_at = now(), accepted_by = auth.uid() where id = r.id;
     claimed := claimed + 1;
   end loop;
@@ -585,9 +681,13 @@ begin
   if not found then
     raise exception 'invalid_code' using errcode = 'P0001';
   end if;
-  insert into public.project_members (project_id, user_id, role, email)
-  values (inv.project_id, auth.uid(), inv.role, auth.jwt() ->> 'email')
+  insert into public.project_members (project_id, user_id, role, email, display_name)
+  values (inv.project_id, auth.uid(), 'builder', auth.jwt() ->> 'email',
+    (select u.raw_user_meta_data ->> 'name' from auth.users u where u.id = auth.uid()))
   on conflict do nothing;
+  insert into public.member_permissions (project_id, user_id, permission, enabled)
+  select inv.project_id, auth.uid(), p.key, p.value::boolean from jsonb_each_text(coalesce(inv.permissions, '{}'::jsonb)) p
+  on conflict (project_id, user_id, permission) do update set enabled = excluded.enabled, updated_at = now();
   update public.project_invites set accepted_at = coalesce(accepted_at, now()), accepted_by = auth.uid() where id = inv.id;
   return inv.project_id;
 end;
@@ -613,6 +713,27 @@ $$;
 -- A shared signup link sends its one-time code in Auth metadata. Claim it in the same transaction that creates the account,
 -- so the first authenticated sync already sees the project and the invited role; no manual Join screen is needed. If that
 -- code is invalid, expired or already used, raising here rolls back the auth.users insert too: no orphan account is created.
+-- Every new account also needs the display name used to identify who made payments and other project entries. This is a
+-- BEFORE INSERT guard, so existing accounts are untouched and a client cannot bypass the required field.
+create or replace function public.require_signup_name()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if coalesce(btrim(new.raw_user_meta_data ->> 'name'), '') = '' then
+    raise exception 'name_required' using errcode = 'P0001';
+  end if;
+  new.raw_user_meta_data := jsonb_set(coalesce(new.raw_user_meta_data, '{}'::jsonb), '{name}', to_jsonb(btrim(new.raw_user_meta_data ->> 'name')));
+  return new;
+end;
+$$;
+
+drop trigger if exists auth_user_require_signup_name on auth.users;
+create trigger auth_user_require_signup_name before insert on auth.users
+for each row execute function public.require_signup_name();
+
 create or replace function public.accept_signup_invite()
 returns trigger
 language plpgsql
@@ -634,9 +755,12 @@ begin
     raise exception 'invite_invalid_or_expired' using errcode = 'P0001';
   end if;
 
-  insert into public.project_members (project_id, user_id, role, email)
-  values (inv.project_id, new.id, inv.role, new.email)
+  insert into public.project_members (project_id, user_id, role, email, display_name)
+  values (inv.project_id, new.id, 'builder', new.email, new.raw_user_meta_data ->> 'name')
   on conflict do nothing;
+  insert into public.member_permissions (project_id, user_id, permission, enabled)
+  select inv.project_id, new.id, p.key, p.value::boolean from jsonb_each_text(coalesce(inv.permissions, '{}'::jsonb)) p
+  on conflict (project_id, user_id, permission) do update set enabled = excluded.enabled, updated_at = now();
   update public.project_invites set accepted_at = now(), accepted_by = new.id where id = inv.id;
   return new;
 end;
@@ -666,6 +790,14 @@ alter table public.materials enable row level security;
 alter table public.project_files enable row level security;
 alter table public.contracts enable row level security;
 alter table public.role_permissions enable row level security;
+alter table public.member_permissions enable row level security;
+
+drop policy if exists member_permissions_select on public.member_permissions;
+drop policy if exists member_permissions_owner on public.member_permissions;
+create policy member_permissions_select on public.member_permissions for select to authenticated
+  using (user_id = auth.uid() or public.is_project_owner(project_id));
+create policy member_permissions_owner on public.member_permissions for all to authenticated
+  using (public.is_project_owner(project_id)) with check (public.is_project_owner(project_id));
 
 drop policy if exists role_permissions_select on public.role_permissions;
 drop policy if exists role_permissions_owner on public.role_permissions;
@@ -722,7 +854,8 @@ begin
     execute format('create policy %I_select on public.%I for select to authenticated using (public.is_member(project_id))', t, t);
     execute format('create policy %I_insert on public.%I for insert to authenticated with check (public.is_member(project_id))', t, t);
     execute format('create policy %I_update on public.%I for update to authenticated using (public.is_member(project_id)) with check (public.is_member(project_id))', t, t);
-    execute format('create policy %I_delete on public.%I for delete to authenticated using (public.role_of(project_id) = ''investor'')', t, t);
+    -- Ordinary removal is a guarded soft delete. Permanent row deletion remains owner-only.
+    execute format('create policy %I_delete on public.%I for delete to authenticated using (public.is_project_owner(project_id))', t, t);
   end loop;
 end $$;
 
@@ -780,7 +913,7 @@ alter table public.push_log enable row level security;
 do $$
 declare t text;
 begin
-  foreach t in array array['projects', 'phases', 'vendors', 'payments', 'attachments', 'payment_plans', 'transfers', 'materials', 'project_files', 'contracts', 'project_members', 'role_permissions'] loop
+  foreach t in array array['projects', 'phases', 'vendors', 'payments', 'attachments', 'payment_plans', 'transfers', 'materials', 'project_files', 'contracts', 'project_members', 'member_permissions'] loop
     begin
       execute format('alter publication supabase_realtime add table public.%I', t);
     exception when duplicate_object then null;

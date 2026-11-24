@@ -29,7 +29,12 @@ const INV = 'aaaaaaaa-0000-0000-0000-000000000001' // the investor, who creates 
 const BLD = 'bbbbbbbb-0000-0000-0000-000000000002' // the builder
 const STR = 'cccccccc-0000-0000-0000-000000000003' // a stranger
 const P = '11111111-1111-1111-1111-111111111111'
-await db.exec(`insert into auth.users values ('${INV}','inv@x.com', now()),('${BLD}','bld@x.com', null),('${STR}','str@x.com', now())`)
+await assert.rejects(
+  db.exec(`insert into auth.users values ('00000000-0000-4000-8000-000000000099','nameless@x.com',now(),'{}')`),
+  /name_required/,
+  'account creation requires a non-blank display name',
+)
+await db.exec(`insert into auth.users values ('${INV}','inv@x.com', now(),'{"name":"Owner"}'),('${BLD}','bld@x.com', null,'{"name":"Member"}'),('${STR}','str@x.com', now(),'{"name":"Stranger"}')`)
 
 const as = async (id: string, email: string) => {
   await db.exec('reset role')
@@ -95,18 +100,24 @@ const own = await invite('investor')
 await db.exec(`select join_project('${own}')`) // an investor using a code keeps the role they have
 assert.equal((await one<{ role: string }>(`select role from project_members where user_id = '${INV}'`)).role, 'investor')
 
-// A shared signup link sends the code with the account payload. The auth trigger assigns membership before first sign-in.
-const signupCode = await invite('builder')
+// A shared signup link sends the code with the account payload. Its exact permission snapshot follows that one person.
+const signupCode = (await one<{ code: string }>(`insert into project_invites (project_id, role, permissions) values
+  ('${P}','builder','{"addPayments":true,"editContracts":true,"manageVendors":false}') returning code`)).code
 const LINK = 'eeeeeeee-0000-0000-0000-000000000005'
 await db.exec('reset role')
-await db.exec(`insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values ('${LINK}','link@x.com',now(),' {"invite_code":"${signupCode}"}')`)
+await db.exec(`insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values ('${LINK}','link@x.com',now(),' {"name":"Invited Person","invite_code":"${signupCode}"}')`)
 assert.equal((await one<{ role: string }>(`select role from project_members where user_id = '${LINK}'`)).role, 'builder', 'signup payload assigns the invited role')
 assert.equal((await one<{ accepted_by: string }>(`select accepted_by from project_invites where code = '${signupCode}'`)).accepted_by, LINK, 'signup consumes the invite for that account')
+assert.deepEqual(
+  (await db.query<{ permission: string; enabled: boolean }>(`select permission, enabled from member_permissions where project_id = '${P}' and user_id = '${LINK}' order by permission`)).rows,
+  [{ permission: 'addPayments', enabled: true }, { permission: 'editContracts', enabled: true }, { permission: 'manageVendors', enabled: false }],
+  'signup copies only this link\'s permission snapshot to its member',
+)
 
 const EXPIRED_SIGNUP = '00000000-0000-4000-8000-00000000000b'
 const expiredSignupCode = (await one<{ code: string }>(`insert into project_invites (project_id, role, expires_at) values ('${P}','builder', now() - interval '1 minute') returning code`)).code
 await assert.rejects(
-  db.exec(`insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values ('${EXPIRED_SIGNUP}','expired-link@x.com',now(),' {"invite_code":"${expiredSignupCode}"}')`),
+  db.exec(`insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values ('${EXPIRED_SIGNUP}','expired-link@x.com',now(),' {"name":"Expired Person","invite_code":"${expiredSignupCode}"}')`),
   /invite_invalid_or_expired/,
   'an expired signup invite rejects the auth account insert',
 )
@@ -197,20 +208,20 @@ await db.exec(`update project_members set role = 'builder' where user_id = '${BL
 await assert.rejects(db.exec(`update project_members set role = 'builder' where user_id = '${INV}'`), /permission/, 'an investor cannot demote himself')
 console.log('investor: ok')
 
-// ---------------------------------------------------------------- project-specific permissions; the creator always bypasses them
-await db.exec(`insert into role_permissions (project_id, role, permission, enabled) values
-  ('${P}','builder','editContracts',true),
-  ('${P}','builder','manageVendors',false),
-  ('${P}','investor','editProject',false)`)
-// Mohsin is both investor and project owner, so the investor restriction does not apply to him.
-assert.equal(await wrote(`update projects set location = 'Lahore', updated_at = 41 where id = '${P}'`), 1, 'owner bypasses role permissions')
+// ---------------------------------------------------------------- per-member permissions; the creator always bypasses them
+await db.exec(`insert into member_permissions (project_id, user_id, permission, enabled) values
+  ('${P}','${BLD}','editContracts',true),
+  ('${P}','${BLD}','manageVendors',false),
+  ('${P}','${INV}','editProject',false)
+  on conflict (project_id,user_id,permission) do update set enabled = excluded.enabled`)
+assert.equal(await wrote(`update projects set location = 'Lahore', updated_at = 41 where id = '${P}'`), 1, 'owner bypasses member permissions')
 await asBuilder()
 assert.equal(await wrote(`update contracts set amount = 2700000, updated_at = 41 where id = '${contractId}'`), 1, 'owner can grant a builder permission')
 assert.equal(await wrote(`update vendors set name = 'Blocked' where id = '${vendorId}'`), 0, 'owner can remove a builder permission')
 assert.equal(
-  await wrote(`update role_permissions set enabled = true where project_id = '${P}' and role = 'builder' and permission = 'manageVendors'`, 'permission'),
+  await wrote(`update member_permissions set enabled = true where project_id = '${P}' and user_id = '${BLD}' and permission = 'manageVendors'`, 'permission'),
   0,
-  'a member cannot change role permissions',
+  'a member cannot change their own permissions',
 )
 await asInvestor()
 console.log('configurable permissions: ok')
@@ -219,7 +230,7 @@ console.log('configurable permissions: ok')
 await db.exec(`insert into project_invites (project_id, email, role) values ('${P}','late@x.com','builder')`)
 await db.exec('reset role')
 const LATE = 'dddddddd-0000-0000-0000-000000000004'
-await db.exec(`insert into auth.users values ('${LATE}','late@x.com', null)`)
+await db.exec(`insert into auth.users values ('${LATE}','late@x.com', null,'{"name":"Late Member"}')`)
 await as(LATE, 'late@x.com')
 assert.equal((await one<{ claim_invites: number }>('select claim_invites()')).claim_invites, 0, 'an unconfirmed email claims nothing')
 assert.equal(await count('payments'), 0)

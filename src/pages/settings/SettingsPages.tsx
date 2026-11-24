@@ -14,14 +14,11 @@ import { SettingRow, SettingsSection } from '@/components/settings'
 import { useToast } from '@/components/Toast'
 import { FileDropzone } from '@/components/FileDropzone'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { PillRadioGroup, PillRadioItem } from '@/components/ui/pill-radio'
 import { LanguageSelect } from '@/components/LanguageSwitcher'
 import { db } from '@/db/db'
 import { exportBackup, importBackup, restorePayment, setSetting } from '@/db/actions'
-import type { Role } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { download, formatDate, formatTime, money } from '@/lib/format'
 import { useInstall } from '@/pwa/install'
@@ -138,17 +135,18 @@ export function SettingsSectionPage() {
 /* ---------------------------------------------------------------- Account */
 
 function AccountSection() {
-  const { t, settings, roleFromProject, isOwner } = useApp()
+  const { t, settings } = useApp()
   const sync = useSync()
   const [pw, setPw] = useState(false)
   const [everywhere, setEverywhere] = useState(false)
   const email = sync.session?.user.email ?? ''
   // The name and role are kept in the account too, so the next phone or sign-in has the same ones.
   const toast = useToast()
-  const saveProfile = async (patch: { name?: string; role?: Role }) => {
+  const saveProfile = async (patch: { name?: string }) => {
     if (!sync.session || !supabase) return
     const failed = await supabase.auth.updateUser({ data: patch }).then(({ error }) => Boolean(error), () => true)
     if (failed) toast.show({ kind: 'error', message: t('set.profileFailed') })
+    else if (patch.name !== undefined) await supabase.from('project_members').update({ display_name: patch.name }).eq('user_id', sync.session.user.id)
   }
   return (
     <>
@@ -166,28 +164,6 @@ function AccountSection() {
               onChange={(e) => void setSetting('userName', e.target.value)}
               onBlur={(e) => void saveProfile({ name: e.target.value.trim() })}
             />
-          )}
-        />
-        <SettingRow
-          label={t('set.role')}
-          help={roleFromProject ? t('set.roleFromProject') : t('set.roleHelp')}
-          control={(a) =>
-            roleFromProject ? (
-              <span className="flex flex-wrap items-center gap-2 font-semibold">
-                {t(settings.role === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')}
-                {isOwner() && <Badge variant="secondary">{t('people.owner')}</Badge>}
-              </span>
-            ) : (
-            <PillRadioGroup aria-labelledby={a.labelId} aria-describedby={a.describedBy} value={settings.role} onValueChange={(v) => {
-                void setSetting('role', v as Role)
-                void saveProfile({ role: v as Role })
-              }}>
-              {(['investor', 'builder'] as Role[]).map((r) => (
-                <PillRadioItem key={r} value={r}>
-                  {t(r === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')}
-                </PillRadioItem>
-              ))}
-            </PillRadioGroup>
           )}
         />
       </SettingsSection>

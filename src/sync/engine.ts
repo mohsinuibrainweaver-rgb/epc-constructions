@@ -264,10 +264,7 @@ async function pull(): Promise<void> {
   }
 }
 
-/**
- * This person's role in each project, from the server (project_members), kept as `member.role.<project id>` so the app can use it
- * offline. The role belongs to the project, not to the phone.
- */
+/** Keeps this account's membership and individual project permissions available offline. */
 export async function refreshMembership(): Promise<void> {
   if (!supabase || !userId) return
   const { data, error } = await supabase.from('project_members').select('project_id, role').eq('user_id', userId)
@@ -279,16 +276,26 @@ export async function refreshMembership(): Promise<void> {
   await db.settings.bulkPut(rows.map((r) => ({ key: `member.role.${r.project_id}`, value: r.role })))
   const projectIds = rows.map((r) => r.project_id)
   if (projectIds.length) {
-    const { data: permissionRows } = await supabase.from('role_permissions').select('project_id, role, permission, enabled').in('project_id', projectIds)
+    const [{ data: permissionRows }, { data: memberRows }] = await Promise.all([
+      supabase.from('member_permissions').select('project_id, user_id, permission, enabled').eq('user_id', userId).in('project_id', projectIds),
+      supabase.from('project_members').select('project_id, user_id, display_name, email').in('project_id', projectIds),
+    ])
     if (permissionRows) {
       const byProject = new Map<string, Record<string, boolean>>()
-      for (const row of permissionRows as { project_id: string; role: string; permission: string; enabled: boolean }[]) {
-        if (rows.find((r) => r.project_id === row.project_id)?.role !== row.role) continue
+      for (const row of permissionRows as { project_id: string; user_id: string; permission: string; enabled: boolean }[]) {
         const map = byProject.get(row.project_id) ?? {}
         map[row.permission] = row.enabled
         byProject.set(row.project_id, map)
       }
       await db.settings.bulkPut(projectIds.map((id) => ({ key: `member.permissions.${id}`, value: byProject.get(id) ?? {} })))
+    }
+    if (memberRows) {
+      await db.settings.bulkPut(projectIds.map((id) => ({
+        key: `project.members.${id}`,
+        value: (memberRows as { project_id: string; user_id: string; display_name: string | null; email: string | null }[])
+          .filter((member) => member.project_id === id)
+          .map((member) => ({ userId: member.user_id, name: member.display_name ?? undefined, email: member.email ?? undefined })),
+      })))
     }
   }
 }

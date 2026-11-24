@@ -27,7 +27,6 @@ import {
   type MiscType,
   type PayMode,
   type PayStatus,
-  type Role,
 } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { ContractBar } from '@/components/ContractParts'
@@ -48,6 +47,7 @@ import { budgetTone, isSpent, previewPhaseBudget, sum } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 import { matchVendor } from '@/lib/vendorMatch'
 import { ensureAttachmentBlob } from '@/sync/engine'
+import { memberLabel, payerLabel } from '@/lib/members'
 
 /** A receipt that is already stored. One another phone uploaded is downloaded the first time it is shown. */
 function StoredReceipt({ attachment, label, onRemove }: { attachment: Attachment; label: string; onRemove: () => void }) {
@@ -130,19 +130,20 @@ export function AddPayment() {
   const { id } = useParams()
   const edit = Boolean(id)
   const [sp] = useSearchParams()
-  const { t, lang, project, settings, phaseName, can, isOwner } = useApp()
+  const { t, lang, project, settings, phaseName, can, isOwner, userId, membersOf } = useApp()
   const nav = useNavigate()
   const toast = useToast()
   const vendors = useVendors(project?.id)
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id)
   const contracts = useContracts(project?.id)
+  const members = membersOf(project?.id)
   const existing = useLiveQuery(() => (id ? db.payments.get(id) : undefined), [id])
   // An approved entry, or a paid one the investor made himself, is closed to a builder (the server holds the same rule).
   const locked = existing ? !canChangePayment(isOwner() ? 'investor' : settings.role, existing, can('editPayments')) : !can('addPayments')
   const canManageVendors = can('manageVendors')
   const canManageFiles = can('manageFiles')
-  const approvalRole = can('approvePayments') ? 'investor' : settings.role
+  const approvalRole = can('approvePayments')
   const existingFiles = useAttachments(id)
 
   const [misc, setMisc] = useState(sp.get('misc') === '1')
@@ -163,7 +164,7 @@ export function AddPayment() {
   const [miscType, setMiscType] = useState<MiscType>('meals')
   const [status, setStatus] = useState<PayStatus>('paid')
   const [mode, setMode] = useState<PayMode>('cash')
-  const [paidBy, setPaidBy] = useState<Role>(settings.role)
+  const [paidBy, setPaidBy] = useState(userId ?? settings.role)
   // Fields the person chose themselves: a vendor's last payment never overrides these. Cleared for each new entry.
   const touched = useRef(new Set<'category' | 'paidBy'>())
   // What was filled in from the chosen vendor's last payment, to say so under the vendor.
@@ -293,7 +294,7 @@ export function AddPayment() {
       }
       if (!touched.current.has('paidBy') && d.paidBy !== paidBy) {
         setPaidBy(d.paidBy)
-        said.push(t('pay.paidByWho', { who: t(`paidBy.${d.paidBy}` as Key) }))
+        said.push(t('pay.paidByWho', { who: payerLabel(d.paidBy, members, t) }))
       }
       setFilled(said)
     }
@@ -315,14 +316,14 @@ export function AddPayment() {
       contractObj
         ? previewPayment(contractObj, payments, { id, amount: draftAmount, status, waitsForApproval: needsApproval(approvalRole, status) })
         : undefined,
-    [contractObj, payments, id, draftAmount, status, settings.role],
+    [contractObj, payments, id, draftAmount, status, approvalRole],
   )
 
   // What this payment does to the chosen phase's budget: spent so far, and how far it is after saving.
   const phaseObj = phases.find((p) => p.id === phaseId)
   const phaseBudget = useMemo(
     () => (phaseObj ? previewPhaseBudget(phaseObj, payments, { id, amount: draftAmount, status, waitsForApproval: needsApproval(approvalRole, status) }) : undefined),
-    [phaseObj, payments, id, draftAmount, status, settings.role],
+    [phaseObj, payments, id, draftAmount, status, approvalRole],
   )
   // The line under the phase. With an estimate: how far it is, and what this payment does to it (red only for a clear overspend). Without
   // one, what has been paid so far, which is what matters when prices are only known afterwards. A finished phase says so.
@@ -855,9 +856,9 @@ export function AddPayment() {
                 value={paidBy}
                 onValueChange={(v) => {
                   touched.current.add('paidBy')
-                  setPaidBy(v as Role)
+                  setPaidBy(v)
                 }}
-                tabs={(['investor', 'builder'] as Role[]).map((r) => ({ value: r, label: t(`paidBy.${r}` as Key) }))}
+                tabs={(members.length ? members : [{ userId: userId ?? settings.role, name: settings.userName || undefined }]).map((member) => ({ value: member.userId, label: memberLabel(member) }))}
               />
             )}
           </GroupField>
@@ -982,7 +983,7 @@ export function AddPayment() {
               [t('pay.date'), date ? formatDate(date, lang) : ''],
               [t('pay.status'), t(`status.${status}` as Key)],
               [t('pay.mode'), t(`mode.${mode}` as Key)],
-              [t('pay.paidBy'), t(`paidBy.${paidBy}` as Key)],
+              [t('pay.paidBy'), payerLabel(paidBy, members, t)],
               [t('pay.summary.files'), String(visibleExisting.length + newFiles.length)],
             ]}
           />

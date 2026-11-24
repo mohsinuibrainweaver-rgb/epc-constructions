@@ -1,4 +1,4 @@
-import type { Contract, Payment, PaymentPlan, Role } from '../db/types'
+import type { Contract, Payment, PaymentPlan } from '../db/types'
 import { summarizeContract, unplannedBalance } from './contracts'
 import { addDays } from './format'
 import { weekdayOf } from './plans'
@@ -11,7 +11,7 @@ export interface ForecastItem {
   /** The day it is due. For something overdue this is its own (past) date. */
   date: string
   amount: number
-  paidBy: Role
+  paidBy: string
   /** 'scheduled': a planned payment that exists. 'expected': a weekly plan's coming payment that is not created yet. */
   kind: 'scheduled' | 'expected'
   purpose: string
@@ -64,6 +64,7 @@ export interface ForecastInput {
   contracts: Contract[]
   /** YYYY-MM-DD */
   today: string
+  ownerId?: string
   weeks?: number
 }
 
@@ -72,7 +73,7 @@ export interface ForecastInput {
  * the app only creates a week ahead, so the rest are projected here), and what is left on active contracts without a day.
  * Paid and approved money is not in it (it is spent); entries waiting for approval count against a contract as already coming.
  */
-export function forecast({ payments, plans, contracts, today, weeks = FORECAST_WEEKS }: ForecastInput): Forecast {
+export function forecast({ payments, plans, contracts, today, ownerId, weeks = FORECAST_WEEKS }: ForecastInput): Forecast {
   const end = addDays(today, weeks * 7 - 1)
   const items: ForecastItem[] = []
 
@@ -106,6 +107,7 @@ export function forecast({ payments, plans, contracts, today, weeks = FORECAST_W
   const n7 = upTo(7)
   const n30 = upTo(30)
   const total = (xs: ForecastItem[]): number => xs.reduce((s, i) => s + i.amount, 0)
+  const ownerPays = (payer: string) => payer === 'investor' || Boolean(ownerId && payer === ownerId)
 
   const unscheduled: ContractBalance[] = contracts
     .filter((c) => !c.deletedAt && c.status === 'active')
@@ -122,10 +124,10 @@ export function forecast({ payments, plans, contracts, today, weeks = FORECAST_W
     later: payments.filter((p) => isPlanned(p) && p.date > end).reduce((s, p) => s + p.amount, 0),
     next7: total(n7),
     next30: total(n30),
-    builderNext30: total(n30.filter((i) => i.paidBy === 'builder')),
-    investorNext30: total(n30.filter((i) => i.paidBy === 'investor')),
-    builderNext7: total(n7.filter((i) => i.paidBy === 'builder')),
-    investorNext7: total(n7.filter((i) => i.paidBy === 'investor')),
+    builderNext30: total(n30.filter((i) => !ownerPays(i.paidBy))),
+    investorNext30: total(n30.filter((i) => ownerPays(i.paidBy))),
+    builderNext7: total(n7.filter((i) => !ownerPays(i.paidBy))),
+    investorNext7: total(n7.filter((i) => ownerPays(i.paidBy))),
     unscheduled,
     unscheduledTotal: unscheduled.reduce((s, x) => s + x.amount, 0),
     items: sorted,

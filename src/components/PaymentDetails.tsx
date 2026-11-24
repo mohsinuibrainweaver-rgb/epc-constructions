@@ -15,6 +15,7 @@ import { hasQuantity, num, rateOf } from '@/lib/materials'
 import { attachmentMime, isAudio, isPictureOrVideo } from '@/lib/media'
 import { canChangePayment } from '@/lib/permissions'
 import { ensureAttachmentBlob } from '@/sync/engine'
+import { payerLabel } from '@/lib/members'
 
 /** One line of the details: what it is, and its value at the end. Left out by the caller when there is no value. */
 function Row({ label, children }: { label: string; children: ReactNode }) {
@@ -89,7 +90,8 @@ function DocumentLine({ file }: { file: Attachment }) {
  * Editing is one button away, and only where this person may change the payment.
  */
 export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClose: () => void }) {
-  const { t, lang, project, phaseName, settings, can, isOwner } = useApp()
+  const { t, lang, project, phaseName, can, membersOf } = useApp()
+  const members = membersOf(project?.id)
   const vendors = useVendors(project?.id)
   const phases = usePhases(project?.id)
   const contracts = useContracts(project?.id)
@@ -113,7 +115,7 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
       title={t('pay.details')}
       onClose={onClose}
       footer={
-        p && canChangePayment(isOwner() ? 'investor' : settings.role, p, can('editPayments')) ? (
+        p && canChangePayment(can('approvePayments') ? 'investor' : 'builder', p, can('editPayments')) ? (
           <Button asChild>
             <Link to={`/payments/${p.id}`} onClick={onClose}>
               <Pencil aria-hidden="true" />
@@ -159,7 +161,7 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
                 </span>
               </Row>
             )}
-            <Row label={t('pay.paidBy')}>{t(`paidBy.${p.paidBy}` as Key)}</Row>
+            <Row label={t('pay.paidBy')}>{payerLabel(p.paidBy, members, t)}</Row>
             {p.addedBy && <Row label={t('pay.addedBy')}>{p.addedBy}</Row>}
             {contract && <Row label={t('pay.contract')}>{contract}</Row>}
             {p.note && <Row label={t('pay.note')}>{p.note}</Row>}

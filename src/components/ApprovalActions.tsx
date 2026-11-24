@@ -80,9 +80,9 @@ export function ApprovalActions({ payment, size = 'sm' }: { payment: Payment; si
 
 /** What an entry's approval status means, shown at the top of its page. */
 export function ApprovalNotice({ payment }: { payment: Payment }) {
-  const { t, lang, settings, can } = useApp()
+  const { t, lang, can } = useApp()
   if (!payment.approval) return null
-  const investor = settings.role === 'investor'
+  const investor = can('approvePayments')
   const name = payment.addedBy || '—'
   const tone =
     payment.approval === 'rejected' ? 'bg-danger-soft text-danger' : payment.approval === 'pending' ? 'bg-warning-soft text-warning' : 'bg-muted text-foreground'

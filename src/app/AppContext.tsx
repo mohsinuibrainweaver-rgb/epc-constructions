@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2 } from 'lucide-react'
 import { db } from '../db/db'
 import { DEFAULT_SETTINGS, ensurePlanPayments, purgeBin } from '../db/actions'
-import type { Lang, Phase, Project, Role, Settings } from '../db/types'
+import type { Lang, Phase, Project, ProjectMemberIdentity, Role, Settings } from '../db/types'
 import { en, type Key } from '../i18n/en'
 import { ur } from '../i18n/ur'
 import { interpolate } from '../lib/format'
@@ -20,6 +20,8 @@ interface AppCtx {
   isOwner: (projectId?: string) => boolean
   /** What the person is in the given project (the Projects list shows several). */
   roleOf: (projectId: string) => Role
+  userId?: string
+  membersOf: (projectId?: string) => ProjectMemberIdentity[]
   lang: Lang
   t: (key: Key, vars?: Record<string, string | number>) => string
   project?: Project
@@ -110,6 +112,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [rows, deviceSettings.role],
   )
   const accountId = rows?.find((r) => r.key === 'account.userId')?.value as string | undefined
+  const membersOf = useCallback(
+    (id?: string): ProjectMemberIdentity[] => (id ? (rows?.find((r) => r.key === `project.members.${id}`)?.value as ProjectMemberIdentity[] | undefined) ?? [] : []),
+    [rows],
+  )
   const ownerOf = useCallback(
     (id?: string): boolean => Boolean(accountId && list.find((p) => p.id === (id ?? project?.id))?.ownerId === accountId),
     [accountId, list, project?.id],
@@ -130,8 +136,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo<AppCtx>(
-    () => ({ settings, roleFromProject: fromProject, can, isOwner: ownerOf, roleOf: roleIn, lang, t, project, projects: list, phaseName }),
-    [settings, fromProject, can, ownerOf, roleIn, lang, t, project, list, phaseName],
+    () => ({ settings, roleFromProject: fromProject, can, isOwner: ownerOf, roleOf: roleIn, userId: accountId, membersOf, lang, t, project, projects: list, phaseName }),
+    [settings, fromProject, can, ownerOf, roleIn, accountId, membersOf, lang, t, project, list, phaseName],
   )
 
   // Wait for the first read from the local database so the app never flashes empty.

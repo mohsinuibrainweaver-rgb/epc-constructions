@@ -12,7 +12,7 @@ import { groupDigits, parseAmount, todayISO, weekdayName } from '@/lib/format'
 import { weekdayOrder } from '@/lib/region'
 
 export function PlanDialog({ open, plan, onClose }: { open: boolean; plan?: PaymentPlan; onClose: () => void }) {
-  const { t, lang, project, phaseName } = useApp()
+  const { t, lang, project, phaseName, userId, settings } = useApp()
   const toast = useToast()
   const vendors = useVendors(project?.id)
   const phases = usePhases(project?.id)
@@ -53,7 +53,7 @@ export function PlanDialog({ open, plan, onClose }: { open: boolean; plan?: Paym
       phaseId: phaseId || undefined,
       category: plan?.category ?? 'labour',
       mode: plan?.mode ?? 'cash',
-      paidBy: plan?.paidBy ?? 'investor',
+      paidBy: plan?.paidBy ?? userId ?? settings.role,
       startDate: start || todayISO(),
       active: plan?.active ?? true,
     })

@@ -58,15 +58,15 @@ function useOnline(): boolean {
 }
 
 function AlertsBell({ conflicts, onReviewConflicts }: { conflicts: number; onReviewConflicts: () => void }) {
-  const { t, project, phaseName, settings } = useApp()
+  const { t, project, phaseName, can } = useApp()
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id)
   const contracts = useContracts(project?.id)
   const [open, setOpen] = useState(false)
 
   const alerts = useMemo(
-    () => [...buildAlerts(project, phases, payments, phaseName, todayISO(), settings.role), ...contractAlerts(contracts, payments)],
-    [project, phases, payments, phaseName, settings.role, contracts],
+    () => [...buildAlerts(project, phases, payments, phaseName, todayISO(), can('approvePayments') ? 'investor' : 'builder'), ...contractAlerts(contracts, payments)],
+    [project, phases, payments, phaseName, can, contracts],
   )
   const total = alerts.length + (conflicts > 0 ? 1 : 0)
 

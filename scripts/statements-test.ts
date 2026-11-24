@@ -22,7 +22,7 @@ const data = [
 let r = buildStatement(data, all)
 assert.equal(r.total, 7700); assert.equal(r.countedCount, 3)
 assert.deepEqual(r.rows.map((p) => p.amount), [2000, 5000, 700], 'oldest first; planned, pending, rejected, skipped and binned left out')
-assert.deepEqual(r.byMode, { cash: 5700, bank: 2000 }); assert.deepEqual(r.byPaidBy, { investor: 7000, builder: 700 })
+assert.deepEqual(r.byMode, { cash: 5700, bank: 2000 }); assert.deepEqual(r.byPaidBy, [{ payer: 'investor', amount: 7000 }, { payer: 'builder', amount: 700 }])
 assert.deepEqual(r.byPhase, [{ phaseId: 'ph1', amount: 5000 }, { phaseId: 'ph2', amount: 2000 }, { phaseId: '', amount: 700 }])
 
 // Planned and pending can be listed, but never change the total.

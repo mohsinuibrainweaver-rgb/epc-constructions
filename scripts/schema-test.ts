@@ -43,7 +43,7 @@ await db.exec('grant all on all tables in schema public to authenticated; grant 
 
 const A = 'aaaaaaaa-0000-0000-0000-000000000001', B = 'bbbbbbbb-0000-0000-0000-000000000002', C = 'cccccccc-0000-0000-0000-000000000003'
 const P = '11111111-1111-1111-1111-111111111111'
-await db.exec(`insert into auth.users values ('${A}','a@x.com'),('${B}','b@x.com'),('${C}','c@x.com')`)
+await db.exec(`insert into auth.users values ('${A}','a@x.com',null,'{"name":"Account A"}'),('${B}','b@x.com',null,'{"name":"Account B"}'),('${C}','c@x.com',null,'{"name":"Account C"}')`)
 const as = async (id: string, email: string) => {
   await db.exec('reset role')
   await db.exec(`select set_config('request.jwt.claims', '{"sub":"${id}","email":"${email}"}', false); set role authenticated`)

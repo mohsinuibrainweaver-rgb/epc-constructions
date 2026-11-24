@@ -1,4 +1,4 @@
-import type { Category, Payment, Role } from '../db/types'
+import type { Category, Payment } from '../db/types'
 
 /*
  * What the Add payment screen learns from payments already in the project: the entries just made (the list beside the form),
@@ -28,7 +28,7 @@ export function lastPaymentTo(payments: Payment[], vendorId: string, excludeId?:
  * so it is only suggested. The mode (cash or bank) is not suggested at all: a vendor is paid both ways, and it was barely better
  * than the plain default.
  */
-export function vendorDefaults(last: Payment): { category?: Category; paidBy: Role; phaseId?: string } {
+export function vendorDefaults(last: Payment): { category?: Category; paidBy: string; phaseId?: string } {
   return { category: last.category === 'misc' ? undefined : last.category, paidBy: last.paidBy, phaseId: last.phaseId }
 }
 
