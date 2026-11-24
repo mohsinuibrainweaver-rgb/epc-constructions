@@ -14,15 +14,13 @@ import { ToastProvider } from './components/Toast'
 import { TooltipProvider } from './components/ui/tooltip'
 import { SyncProvider, useSync } from './sync/SyncProvider'
 import { SignIn } from './pages/SignIn'
-import { DeviceOwner } from './pages/DeviceOwner'
 
 function Gate() {
   const { configured, loading, session, device } = useSync()
   if (configured && loading) return null
   if (configured && !session) return <SignIn />
-  // Signed in, but whose data is on this phone is not known yet, or it is another account's.
+  // Signed in, but the local account cache is still being checked/prepared.
   if (configured && device.state === 'checking') return null
-  if (configured && device.state === 'foreign') return <DeviceOwner projects={device.projects} pending={device.pending} />
   return <App />
 }
 

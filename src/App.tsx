@@ -35,12 +35,17 @@ const NotFound = lazy(() => import('./pages/Misc').then((m) => ({ default: m.Not
 
 function AddPaymentGate() {
   const { can } = useApp()
-  return can('addPayments') ? <AddPayment /> : <Navigate to="/ledger" replace />
+  return can('addPayments') ? <AddPayment /> : <Navigate to="/" replace />
 }
 
 function EditPaymentGate() {
   const { can } = useApp()
-  return can('editPayments') ? <AddPayment /> : <Navigate to="/ledger" replace />
+  return can('viewLedger') && can('editPayments') ? <AddPayment /> : <Navigate to="/" replace />
+}
+
+function PermissionGate({ permission, children }: { permission: import('./lib/permissions').Action; children: ReactNode }) {
+  const { can } = useApp()
+  return can(permission) ? children : <Navigate to="/" replace />
 }
 
 function OwnerRolesGate() {
@@ -99,24 +104,24 @@ export default function App() {
         <Route element={<Shell />}>
           <Route index element={<Home />} />
           <Route path="projects" element={<Projects />} />
-          <Route path="phases" element={<Phases />} />
-          <Route path="phases/:id" element={<PhaseDetail />} />
-          <Route path="vendors" element={<Vendors />} />
-          <Route path="vendors/:id" element={<VendorDetail />} />
-          <Route path="ledger" element={<Ledger />} />
+          <Route path="phases" element={<PermissionGate permission="viewPhases"><Phases /></PermissionGate>} />
+          <Route path="phases/:id" element={<PermissionGate permission="viewPhases"><PhaseDetail /></PermissionGate>} />
+          <Route path="vendors" element={<PermissionGate permission="viewVendors"><Vendors /></PermissionGate>} />
+          <Route path="vendors/:id" element={<PermissionGate permission="viewVendors"><VendorDetail /></PermissionGate>} />
+          <Route path="ledger" element={<PermissionGate permission="viewLedger"><Ledger /></PermissionGate>} />
           <Route path="add" element={<AddPaymentGate />} />
           <Route path="payments/:id" element={<EditPaymentGate />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="compare" element={<Compare />} />
-          <Route path="forecast" element={<Forecast />} />
-          <Route path="plans" element={<Plans />} />
-          <Route path="settlement" element={<Settlement />} />
-          <Route path="contracts" element={<Contracts />} />
-          <Route path="contracts/:id" element={<ContractDetail />} />
-          <Route path="statements" element={<Statements />} />
+          <Route path="reports" element={<PermissionGate permission="viewReports"><Reports /></PermissionGate>} />
+          <Route path="compare" element={<PermissionGate permission="viewCompare"><Compare /></PermissionGate>} />
+          <Route path="forecast" element={<PermissionGate permission="viewForecast"><Forecast /></PermissionGate>} />
+          <Route path="plans" element={<PermissionGate permission="viewPlans"><Plans /></PermissionGate>} />
+          <Route path="settlement" element={<PermissionGate permission="viewSettlement"><Settlement /></PermissionGate>} />
+          <Route path="contracts" element={<PermissionGate permission="viewContracts"><Contracts /></PermissionGate>} />
+          <Route path="contracts/:id" element={<PermissionGate permission="viewContracts"><ContractDetail /></PermissionGate>} />
+          <Route path="statements" element={<PermissionGate permission="viewStatements"><Statements /></PermissionGate>} />
           <Route path="roles" element={<OwnerRolesGate />} />
           <Route path="materials" element={<Navigate to="/reports" replace />} />
-          <Route path="files" element={<Files />} />
+          <Route path="files" element={<PermissionGate permission="viewFiles"><Files /></PermissionGate>} />
           <Route path="more" element={<More />} />
           <Route path="settings" element={<SettingsLayout />}>
             <Route index element={<SettingsIndex />} />

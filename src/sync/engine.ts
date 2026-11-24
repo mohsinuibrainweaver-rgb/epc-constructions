@@ -429,7 +429,7 @@ export function startSync(uid: string): void {
 
   // Live updates: another phone saved something, so pull soon.
   const channel = supabase.channel('epc-sync')
-  for (const def of [...TABLES.map((d) => d.remote ?? d.name), 'project_members', 'role_permissions']) {
+  for (const def of [...TABLES.map((d) => d.remote ?? d.name), 'project_members', 'member_permissions', 'role_permissions']) {
     channel.on('postgres_changes', { event: '*', schema: 'public', table: def }, () => {
       clearTimeout(pullTimer)
       pullTimer = setTimeout(() => void syncNow(), 500)

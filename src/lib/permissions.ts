@@ -6,6 +6,17 @@ import type { Payment, Role } from '../db/types'
  * these to leave out the buttons a builder could not use, so a refused write is the exception and not the way he finds out.
  */
 export type Action =
+  | 'viewPhases'
+  | 'viewVendors'
+  | 'viewContracts'
+  | 'viewLedger'
+  | 'viewPlans'
+  | 'viewForecast'
+  | 'viewSettlement'
+  | 'viewReports'
+  | 'viewCompare'
+  | 'viewStatements'
+  | 'viewFiles'
   | 'addPayments'
   | 'editPayments'
   | 'deletePayments'
@@ -30,13 +41,24 @@ export type Action =
 
 export interface PermissionDefinition {
   key: Action
-  group: 'payments' | 'project' | 'money' | 'people'
+  group: 'access' | 'payments' | 'project' | 'money' | 'people'
   label: string
   description: string
 }
 
 /** Stable keys shared by the UI and supabase/schema.sql. Never rename a key after release. */
 export const PERMISSIONS: PermissionDefinition[] = [
+  { key: 'viewPhases', group: 'access', label: 'View phases', description: 'Open the phases list and phase details.' },
+  { key: 'viewVendors', group: 'access', label: 'View vendors', description: 'Open vendors and supplier details.' },
+  { key: 'viewContracts', group: 'access', label: 'View contracts', description: 'Open contracts and their details.' },
+  { key: 'viewLedger', group: 'access', label: 'View ledger', description: 'See payment entries and their details.' },
+  { key: 'viewPlans', group: 'access', label: 'View weekly payments', description: 'See recurring and weekly payment plans.' },
+  { key: 'viewForecast', group: 'access', label: 'View cash forecast', description: 'See projected cash requirements.' },
+  { key: 'viewSettlement', group: 'access', label: 'View settlement', description: 'See project settlement and transfers.' },
+  { key: 'viewReports', group: 'access', label: 'View reports', description: 'Open project reports and analytics.' },
+  { key: 'viewCompare', group: 'access', label: 'Compare projects', description: 'Open project comparison screens.' },
+  { key: 'viewStatements', group: 'access', label: 'View statements', description: 'Open and export project statements.' },
+  { key: 'viewFiles', group: 'access', label: 'View files', description: 'See project files and attachments.' },
   { key: 'addPayments', group: 'payments', label: 'Add payments', description: 'Create paid, planned and advance entries.' },
   { key: 'editPayments', group: 'payments', label: 'Edit payments', description: 'Change payment entries this person is allowed to change.' },
   { key: 'deletePayments', group: 'payments', label: 'Delete payments', description: 'Move payment entries to the bin.' },
@@ -61,6 +83,9 @@ export type PermissionMap = Partial<Record<Action, boolean>>
 export const DEFAULT_PERMISSIONS: Record<Role, Record<Action, boolean>> = {
   investor: Object.fromEntries(PERMISSIONS.map((p) => [p.key, true])) as Record<Action, boolean>,
   builder: {
+    viewPhases: true, viewVendors: true, viewContracts: true, viewLedger: true,
+    viewPlans: true, viewForecast: true, viewSettlement: true, viewReports: true,
+    viewCompare: true, viewStatements: true, viewFiles: true,
     addPayments: true, editPayments: true, deletePayments: true, approvePayments: false,
     viewBankDetails: false, manageVendors: true, editProject: false, deleteProject: false,
     editPhases: false, completePhases: true, editContracts: false, editTransfers: false,
@@ -71,7 +96,7 @@ export const DEFAULT_PERMISSIONS: Record<Role, Record<Action, boolean>> = {
 export const EMPTY_PERMISSIONS = Object.fromEntries(PERMISSIONS.map((p) => [p.key, false])) as Record<Action, boolean>
 export const FULL_PERMISSIONS = Object.fromEntries(PERMISSIONS.map((p) => [p.key, true])) as Record<Action, boolean>
 
-/** Permissions now belong to one project member. Missing keys are denied; the project owner bypasses this map. */
+/** Permissions belong to one project member. Missing and disabled keys are denied; the project owner bypasses this map. */
 export const permissionValue = (_role: Role, action: Action, overrides?: PermissionMap): boolean => overrides?.[action] === true
 
 export const can = (role: Role, action: Action, overrides?: PermissionMap, owner = false): boolean =>

@@ -61,7 +61,7 @@ function Kpi({ label, value, icon: Icon, mesh, to, children, corner, className }
 }
 
 export function Home() {
-  const { t, lang, project, phaseName, can } = useApp()
+  const { t, lang, project, phaseName, can, isOwner, userId } = useApp()
   // Due and upcoming starts with the three that are first in line; the rest open on request (up to eight).
   const [dueAll, setDueAll] = useState(false)
   const payments = usePayments(project?.id)
@@ -84,21 +84,25 @@ export function Home() {
   const tone = budgetTone(budgetState(spent, budget))
   // Plot cost and construction, each on its own, then the two together. Nothing shows when no plot cost was entered.
   const split = costSplit(project?.plotCost, spent, budget)
+  const owner = isOwner()
+  const canViewLedger = can('viewLedger')
+  const canViewPhases = can('viewPhases')
+  const canViewPlans = can('viewPlans')
 
   // The phases worth a line (spending or a budget; over budget first); the empty ones are only counted.
   const progress = phaseProgress(phases, payments)
 
   // Budgets over their limit, contracts overpaid, and the tidy-up items; due payments and approvals have their own cards.
   const attention = attentionItems(
-    [...buildAlerts(project, phases, payments, phaseName, todayISO(), can('approvePayments') ? 'investor' : 'builder'), ...contractAlerts(contracts, payments)],
-    payments,
-    receiptIds,
-    fullPhases(phases, payments).map((ph) => phaseName(ph)),
+    owner ? [...buildAlerts(project, phases, payments, phaseName, todayISO(), can('approvePayments') ? 'investor' : 'builder'), ...contractAlerts(contracts, payments)] : [],
+    canViewLedger ? (owner ? payments : payments.filter((payment) => payment.addedBy === userId)) : [],
+    canViewLedger ? receiptIds : undefined,
+    owner && canViewPhases ? fullPhases(phases, payments).map((ph) => phaseName(ph)) : [],
   ).slice(0, 8)
   // The Planned figure is shown only when something is planned; otherwise it is an empty tile that takes room.
   const showPlanned = planned.length > 0
   // A payment that is overdue or due within three days: on a phone its card moves above the recent payments.
-  const urgent = planned.some((p) => p.date <= addDays(todayISO(), 3))
+  const urgent = canViewPlans && planned.some((p) => p.date <= addDays(todayISO(), 3))
 
   if (!project) return null
 
@@ -116,7 +120,7 @@ export function Home() {
       </div>
     )
 
-  const dueCard = (
+  const dueCard = canViewPlans ? (
     <Card className={cn('gap-0 overflow-hidden py-0 md:order-none md:col-span-6 md:col-start-1 md:row-start-2', urgent ? 'max-md:order-3' : 'max-md:order-7')} aria-labelledby="due-title">
       <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
         <CardHeading icon={CalendarClock} id="due-title" className="max-sm:text-base">
@@ -158,7 +162,7 @@ export function Home() {
         </button>
       )}
     </Card>
-  )
+  ) : null
 
   const usedNote = budget ? (
     tone === 'danger' || tone === 'warning' ? (
@@ -174,14 +178,14 @@ export function Home() {
     <>
       <PageHeader title={project.name} subtitle={project.location || undefined} phoneTitleHidden subtitleClassName="max-sm:text-sm" />
 
-      <section aria-label={t('home.budget')} className={cn('order-1 grid grid-cols-2 gap-3 md:order-none md:gap-6', showPlanned ? 'md:grid-cols-4' : 'md:grid-cols-3')}>
+      {canViewLedger && <section aria-label={t('home.budget')} className={cn('order-1 grid grid-cols-2 gap-3 md:order-none md:gap-6', showPlanned ? 'md:grid-cols-4' : 'md:grid-cols-3')}>
         <Kpi label={t('home.spent')} value={money(spent)} icon={HandCoins} mesh={0} to="/ledger">
           {awaiting > 0 && <span className="text-sm text-muted-foreground max-sm:text-xs">{t('home.awaiting', { amount: money(awaiting) })}</span>}
         </Kpi>
-        <Kpi label={t('home.budget')} value={budget ? money(budget) : '—'} icon={Target} mesh={1} to={budget || !can('editProject') ? '/phases' : `/projects/${project.id}/edit`}>
+        <Kpi label={t('home.budget')} value={budget ? money(budget) : '—'} icon={Target} mesh={1} to={!budget && can('editProject') ? `/projects/${project.id}/edit` : canViewPhases ? '/phases' : '/'}>
           {!budget && <span className="text-sm text-primary underline underline-offset-4 max-sm:text-xs">{t('home.noBudget')}</span>}
         </Kpi>
-        <Kpi label={t('home.left')} value={left === undefined ? '—' : money(left)} icon={Wallet} mesh={2} to="/phases" className={showPlanned ? undefined : 'max-sm:col-span-2'} corner={budget ? usedNote : undefined}>
+        <Kpi label={t('home.left')} value={left === undefined ? '—' : money(left)} icon={Wallet} mesh={2} to={canViewPhases ? '/phases' : '/'} className={showPlanned ? undefined : 'max-sm:col-span-2'} corner={budget ? usedNote : undefined}>
           {budget ? (
             <>
               <BudgetBar spent={spent} budget={budget} label={t('home.budgetUsed', { pct: percent(spent, budget) })} className="bg-white dark:bg-white/20" />
@@ -191,9 +195,9 @@ export function Home() {
           ) : null}
         </Kpi>
         {showPlanned && <Kpi label={t('home.planned')} value={money(sum(planned))} icon={CalendarClock} mesh={3} to="/ledger?status=planned" />}
-      </section>
+      </section>}
 
-      {split && (
+      {canViewLedger && split && (
         <section aria-label={t('home.plotAndBuild')} className="order-1 md:order-none">
           <Card className="gap-0 px-3 py-2.5 md:px-5 md:py-4">
             <dl className="grid gap-1 md:grid-cols-4 md:gap-6">
@@ -213,9 +217,9 @@ export function Home() {
         </section>
       )}
 
-      <div className="order-2 empty:hidden md:order-none">
+      {canViewLedger && <div className="order-2 empty:hidden md:order-none">
         <ApprovalsCard payments={live} />
-      </div>
+      </div>}
 
       <div className="order-4 empty:hidden md:order-none">
         <AttentionCard items={attention} />
@@ -226,7 +230,7 @@ export function Home() {
         {/* On a phone a payment that is due or overdue comes before the recent payments; on a wide screen the places below hold. */}
         {urgent && dueCard}
 
-        <Card className="gap-0 overflow-hidden py-0 max-md:order-6 md:col-span-12 md:col-start-1 md:row-start-1" aria-labelledby="recent-title">
+        {canViewLedger && <Card className="gap-0 overflow-hidden py-0 max-md:order-6 md:col-span-12 md:col-start-1 md:row-start-1" aria-labelledby="recent-title">
           <div className="flex items-center justify-between gap-3 p-4">
             <CardHeading icon={ReceiptText} id="recent-title" className="max-sm:text-base">
               {t('home.recent')}
@@ -236,11 +240,11 @@ export function Home() {
             </Link>
           </div>
           {recent.length === 0 ? <EmptyState compact icon={ReceiptText} title={t('home.recentEmpty')} /> : <PaymentsTable payments={recent.slice(0, 6)} compact />}
-        </Card>
+        </Card>}
 
         {!urgent && dueCard}
 
-        <Card className="gap-0 overflow-hidden py-0 max-md:order-8 md:col-span-6 md:col-start-7 md:row-start-2" aria-labelledby="ph-title">
+        {canViewPhases && <Card className="gap-0 overflow-hidden py-0 max-md:order-8 md:col-span-6 md:col-start-7 md:row-start-2" aria-labelledby="ph-title">
           <div className="flex flex-wrap items-center justify-between gap-x-3 p-4">
             <CardHeading icon={Layers3} id="ph-title" className="max-sm:text-base">
               {t('home.phaseProgress')}
@@ -272,7 +276,7 @@ export function Home() {
             ))}
             {progress.notStarted > 0 && <p className="text-sm text-muted-foreground max-sm:text-xs">{t('home.phasesNotStarted', { count: progress.notStarted })}</p>}
           </div>
-        </Card>
+        </Card>}
       </div>
     </>
   )

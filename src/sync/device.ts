@@ -1,6 +1,5 @@
 import { db } from '../db/db'
 import { deviceVerdict } from '../lib/device-owner'
-import { countPending } from './engine'
 import { supabase } from './supabase'
 
 /** The account this phone's data belongs to. */
@@ -27,8 +26,8 @@ export async function takeOverDevice(uid: string): Promise<void> {
 }
 
 /**
- * Run when an account signs in, before anything syncs. Says whether the data on this phone is this account's; if it is another
- * account's, nothing is shown or sent until the person decides (see the DeviceOwner screen).
+ * Run when an account signs in, before anything syncs. If this browser still has another account's local cache, clear that
+ * cache automatically and hand the browser to the signed-in account. The previous account's synced data remains on the server.
  */
 export async function checkDevice(uid: string): Promise<DeviceCheck> {
   const marker = await readDeviceOwner()
@@ -46,12 +45,7 @@ export async function checkDevice(uid: string): Promise<DeviceCheck> {
     if (marker !== uid) await db.settings.put({ key: OWNER, value: uid })
     return { state: 'ok' }
   }
-  const live = projects.filter((p) => !p.deletedAt).length
-  const pending = await countPending()
-  // Nothing of the other account is left here, so there is nothing to lose or to ask about.
-  if (live === 0 && pending === 0) {
-    await takeOverDevice(uid)
-    return { state: 'ok' }
-  }
-  return { state: 'foreign', projects: live, pending }
+  // Never block the new account behind an ownership warning. Only the browser cache is cleared here; no server rows are deleted.
+  await takeOverDevice(uid)
+  return { state: 'ok' }
 }

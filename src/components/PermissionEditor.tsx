@@ -2,8 +2,8 @@ import { ShieldCheck } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { PERMISSIONS, type Action, type PermissionMap } from '@/lib/permissions'
 
-const GROUPS = ['payments', 'project', 'money', 'people'] as const
-const TITLES = { payments: 'Payments', project: 'Project', money: 'Contracts and money', people: 'People' }
+const GROUPS = ['access', 'payments', 'project', 'money', 'people'] as const
+const TITLES = { access: 'Page access', payments: 'Payments', project: 'Project', money: 'Contracts and money', people: 'People' }
 
 export function PermissionEditor({ values, onChange, disabled, compact = false, neutral = false, mobileDense = false }: {
   values: PermissionMap
@@ -16,7 +16,7 @@ export function PermissionEditor({ values, onChange, disabled, compact = false, 
   return (
     <div className={compact ? 'grid' : mobileDense ? 'grid gap-3 sm:gap-4' : 'grid gap-4'}>
       {GROUPS.map((group) => (
-        <section key={group} className={compact ? 'border-b last:border-b-0' : 'rounded-xl border bg-card'}>
+        <section key={group} className={compact ? 'border-b last:border-b-0' : 'rounded-control border bg-card'}>
           <h3 className={`flex items-center gap-2 border-b text-sm font-semibold ${compact ? 'py-3' : mobileDense ? 'px-3 py-2.5 sm:px-4 sm:py-3' : 'px-4 py-3'}`}>
             <ShieldCheck aria-hidden="true" className={`size-4 ${neutral ? 'text-muted-foreground' : 'text-primary'}`} />
             {TITLES[group]}

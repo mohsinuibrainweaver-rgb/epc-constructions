@@ -19,25 +19,26 @@ import type { Key } from '@/i18n/en'
 import { addPaymentPath } from '@/lib/addLink'
 import { initials, todayISO } from '@/lib/format'
 import { contractAlerts } from '@/lib/contracts'
+import type { Action } from '@/lib/permissions'
 import { buildAlerts } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 import { syncPushLanguage } from '@/push/push'
 import { onRefused } from '@/sync/engine'
 import { useSync } from '@/sync/SyncProvider'
 
-const NAV: { to: string; key: Key; icon: typeof House; end?: boolean; ownerOnly?: boolean }[] = [
+const NAV: { to: string; key: Key; icon: typeof House; end?: boolean; ownerOnly?: boolean; permission?: Action }[] = [
   { to: '/', key: 'nav.home', icon: House, end: true },
-  { to: '/phases', key: 'nav.phases', icon: Layers3 },
-  { to: '/vendors', key: 'nav.vendors', icon: Users },
-  { to: '/contracts', key: 'nav.contracts', icon: FileSignature },
-  { to: '/ledger', key: 'nav.ledger', icon: ReceiptText },
-  { to: '/plans', key: 'nav.plans', icon: CalendarClock },
-  { to: '/forecast', key: 'nav.forecast', icon: Banknote },
-  { to: '/settlement', key: 'nav.settlement', icon: Scale },
-  { to: '/reports', key: 'nav.reports', icon: ChartColumn },
-  { to: '/compare', key: 'nav.compare', icon: GitCompareArrows },
-  { to: '/statements', key: 'nav.statements', icon: FileText },
-  { to: '/files', key: 'nav.files', icon: FolderOpen },
+  { to: '/phases', key: 'nav.phases', icon: Layers3, permission: 'viewPhases' },
+  { to: '/vendors', key: 'nav.vendors', icon: Users, permission: 'viewVendors' },
+  { to: '/contracts', key: 'nav.contracts', icon: FileSignature, permission: 'viewContracts' },
+  { to: '/ledger', key: 'nav.ledger', icon: ReceiptText, permission: 'viewLedger' },
+  { to: '/plans', key: 'nav.plans', icon: CalendarClock, permission: 'viewPlans' },
+  { to: '/forecast', key: 'nav.forecast', icon: Banknote, permission: 'viewForecast' },
+  { to: '/settlement', key: 'nav.settlement', icon: Scale, permission: 'viewSettlement' },
+  { to: '/reports', key: 'nav.reports', icon: ChartColumn, permission: 'viewReports' },
+  { to: '/compare', key: 'nav.compare', icon: GitCompareArrows, permission: 'viewCompare' },
+  { to: '/statements', key: 'nav.statements', icon: FileText, permission: 'viewStatements' },
+  { to: '/files', key: 'nav.files', icon: FolderOpen, permission: 'viewFiles' },
   { to: '/roles', key: 'nav.roles', icon: ShieldCheck, ownerOnly: true },
   { to: '/settings', key: 'nav.settings', icon: SettingsIcon },
 ]
@@ -58,15 +59,15 @@ function useOnline(): boolean {
 }
 
 function AlertsBell({ conflicts, onReviewConflicts }: { conflicts: number; onReviewConflicts: () => void }) {
-  const { t, project, phaseName, can } = useApp()
+  const { t, project, phaseName, can, isOwner } = useApp()
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id)
   const contracts = useContracts(project?.id)
   const [open, setOpen] = useState(false)
 
   const alerts = useMemo(
-    () => [...buildAlerts(project, phases, payments, phaseName, todayISO(), can('approvePayments') ? 'investor' : 'builder'), ...contractAlerts(contracts, payments)],
-    [project, phases, payments, phaseName, can, contracts],
+    () => isOwner() ? [...buildAlerts(project, phases, payments, phaseName, todayISO(), can('approvePayments') ? 'investor' : 'builder'), ...contractAlerts(contracts, payments)] : [],
+    [project, phases, payments, phaseName, can, contracts, isOwner],
   )
   const total = alerts.length + (conflicts > 0 ? 1 : 0)
 
@@ -238,6 +239,12 @@ export function Shell() {
     )
 
   const sideChip = statusChip(true)
+  const mobileTabs = [
+    { to: '/', key: 'nav.home' as Key, icon: House, end: true },
+    ...(can('viewPhases') ? [{ to: '/phases', key: 'nav.phases' as Key, icon: Layers3, end: false }] : []),
+    ...(can('viewVendors') ? [{ to: '/vendors', key: 'nav.vendors' as Key, icon: Users, end: false }] : []),
+  ]
+  const mobileTabCount = mobileTabs.length + (can('addPayments') ? 1 : 0) + 1
   return (
     <div className="grid min-h-[calc(100dvh-2*var(--page-gap))] grid-cols-1 gap-[var(--page-gap)] sm:grid-cols-[4.5rem_minmax(0,1fr)] lg:grid-cols-[15rem_minmax(0,1fr)] print:block">
       <a
@@ -282,7 +289,7 @@ export function Shell() {
         </div>
 
         <nav aria-label={t('app.name')} className="grid gap-0.5">
-          {NAV.filter(({ ownerOnly }) => !ownerOnly || isOwner()).map(({ to, key, icon: Icon, end }) => (
+          {NAV.filter(({ ownerOnly, permission }) => (!ownerOnly || isOwner()) && (!permission || can(permission))).map(({ to, key, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -330,7 +337,7 @@ export function Shell() {
 
         <header className="sticky top-0 z-20 hidden border-b bg-card/95 backdrop-blur sm:block print:hidden">
           <div className="container-page flex min-h-16 items-center gap-3">
-            <form onSubmit={submitSearch} role="search" aria-label={t('ledger.search')} className="relative max-w-md flex-1">
+            {can('viewLedger') ? <form onSubmit={submitSearch} role="search" aria-label={t('ledger.search')} className="relative max-w-md flex-1">
               <Search aria-hidden="true" className="pointer-events-none absolute inset-s-3.5 top-1/2 size-[1.125rem] -translate-y-1/2 text-muted-foreground" />
               <label className="sr-only" htmlFor="top-search">
                 {t('common.search')}
@@ -343,7 +350,7 @@ export function Shell() {
                 onChange={(e) => setQ(e.target.value)}
                 className="ps-10"
               />
-            </form>
+            </form> : <span className="flex-1" />}
             <span className="flex-1" />
             {!fullscreen && can('addPayments') && (
               <Button asChild>
@@ -385,13 +392,8 @@ export function Shell() {
         aria-label={t('app.name')}
         className={cn('fixed inset-x-0 bottom-0 z-30 border-t bg-background pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden', fullscreen && 'hidden')}
       >
-        <div className={cn('mx-auto grid h-[4.25rem] max-w-lg items-center', can('addPayments') ? 'grid-cols-5' : 'grid-cols-4')}>
-          {(
-            [
-              ['/', 'nav.home', House, true],
-              ['/phases', 'nav.phases', Layers3, false],
-            ] as const
-          ).map(([to, key, Icon, end]) => (
+        <div className="mx-auto grid h-[4.25rem] max-w-lg items-center" style={{ gridTemplateColumns: `repeat(${mobileTabCount}, minmax(0, 1fr))` }}>
+          {mobileTabs.map(({ to, key, icon: Icon, end }) => (
             <TabLink key={to} to={to} end={end} label={t(key)} icon={<Icon className="size-[1.375rem]" aria-hidden="true" />} />
           ))}
           {can('addPayments') && (
@@ -403,7 +405,6 @@ export function Shell() {
               <Plus className="size-7" aria-hidden="true" />
             </Link>
           )}
-          <TabLink to="/vendors" label={t('nav.vendors')} icon={<Users className="size-[1.375rem]" aria-hidden="true" />} />
           <TabLink to="/more" label={t('nav.more')} icon={<Ellipsis className="size-[1.375rem]" aria-hidden="true" />} />
         </div>
       </nav>
