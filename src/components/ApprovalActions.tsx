@@ -90,7 +90,7 @@ export function ApprovalActions({ payment, size = 'sm' }: { payment: Payment; si
 }
 
 /** What an entry's approval status means, shown at the top of its page. */
-export function ApprovalNotice({ payment }: { payment: Payment }) {
+export function ApprovalNotice({ payment, actions = true }: { payment: Payment; actions?: boolean }) {
   const { t, lang, can } = useApp()
   if (!payment.approval) return null
   const investor = can('approvePayments')
@@ -108,7 +108,7 @@ export function ApprovalNotice({ payment }: { payment: Payment }) {
       <p className="font-semibold">{text}</p>
       {payment.approval === 'rejected' && payment.rejectReason && <p>{t('approval.reasonIs', { reason: payment.rejectReason })}</p>}
       {payment.approval === 'approved' && !investor && <p className="text-sm">{t('approval.editAgain')}</p>}
-      {can('approvePayments') && payment.approval !== 'approved' && <ApprovalActions payment={payment} size="default" />}
+      {actions && can('approvePayments') && payment.approval !== 'approved' && <ApprovalActions payment={payment} size="default" />}
     </div>
   )
 }

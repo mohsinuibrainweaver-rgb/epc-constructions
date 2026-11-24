@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Banknote, Landmark, Paperclip, ReceiptText, UserRound } from 'lucide-react'
+import { Banknote, Landmark, Paperclip, Pencil, ReceiptText, UserRound } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { StatusPill } from '@/components/common'
 import { PaymentDetails } from '@/components/PaymentDetails'
@@ -10,6 +10,7 @@ import { ariaSort, SortButton } from '@/components/SortButton'
 import { nextSort, sortRows, type SortState } from '@/lib/sort'
 import { colourMap } from '@/lib/avatarColours'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { usePhases, useProjectAttachments, useVendors } from '@/db/hooks'
 import type { Payment } from '@/db/types'
 import type { Key } from '@/i18n/en'
@@ -18,6 +19,7 @@ import { addDays, formatDate, money, moneyRate, todayISO } from '@/lib/format'
 import { hasQuantity, num, rateOf } from '@/lib/materials'
 import { cn } from '@/lib/utils'
 import { payerLabel } from '@/lib/members'
+import { canChangePayment } from '@/lib/permissions'
 
 type Col = 'date' | 'purpose' | 'phase' | 'mode' | 'paidBy' | 'amount' | 'status'
 
@@ -119,7 +121,10 @@ export function PaymentsTable({ payments, showPhase = true, compact = false, sho
         type="button"
         aria-haspopup="dialog"
         aria-label={t('ledger.viewAttachments', { count })}
-        onClick={() => setAttachmentPayment(p)}
+        onClick={(event) => {
+          event.stopPropagation()
+          setAttachmentPayment(p)
+        }}
         className="relative z-10 inline-flex min-h-6 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[0.6875rem] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <Paperclip aria-hidden="true" className="size-3.5" />
@@ -127,6 +132,23 @@ export function PaymentsTable({ payments, showPhase = true, compact = false, sho
       </button>
     )
   }
+
+  const canEdit = (payment: Payment) =>
+    can('viewLedger') && canChangePayment(can('approvePayments') ? 'investor' : 'builder', payment, can('editPayments'))
+
+  const editButton = (payment: Payment, compactButton = false) =>
+    canEdit(payment) ? (
+      <Button asChild variant="ghost" size="icon" className={cn('relative z-10 shrink-0', compactButton && 'size-8')}>
+        <Link
+          to={`/payments/${payment.id}`}
+          aria-label={`${t('common.edit')}: ${payment.purpose}`}
+          title={t('common.edit')}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Pencil aria-hidden="true" />
+        </Link>
+      </Button>
+    ) : null
 
   return (
     <div className="@container">
@@ -157,16 +179,32 @@ export function PaymentsTable({ payments, showPhase = true, compact = false, sho
               <TableHead aria-sort={ariaSort(sort, 'status')}>
                 <SortButton k="status" sort={sort} onSort={onSort}>{t('ledger.status')}</SortButton>
               </TableHead>
+              {can('viewLedger') && can('editPayments') && (
+                <TableHead className="w-12">
+                  <span className="sr-only">{t('common.edit')}</span>
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((p) => (
-              <TableRow key={p.id} className="transition-colors">
+              <TableRow
+                key={p.id}
+                tabIndex={0}
+                aria-label={`${p.purpose}, ${money(p.amount)}`}
+                className="cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+                onClick={() => setDetail(p)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    setDetail(p)
+                  }
+                }}
+              >
                 <TableCell className="tabular whitespace-nowrap">{formatDate(p.date, lang)}</TableCell>
                 <TableCell className="whitespace-normal">
-                  <Link to={`/payments/${p.id}`} className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline">
-                    {p.purpose}
-                  </Link>
+                  <span className="font-semibold text-foreground">{p.purpose}</span>
                   {who(p) && <div className="text-sm text-muted-foreground">{who(p)}</div>}
                   {sub(p) && <div className="text-sm text-muted-foreground">{sub(p)}</div>}
                   {attachmentCounts.has(p.id) && <div className="mt-1.5 flex">{attachmentBadge(p)}</div>}
@@ -197,6 +235,9 @@ export function PaymentsTable({ payments, showPhase = true, compact = false, sho
                 <TableCell>
                   <StatusPill payment={p} />
                 </TableCell>
+                {can('viewLedger') && can('editPayments') && (
+                  <TableCell onClick={(event) => event.stopPropagation()}>{editButton(p)}</TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -234,6 +275,7 @@ export function PaymentsTable({ payments, showPhase = true, compact = false, sho
                   <div className="grid shrink-0 justify-items-end gap-1">
                     <span className="tabular leading-snug font-bold whitespace-nowrap max-sm:text-[0.9375rem]">{money(p.amount)}</span>
                     {!plain && <StatusPill payment={p} />}
+                    {editButton(p, true)}
                   </div>
                 </div>
               </li>
@@ -253,6 +295,7 @@ export function PaymentsTable({ payments, showPhase = true, compact = false, sho
                   <div className="grid shrink-0 justify-items-end gap-2">
                     <span className="tabular leading-snug font-bold whitespace-nowrap">{money(p.amount)}</span>
                     <StatusPill payment={p} />
+                    {editButton(p, true)}
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t border-dashed pt-2 text-sm text-muted-foreground">

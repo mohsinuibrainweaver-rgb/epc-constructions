@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import { ExternalLink, FileText, Pencil, Video } from 'lucide-react'
+import { ExternalLink, FileText, Video } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { ApprovalNotice } from '@/components/ApprovalActions'
-import { Dialog, StatusPill } from '@/components/common'
+import { StatusPill } from '@/components/common'
 import { AudioNote } from '@/components/FilePreview'
-import { Button } from '@/components/ui/button'
+import { Drawer, DrawerBody, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useAttachments, useContracts, usePhases, useVendors } from '@/db/hooks'
 import type { Attachment, Payment } from '@/db/types'
 import type { Key } from '@/i18n/en'
@@ -13,7 +12,6 @@ import { fileSize, formatDate, money, moneyRate } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
 import { hasQuantity, num, rateOf } from '@/lib/materials'
 import { attachmentMime, isAudio, isPictureOrVideo } from '@/lib/media'
-import { canChangePayment } from '@/lib/permissions'
 import { ensureAttachmentBlob } from '@/sync/engine'
 import { payerLabel } from '@/lib/members'
 
@@ -86,8 +84,8 @@ function DocumentLine({ file }: { file: Attachment }) {
 }
 
 /**
- * Everything about one payment, opened by tapping its row on a phone (a bottom sheet), so the row itself can stay short.
- * Editing is one button away, and only where this person may change the payment.
+ * Read-only payment details. Selecting a payment opens this side drawer while editing remains a separate,
+ * permission-gated action in the payment list.
  */
 export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClose: () => void }) {
   const { t, lang, project, phaseName, can, membersOf } = useApp()
@@ -110,23 +108,15 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
   const documents = files.filter((f) => !isPictureOrVideo(f) && !isAudio(f))
 
   return (
-    <Dialog
-      open={Boolean(payment)}
-      title={t('pay.details')}
-      onClose={onClose}
-      footer={
-        p && canChangePayment(can('approvePayments') ? 'investor' : 'builder', p, can('editPayments')) ? (
-          <Button asChild>
-            <Link to={`/payments/${p.id}`} onClick={onClose}>
-              <Pencil aria-hidden="true" />
-              {t('common.edit')}
-            </Link>
-          </Button>
-        ) : undefined
-      }
-    >
-      {p && (
-        <>
+    <Drawer open={Boolean(payment)} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle className="text-lg font-semibold">{t('pay.details')}</DrawerTitle>
+          <DrawerDescription className="sr-only">{p?.purpose ?? t('pay.details')}</DrawerDescription>
+        </DrawerHeader>
+        <DrawerBody className="grid content-start gap-4 p-4 sm:p-5">
+          {p && (
+            <>
           <div className="flex items-start justify-between gap-3">
             <div className="grid min-w-0 gap-1">
               <p className="text-lg leading-snug font-semibold [overflow-wrap:anywhere]">{p.purpose}</p>
@@ -135,7 +125,7 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
             <p className="tabular shrink-0 text-xl font-bold whitespace-nowrap">{money(p.amount)}</p>
           </div>
 
-          <ApprovalNotice payment={p} />
+          <ApprovalNotice payment={p} actions={false} />
 
           <dl>
             <Row label={t('pay.date')}>
@@ -202,8 +192,10 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
               )}
             </div>
           )}
-        </>
-      )}
-    </Dialog>
+            </>
+          )}
+        </DrawerBody>
+      </DrawerContent>
+    </Drawer>
   )
 }

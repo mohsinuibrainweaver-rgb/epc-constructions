@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ElementType, type ReactNode } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Banknote, ClipboardList, Clock, Loader2, Paperclip, ReceiptText, Store, Trash2, TriangleAlert, Wallet } from 'lucide-react'
+import { ArrowLeft, Banknote, ClipboardList, Clock, Loader2, Paperclip, ReceiptText, Store, Trash2, TriangleAlert, Wallet } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { Field, GroupField } from '@/components/common'
 import { useToast } from '@/components/Toast'
@@ -560,7 +560,14 @@ export function AddPayment() {
       noValidate
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight max-sm:text-xl sm:text-3xl">{edit ? t('pay.edit') : t('pay.add')}</h1>
+        <div className="flex min-w-0 items-center gap-2">
+          {edit && (
+            <Button type="button" variant="ghost" size="icon" className="-ms-2 shrink-0" onClick={goBack} aria-label={t('common.back')}>
+              <ArrowLeft aria-hidden="true" className="rtl:rotate-180" />
+            </Button>
+          )}
+          <h1 className="text-2xl font-semibold tracking-tight max-sm:text-xl sm:text-3xl">{edit ? t('pay.edit') : t('pay.add')}</h1>
+        </div>
         {edit && !locked && can('deletePayments') && (
           <Button type="button" variant="destructive" size="sm" onClick={() => void remove()}>
             <Trash2 aria-hidden="true" />
