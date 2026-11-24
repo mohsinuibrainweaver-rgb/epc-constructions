@@ -162,6 +162,15 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
               </Row>
             )}
             <Row label={t('pay.paidBy')}>{payerLabel(p.paidBy, members, t)}</Row>
+            {p.projectCashAmount !== undefined && p.projectCashAmount !== null && (
+              <Row label={t('cash.source')}>
+                {p.projectCashAmount <= 0
+                  ? t('cash.own')
+                  : p.projectCashAmount >= p.amount
+                    ? t('cash.project')
+                    : t('cash.splitDetail', { project: money(p.projectCashAmount), own: money(p.amount - p.projectCashAmount) })}
+              </Row>
+            )}
             {p.addedBy && <Row label={t('pay.addedBy')}>{p.addedBy}</Row>}
             {contract && <Row label={t('pay.contract')}>{contract}</Row>}
             {p.note && <Row label={t('pay.note')}>{p.note}</Row>}

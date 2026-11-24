@@ -232,6 +232,7 @@ export const TABLES: TableDef[] = [
       status: p.status,
       mode: p.mode,
       paid_by: p.paidBy,
+      ...(p.projectCashAmount !== undefined ? { project_cash_amount: p.projectCashAmount } : {}),
       note: nul(p.note),
       added_by: nul(p.addedBy),
       ...(p.planId ? { plan_id: p.planId } : {}),
@@ -263,6 +264,7 @@ export const TABLES: TableDef[] = [
       status: r.status,
       mode: r.mode,
       paidBy: r.paid_by,
+      projectCashAmount: r.project_cash_amount === null || r.project_cash_amount === undefined ? undefined : Number(r.project_cash_amount),
       note: und(r.note),
       addedBy: r.added_by ?? '',
       planId: und(r.plan_id),
@@ -286,6 +288,7 @@ export const TABLES: TableDef[] = [
     toRemote: (t: Transfer) => ({
       id: t.id,
       project_id: t.projectId,
+      ...(t.memberId !== undefined ? { member_id: t.memberId } : {}),
       date: t.date,
       amount: t.amount,
       kind: t.kind,
@@ -295,6 +298,7 @@ export const TABLES: TableDef[] = [
     fromRemote: (r): Transfer => ({
       id: r.id,
       projectId: r.project_id,
+      memberId: und(r.member_id),
       date: r.date,
       amount: Number(r.amount),
       kind: r.kind,

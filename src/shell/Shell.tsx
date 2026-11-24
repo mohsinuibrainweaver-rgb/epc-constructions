@@ -393,7 +393,7 @@ export function Shell() {
         className={cn('fixed inset-x-0 bottom-0 z-30 border-t bg-background pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden', fullscreen && 'hidden')}
       >
         <div className="mx-auto grid h-[4.25rem] max-w-lg items-center" style={{ gridTemplateColumns: `repeat(${mobileTabCount}, minmax(0, 1fr))` }}>
-          {mobileTabs.map(({ to, key, icon: Icon, end }) => (
+          {mobileTabs.slice(0, 2).map(({ to, key, icon: Icon, end }) => (
             <TabLink key={to} to={to} end={end} label={t(key)} icon={<Icon className="size-[1.375rem]" aria-hidden="true" />} />
           ))}
           {can('addPayments') && (
@@ -405,6 +405,9 @@ export function Shell() {
               <Plus className="size-7" aria-hidden="true" />
             </Link>
           )}
+          {mobileTabs.slice(2).map(({ to, key, icon: Icon, end }) => (
+            <TabLink key={to} to={to} end={end} label={t(key)} icon={<Icon className="size-[1.375rem]" aria-hidden="true" />} />
+          ))}
           <TabLink to="/more" label={t('nav.more')} icon={<Ellipsis className="size-[1.375rem]" aria-hidden="true" />} />
         </div>
       </nav>

@@ -160,6 +160,8 @@ alter table public.payments add column if not exists approval text check (approv
 alter table public.payments add column if not exists approved_by text;
 alter table public.payments add column if not exists approved_at bigint;
 alter table public.payments add column if not exists reject_reason text;
+-- How much of a payment came from project cash held by the paying member. Null keeps legacy rows unchanged.
+alter table public.payments add column if not exists project_cash_amount bigint check (project_cash_amount >= 0 and project_cash_amount <= amount);
 
 -- What the plot cost, kept apart from the construction budget (added after the first release).
 alter table public.projects add column if not exists plot_cost bigint;
@@ -253,6 +255,9 @@ create table if not exists public.transfers (
   deleted_at bigint,
   server_updated_at timestamptz not null default now()
 );
+
+-- New transfers name the member holding/returning the project cash. Existing aggregate rows remain null and untouched.
+alter table public.transfers add column if not exists member_id uuid;
 
 create table if not exists public.materials (
   id uuid primary key,
@@ -517,6 +522,10 @@ begin
   elsif tg_table_name in ('attachments', 'project_files') then
     if public.has_permission(pid, 'manageFiles') then return new; else return null; end if;
   elsif tg_table_name = 'payments' then
+    -- A non-owner may only spend or reserve project cash under their own identity.
+    if not public.has_permission(pid, 'approvePayments') then
+      new.paid_by := auth.uid()::text;
+    end if;
     if not public.has_permission(pid, 'approvePayments') and o is not null and (o ->> 'status') in ('paid', 'advance') and
        coalesce(o ->> 'approval', '') not in ('pending', 'rejected') and not public.has_permission(pid, 'approvePayments') then
       return null;

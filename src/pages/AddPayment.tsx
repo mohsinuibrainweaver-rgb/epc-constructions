@@ -16,7 +16,7 @@ import { ApprovalNotice } from '@/components/ApprovalActions'
 import { db } from '@/db/db'
 import { binPayment, restorePayment, savePayment } from '@/db/actions'
 import { canChangePayment } from '@/lib/permissions'
-import { useAttachments, useContracts, usePayments, usePhases, useVendors } from '@/db/hooks'
+import { useAttachments, useContracts, usePayments, usePhases, useTransfers, useVendors } from '@/db/hooks'
 import {
   CATEGORIES,
   MATERIAL_UNITS,
@@ -48,6 +48,9 @@ import { cn } from '@/lib/utils'
 import { matchVendor } from '@/lib/vendorMatch'
 import { ensureAttachmentBlob } from '@/sync/engine'
 import { memberLabel, payerLabel } from '@/lib/members'
+import { memberCashPosition, projectCashUsed } from '@/lib/pettyCash'
+
+type FundingSource = 'project' | 'own' | 'split'
 
 /** A receipt that is already stored. One another phone uploaded is downloaded the first time it is shown. */
 function StoredReceipt({ attachment, label, onRemove }: { attachment: Attachment; label: string; onRemove: () => void }) {
@@ -136,8 +139,10 @@ export function AddPayment() {
   const vendors = useVendors(project?.id)
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id)
+  const transfers = useTransfers(project?.id)
   const contracts = useContracts(project?.id)
   const members = membersOf(project?.id)
+  const selectableMembers = isOwner() ? members : members.filter((member) => member.userId === userId)
   const existing = useLiveQuery(() => (id ? db.payments.get(id) : undefined), [id])
   // An approved entry, or a paid one the investor made himself, is closed to a builder (the server holds the same rule).
   const locked = existing ? !canChangePayment(isOwner() ? 'investor' : settings.role, existing, can('editPayments')) : !can('addPayments')
@@ -165,6 +170,8 @@ export function AddPayment() {
   const [status, setStatus] = useState<PayStatus>('paid')
   const [mode, setMode] = useState<PayMode>('cash')
   const [paidBy, setPaidBy] = useState(userId ?? settings.role)
+  const [fundingSource, setFundingSource] = useState<FundingSource>('own')
+  const [projectCashAmount, setProjectCashAmount] = useState('')
   // Fields the person chose themselves: a vendor's last payment never overrides these. Cleared for each new entry.
   const touched = useRef(new Set<'category' | 'paidBy'>())
   // What was filled in from the chosen vendor's last payment, to say so under the vendor.
@@ -176,7 +183,7 @@ export function AddPayment() {
   const [bankRef, setBankRef] = useState('')
   const [newFiles, setNewFiles] = useState<{ key: number; blob: Blob }[]>([])
   const [removed, setRemoved] = useState<string[]>([])
-  const [errors, setErrors] = useState<{ amount?: string; purpose?: string; date?: string; quantity?: string }>({})
+  const [errors, setErrors] = useState<{ amount?: string; purpose?: string; date?: string; quantity?: string; projectCash?: string }>({})
   const [dup, setDup] = useState(false)
   const [vendorOpen, setVendorOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -199,6 +206,9 @@ export function AddPayment() {
     setStatus(existing.status)
     setMode(existing.mode)
     setPaidBy(existing.paidBy)
+    const savedProjectCash = existing.projectCashAmount ?? 0
+    setFundingSource(savedProjectCash <= 0 ? 'own' : savedProjectCash >= existing.amount ? 'project' : 'split')
+    setProjectCashAmount(savedProjectCash > 0 && savedProjectCash < existing.amount ? groupDigits(String(savedProjectCash)) : '')
     setNote(existing.note ?? '')
     setBankName(existing.bankName ?? '')
     setBankAccount(existing.bankAccount ?? '')
@@ -311,6 +321,19 @@ export function AddPayment() {
   // What this payment does to the chosen contract: agreed, paid, left now, and left after saving.
   const contractObj = contracts.find((c) => c.id === contractId)
   const draftAmount = parseAmount(amount)
+  const payingMember = Boolean(project && paidBy && paidBy !== project.ownerId && paidBy !== 'investor' && paidBy !== 'builder')
+  const cashPosition = useMemo(() => memberCashPosition(paidBy, payments, transfers), [paidBy, payments, transfers])
+  const existingCashReservation = existing && existing.paidBy === paidBy && (isSpent(existing) || existing.approval === 'pending')
+    ? projectCashUsed(existing)
+    : 0
+  const availableProjectCash = cashPosition.availableCash + existingCashReservation
+  const selectedProjectCash = !payingMember || status === 'skipped'
+    ? 0
+    : fundingSource === 'project'
+      ? draftAmount
+      : fundingSource === 'split'
+        ? parseAmount(projectCashAmount)
+        : 0
   const preview = useMemo(
     () =>
       contractObj
@@ -408,6 +431,7 @@ export function AddPayment() {
     setFilled([])
     touched.current.clear()
     setBankRef('')
+    setProjectCashAmount('')
     if (!sp.get('contract') && !sp.get('vendor')) {
       setVendorId('')
       setContractId('')
@@ -429,10 +453,12 @@ export function AddPayment() {
     if (!purpose.trim()) errs.purpose = t('pay.errPurpose')
     if (!date) errs.date = t('pay.errDate')
     if (isMaterial && quantity.trim() && parseDecimal(quantity) <= 0) errs.quantity = t('mat.errQty')
+    if (selectedProjectCash > amt) errs.projectCash = t('cash.errOverPayment')
+    else if (selectedProjectCash > availableProjectCash) errs.projectCash = t('cash.errInsufficient', { amount: money(Math.max(0, availableProjectCash)) })
     setErrors(errs)
     if (Object.keys(errs).length) {
       // Move focus to the first field with a problem (WCAG 3.3.1).
-      const first = errs.amount ? 'amount' : errs.date ? 'date' : errs.purpose ? 'purpose' : 'quantity'
+      const first = errs.amount ? 'amount' : errs.date ? 'date' : errs.purpose ? 'purpose' : errs.quantity ? 'quantity' : 'project-cash-amount'
       document.getElementById(first)?.focus()
       return
     }
@@ -473,6 +499,8 @@ export function AddPayment() {
           status,
           mode,
           paidBy,
+          // New entries explicitly separate project cash held by a member from money they paid from their own pocket.
+          projectCashAmount: payingMember ? selectedProjectCash : existing?.projectCashAmount ? null : undefined,
           note: note.trim() || undefined,
           // Bank details are kept only for a bank transfer; null removes a value that was saved before.
           bankName: bankValue(bankName, existing?.bankName),
@@ -857,12 +885,52 @@ export function AddPayment() {
                 onValueChange={(v) => {
                   touched.current.add('paidBy')
                   setPaidBy(v)
+                  setProjectCashAmount('')
+                  const next = memberCashPosition(v, payments, transfers)
+                  setFundingSource(v !== project?.ownerId && next.availableCash > 0 ? 'project' : 'own')
                 }}
-                tabs={(members.length ? members : [{ userId: userId ?? settings.role, name: settings.userName || undefined }]).map((member) => ({ value: member.userId, label: memberLabel(member) }))}
+                tabs={(selectableMembers.length ? selectableMembers : [{ userId: userId ?? settings.role, name: settings.userName || undefined }]).map((member) => ({ value: member.userId, label: memberLabel(member) }))}
               />
             )}
           </GroupField>
         </div>
+
+        {payingMember && status !== 'skipped' && (
+          <div className="grid gap-3 rounded-control border bg-muted/30 p-3 sm:p-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div>
+                <h3 className="font-semibold">{t('cash.source')}</h3>
+                <p className="text-xs text-muted-foreground">{t('cash.available', { name: payerLabel(paidBy, members, t), amount: money(Math.max(0, availableProjectCash)) })}</p>
+              </div>
+              {cashPosition.pendingCashUse > 0 && <span className="text-xs text-muted-foreground">{t('cash.pending', { amount: money(cashPosition.pendingCashUse) })}</span>}
+            </div>
+            <ViewTabs
+              fill
+              size="default"
+              value={fundingSource}
+              onValueChange={(value) => {
+                setFundingSource(value as FundingSource)
+                if (value !== 'split') setProjectCashAmount('')
+              }}
+              tabs={([
+                { value: 'project', label: t('cash.project') },
+                { value: 'own', label: t('cash.own') },
+                { value: 'split', label: t('cash.split') },
+              ] as const)}
+            />
+            {fundingSource === 'split' && (
+              <Field label={t('cash.projectPart')} htmlFor="project-cash-amount" error={errors.projectCash}>
+                <Input id="project-cash-amount" className="tabular" inputMode="numeric" value={projectCashAmount} onChange={(e) => setProjectCashAmount(groupDigits(e.target.value))} autoComplete="off" />
+              </Field>
+            )}
+            {fundingSource !== 'own' && draftAmount > 0 && (
+              <p aria-live="polite" className={cn('text-sm font-semibold', selectedProjectCash > availableProjectCash ? 'text-danger' : 'text-foreground')}>
+                {t('cash.after', { amount: money(availableProjectCash - selectedProjectCash) })}
+              </p>
+            )}
+            {fundingSource !== 'split' && errors.projectCash && <p role="alert" className="text-sm font-semibold text-danger">{errors.projectCash}</p>}
+          </div>
+        )}
 
         {mode === 'bank' && (
           <div role="group" aria-labelledby="bank-title" className="grid items-start gap-4 rounded-xl border bg-muted/40 p-3 sm:grid-cols-2">
@@ -984,6 +1052,7 @@ export function AddPayment() {
               [t('pay.status'), t(`status.${status}` as Key)],
               [t('pay.mode'), t(`mode.${mode}` as Key)],
               [t('pay.paidBy'), payerLabel(paidBy, members, t)],
+              ...(payingMember ? [[t('cash.source'), t(`cash.${fundingSource}` as Key)] as [string, string]] : []),
               [t('pay.summary.files'), String(visibleExisting.length + newFiles.length)],
             ]}
           />

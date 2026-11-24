@@ -34,7 +34,7 @@ await db.exec(`
   drop table public.payment_plans, public.transfers, public.materials, public.project_files, public.push_subscriptions, public.push_log, public.contracts;
   alter table public.projects drop column plot_cost, drop column fee_basis, drop column fee_amount, drop column fee_percent, drop column retainer_amount, drop column retainer_start, drop column retainer_end;
   alter table public.phases drop column fee_kind, drop column fee_value, drop column done;
-  alter table public.payments drop column plan_id, drop column approval, drop column approved_by, drop column approved_at, drop column reject_reason, drop column contract_id, drop column bank_name, drop column bank_account, drop column bank_ref, drop column quantity, drop column unit;
+  alter table public.payments drop column plan_id, drop column approval, drop column approved_by, drop column approved_at, drop column reject_reason, drop column project_cash_amount, drop column contract_id, drop column bank_name, drop column bank_account, drop column bank_ref, drop column quantity, drop column unit;
   alter table public.vendors drop column bank_name;
 `)
 await db.exec(schema)
@@ -154,6 +154,15 @@ await db.exec(`update push_subscriptions set reminder_hour = 22 where endpoint =
 await as(A, 'a@x.com')
 assert.equal((await mine())[0].reminder_hour, 0, 'B cannot change A\'s device')
 console.log('push preferences: ok')
+
+// Per-member project cash is additive: the transfer names its holder, and a payment stores only the part used from that cash.
+await as(A, 'a@x.com')
+await db.exec(`update transfers set member_id = '${B}' where id = '33333333-3333-3333-3333-333333333333'`)
+await db.exec(`update payments set project_cash_amount = 50000 where id = '44444444-4444-4444-4444-444444444444'`)
+assert.equal((await db.query<{ member_id: string }>(`select member_id from transfers where id = '33333333-3333-3333-3333-333333333333'`)).rows[0].member_id, B)
+assert.equal(Number((await db.query<{ project_cash_amount: string }>(`select project_cash_amount from payments where id = '44444444-4444-4444-4444-444444444444'`)).rows[0].project_cash_amount), 50000)
+await assert.rejects(db.exec(`update payments set project_cash_amount = amount + 1 where id = '44444444-4444-4444-4444-444444444444'`), /./, 'project cash cannot exceed the payment')
+console.log('member project cash columns: ok')
 
 // Bank details of a transfer: stored on the payment and the vendor, empty by default, and only members see them.
 await as(A, 'a@x.com')

@@ -8,11 +8,15 @@ import { Textarea } from '@/components/ui/textarea'
 import { approvePayment, rejectPayment } from '@/db/actions'
 import type { Payment } from '@/db/types'
 import { formatDate, money } from '@/lib/format'
+import { usePayments, useTransfers } from '@/db/hooks'
+import { memberCashPosition, projectCashUsed } from '@/lib/pettyCash'
 
 /** Approve or reject one entry the builder added. Only the investor sees these buttons. */
 export function ApprovalActions({ payment, size = 'sm' }: { payment: Payment; size?: 'sm' | 'default' }) {
-  const { t, settings, can } = useApp()
+  const { t, settings, can, project } = useApp()
   const toast = useToast()
+  const payments = usePayments(project?.id)
+  const transfers = useTransfers(project?.id)
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState('')
   const by = settings.userName || settings.role
@@ -26,6 +30,13 @@ export function ApprovalActions({ payment, size = 'sm' }: { payment: Payment; si
           type="button"
           size={size}
           onClick={() => {
+            const requestedCash = projectCashUsed(payment)
+            const position = memberCashPosition(payment.paidBy, payments, transfers)
+            const availableForThisPayment = position.availableCash + (payment.approval === 'pending' ? requestedCash : 0)
+            if (requestedCash > availableForThisPayment) {
+              toast.show({ kind: 'error', message: t('cash.errInsufficient', { amount: money(Math.max(0, availableForThisPayment)) }) })
+              return
+            }
             void approvePayment(payment.id, by)
             toast.show({ kind: 'success', message: t('approval.approvedToast') })
           }}

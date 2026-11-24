@@ -154,8 +154,8 @@ export interface CashAdvice {
  * Whether the cash the builder holds covers what he is to pay in the next 30 days. `builderBalance` is the Settlement's figure:
  * negative means the builder holds that much of the investor's money.
  */
-export function cashAdvice(builderBalance: number, builderNext30: number): CashAdvice {
-  const holds = Math.max(0, -builderBalance)
+export function cashAdvice(builderBalance: number, builderNext30: number, explicitCashHeld?: number): CashAdvice {
+  const holds = explicitCashHeld === undefined ? Math.max(0, -builderBalance) : Math.max(0, explicitCashHeld)
   return { holds, needs: builderNext30, topUp: Math.max(0, builderNext30 - holds), leftOver: Math.max(0, holds - builderNext30) }
 }
 

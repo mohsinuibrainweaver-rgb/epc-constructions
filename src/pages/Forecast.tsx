@@ -15,6 +15,7 @@ import { cashAdvice, forecast, type ForecastItem } from '@/lib/forecast'
 import { formatDate, formatDayShort, money, todayISO } from '@/lib/format'
 import { computeSettlement } from '@/lib/settlement'
 import { payerLabel } from '@/lib/members'
+import { totalProjectCashHeld } from '@/lib/pettyCash'
 
 /** What the coming weeks will cost: week by week, who pays, and what has no day yet. */
 export function Forecast() {
@@ -32,7 +33,8 @@ export function Forecast() {
 
   const f = useMemo(() => forecast({ payments, plans, contracts, today, ownerId: project?.ownerId }), [payments, plans, contracts, today, project?.ownerId])
   const settlement = useMemo(() => (project ? computeSettlement(project, payments, transfers, phases, today) : undefined), [project, payments, transfers, phases, today])
-  const advice = settlement ? cashAdvice(settlement.builderBalance, f.builderNext30) : undefined
+  const cashHeld = useMemo(() => totalProjectCashHeld(project?.ownerId, payments, transfers), [project?.ownerId, payments, transfers])
+  const advice = settlement ? cashAdvice(settlement.builderBalance, f.builderNext30, cashHeld) : undefined
   const vendorName = useMemo(() => new Map(vendors.map((v) => [v.id, v.name])), [vendors])
 
   // The columns: what is overdue (when there is any), then the weeks.

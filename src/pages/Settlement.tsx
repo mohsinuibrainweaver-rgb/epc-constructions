@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { isAwaitingApproval, sum } from '@/lib/stats'
-import { ArrowLeftRight, Banknote, Pencil, Percent, Plus, Printer, Scale, Trash2 } from 'lucide-react'
+import { ArrowLeftRight, Banknote, Pencil, Percent, Plus, Printer, Scale, Trash2, WalletCards } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { CardHeading, IconTile } from '@/components/CardHeading'
 import { EmptyState, PageHeader } from '@/components/common'
@@ -16,6 +16,8 @@ import type { Transfer } from '@/db/types'
 import type { Key } from '@/i18n/en'
 import { formatDate, money, todayISO } from '@/lib/format'
 import { computeSettlement } from '@/lib/settlement'
+import { memberCashPosition, totalProjectCashHeld } from '@/lib/pettyCash'
+import { memberLabel } from '@/lib/members'
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
@@ -27,7 +29,7 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
 }
 
 export function Settlement() {
-  const { t, lang, project, phaseName, can } = useApp()
+  const { t, lang, project, phaseName, can, isOwner, userId, membersOf } = useApp()
   const toast = useToast()
   const phases = usePhases(project?.id)
   const payments = usePayments(project?.id).filter((p) => !p.deletedAt)
@@ -39,6 +41,24 @@ export function Settlement() {
   const s = useMemo(() => (project ? computeSettlement(project, payments, transfers, phases, todayISO()) : undefined), [project, payments, transfers, phases])
   const pendingTotal = sum(payments.filter(isAwaitingApproval))
   if (!project || !s) return null
+
+  const knownMembers = membersOf(project.id).filter((member) => member.userId !== project.ownerId)
+  const memberIds = new Set(knownMembers.map((member) => member.userId))
+  for (const transfer of transfers) if (transfer.memberId) memberIds.add(transfer.memberId)
+  for (const payment of payments) {
+    if (payment.projectCashAmount !== undefined && payment.projectCashAmount !== null && payment.paidBy !== project.ownerId) memberIds.add(payment.paidBy)
+  }
+  const projectMembers = [...memberIds].map((id) => knownMembers.find((member) => member.userId === id) ?? { userId: id })
+  const ownerView = isOwner()
+  const visibleMembers = ownerView ? projectMembers : projectMembers.filter((member) => member.userId === userId)
+  const cashPositions = visibleMembers.map((member) => ({ member, position: memberCashPosition(member.userId, payments, transfers) }))
+  const totalCashHeld = ownerView
+    ? totalProjectCashHeld(project.ownerId, payments, transfers)
+    : cashPositions.reduce((total, item) => total + Math.max(0, item.position.cashHeld), 0)
+  const totalPendingCash = cashPositions.reduce((total, item) => total + item.position.pendingCashUse, 0)
+  const totalReimbursementDue = cashPositions.reduce((total, item) => total + Math.max(0, item.position.reimbursementDue), 0)
+  const memberNames = new Map(projectMembers.map((member) => [member.userId, memberLabel(member)]))
+  const hasLegacyTransfers = transfers.some((transfer) => !transfer.memberId)
 
   const balanceMsg =
     s.builderBalance > 0
@@ -177,6 +197,53 @@ export function Settlement() {
       </Card>
 
       <Card className="gap-0 overflow-hidden py-0">
+        <CardHeading icon={WalletCards} className="p-4 max-sm:p-3">{t('cash.title')}</CardHeading>
+        <div className="border-t p-4 max-sm:p-3">
+          <p className="mb-4 text-sm text-muted-foreground max-sm:mb-3 max-sm:text-[0.8125rem]">{t('cash.subtitle')}</p>
+          {ownerView && (
+            <dl className="mb-4 grid gap-2 rounded-control bg-secondary p-3 text-secondary-foreground max-sm:mb-3 sm:grid-cols-3">
+              <div className="grid gap-1 sm:border-e sm:pe-3">
+                <dt className="text-xs font-medium opacity-75">{t('cash.totalHeld')}</dt>
+                <dd className="tabular text-xl font-extrabold">{money(totalCashHeld)}</dd>
+              </div>
+              <div className="grid gap-1 sm:border-e sm:px-3">
+                <dt className="text-xs font-medium opacity-75">{t('cash.totalPending')}</dt>
+                <dd className="tabular font-bold">{money(totalPendingCash)}</dd>
+              </div>
+              <div className="grid gap-1 sm:ps-3">
+                <dt className="text-xs font-medium opacity-75">{t('cash.totalDue')}</dt>
+                <dd className="tabular font-bold">{money(totalReimbursementDue)}</dd>
+              </div>
+            </dl>
+          )}
+          {cashPositions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('cash.none')}</p>
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-2">
+              {cashPositions.map(({ member, position }) => (
+                <section key={member.userId} className="rounded-control border bg-muted/20 p-3">
+                  <div className="flex items-center justify-between gap-3 border-b pb-2.5">
+                    <h3 className="truncate font-semibold">{memberLabel(member)}</h3>
+                    <Badge variant={position.cashHeld > 0 ? 'default' : 'neutral'}>{t('cash.held')}: {money(position.cashHeld)}</Badge>
+                  </div>
+                  <dl className="divide-y text-sm">
+                    <Row label={t('cash.given')} value={money(position.given)} />
+                    <Row label={t('cash.used')} value={money(position.spentFromProjectCash)} />
+                    <Row label={t('cash.returned')} value={money(position.returned)} />
+                    <Row label={t('cash.ownSpent')} value={money(position.spentFromOwnFunds)} />
+                    <Row label={t('cash.reimbursed')} value={money(position.reimbursed)} />
+                    <Row label={t('cash.due')} value={money(position.reimbursementDue)} strong={position.reimbursementDue > 0} />
+                  </dl>
+                  {position.pendingCashUse > 0 && <p className="mt-2 text-xs text-muted-foreground">{t('cash.pending', { amount: money(position.pendingCashUse) })}</p>}
+                </section>
+              ))}
+            </div>
+          )}
+          {hasLegacyTransfers && <p className="mt-3 text-xs text-muted-foreground">{t('cash.legacy')}</p>}
+        </div>
+      </Card>
+
+      <Card className="gap-0 overflow-hidden py-0">
         <CardHeading icon={ArrowLeftRight} className="p-4 max-sm:p-3">{t('stl.transfers')}</CardHeading>
         {transfers.length === 0 ? (
           <EmptyState compact icon={ArrowLeftRight} title={t('stl.transferEmpty')} body={t('stl.transferEmptyBody')} />
@@ -188,6 +255,7 @@ export function Settlement() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold max-sm:text-[0.9375rem]">{t(`xfer.${x.kind}` as Key)}</span>
                     <Badge variant="neutral">{t(x.kind === 'return' ? 'stl.builderToInvestor' : 'stl.investorToBuilder')}</Badge>
+                    {x.memberId && <Badge variant="neutral">{memberNames.get(x.memberId) ?? x.memberId.slice(0, 8)}</Badge>}
                   </div>
                   <p className="text-sm text-muted-foreground max-sm:text-[0.8125rem]">
                     <span className="tabular">{formatDate(x.date, lang)}</span>

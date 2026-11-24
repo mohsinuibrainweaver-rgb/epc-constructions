@@ -147,6 +147,8 @@ export interface Payment extends Stamped {
   mode: PayMode
   /** Project member id for new rows; legacy rows contain "investor" or "builder". */
   paidBy: string
+  /** Part of this payment funded from project cash held by `paidBy`. Missing on legacy rows; 0 means the member used their own money. */
+  projectCashAmount?: number | null
   note?: string
   addedBy: string
   /** Set on a payment that a weekly plan created. */
@@ -170,12 +172,14 @@ export interface Payment extends Stamped {
   unit?: MaterialUnit | null
 }
 
-/** Money moving between the two people. All but 'return' go from the investor to the builder. */
+/** Money moving between the project owner and a project member. */
 export type TransferKind = 'advance' | 'topup' | 'reimbursement' | 'return' | 'fee'
 export const TRANSFER_KINDS: TransferKind[] = ['advance', 'topup', 'reimbursement', 'return', 'fee']
 
 export interface Transfer extends Stamped {
   projectId: string
+  /** Member receiving/returning the money. Missing on legacy aggregate transfers. */
+  memberId?: string | null
   date: string
   amount: number
   kind: TransferKind

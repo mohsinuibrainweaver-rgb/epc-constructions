@@ -12,7 +12,7 @@ Object.defineProperty(globalThis, 'navigator', { value: { onLine: true }, config
 let mode: 'old' | 'new' = 'old'
 const store: Record<string, Record<string, any>> = {}
 const NEW_TABLES = ['payment_plans', 'transfers', 'project_files', 'contracts']
-const NEW_COLS: Record<string, string[]> = { projects: ['plot_cost', 'fee_basis', 'fee_amount', 'fee_percent', 'retainer_amount', 'retainer_start', 'retainer_end'], phases: ['fee_kind', 'fee_value', 'done'], payments: ['plan_id', 'approval', 'approved_by', 'approved_at', 'reject_reason', 'contract_id', 'quantity', 'unit'] }
+const NEW_COLS: Record<string, string[]> = { projects: ['plot_cost', 'fee_basis', 'fee_amount', 'fee_percent', 'retainer_amount', 'retainer_start', 'retainer_end'], phases: ['fee_kind', 'fee_value', 'done'], payments: ['plan_id', 'approval', 'approved_by', 'approved_at', 'reject_reason', 'project_cash_amount', 'contract_id', 'quantity', 'unit'] }
 let tick = 0
 const stamp = () => new Date(Date.UTC(2026, 10, 15, 0, 0, 0) + ++tick * 1000).toISOString()
 
@@ -74,12 +74,12 @@ async function settle(label: string, wantDirty: (d: Record<string, number>) => b
 const pid = await actions.createProject({ name: 'House #3', location: 'Wah Cantt', budget: 1000 }, 'standard')
 const vid = await actions.saveVendor({ projectId: pid, name: 'Hakimeen', role: 'foreman' })
 await actions.savePayment({ projectId: pid, date: '2026-11-10', amount: 100, category: 'material', purpose: 'Plain payment', status: 'paid', mode: 'cash', paidBy: 'investor', addedBy: 'A' }, [], [])
-await actions.savePayment({ projectId: pid, date: '2026-11-10', amount: 700, category: 'material', purpose: 'Builder entry', status: 'paid', mode: 'cash', paidBy: 'builder', addedBy: 'B', approval: 'pending' }, [], [])
+await actions.savePayment({ projectId: pid, date: '2026-11-10', amount: 700, category: 'material', purpose: 'Builder entry', status: 'paid', mode: 'cash', paidBy: 'builder', projectCashAmount: 500, addedBy: 'B', approval: 'pending' }, [], [])
 await actions.saveFee(pid, { basis: 'retainer', retainer: { amount: 100000, start: '2026-11-01' } })
 await actions.saveFee(pid, { basis: 'percent', percent: 5 })
 const donePhase = (await db.phases.where('projectId').equals(pid).first())!
 await actions.setPhaseDone(donePhase.id, true)
-await actions.saveTransfer({ projectId: pid, date: '2026-11-08', amount: 500000, kind: 'advance' })
+await actions.saveTransfer({ projectId: pid, memberId: 'member-a', date: '2026-11-08', amount: 500000, kind: 'advance' })
 // A material purchase is a payment with a quantity and a unit (the columns are new, so an old server lacks them).
 await actions.savePayment({ projectId: pid, date: '2026-11-09', amount: 16500, category: 'material', purpose: 'Bricks', status: 'paid', mode: 'cash', paidBy: 'investor', addedBy: 'A', quantity: 1000, unit: 'piece' }, [], [])
 await actions.addFiles(pid, 'document', [{ blob: new Blob(['hello'], { type: 'application/pdf' }), name: 'c.pdf' }], { date: '2026-11-09', docType: 'contract' })
@@ -98,7 +98,7 @@ startSync('test-user')
 // 1. Old server: the old tables sync, the new things wait, and nothing crashes.
 await settle('old server', (d) => d.phases === 1 && d.vendors === 0 && d.plans > 0 && d.transfers > 0 && d.files > 0 && d.contracts > 0)
 const w = getStatus().warning ?? ''
-assert.match(w, /plot_cost/); assert.match(w, /payment_plans/); assert.match(w, /transfers/); assert.match(w, /quantity/); assert.match(w, /project_files/); assert.match(w, /fee_basis/); assert.match(w, /plan_id/); assert.match(w, /retainer_amount/); assert.match(w, /fee_kind/); assert.match(w, /approval/); assert.match(w, /contract/)
+assert.match(w, /plot_cost/); assert.match(w, /payment_plans/); assert.match(w, /transfers/); assert.match(w, /quantity/); assert.match(w, /project_files/); assert.match(w, /fee_basis/); assert.match(w, /plan_id/); assert.match(w, /retainer_amount/); assert.match(w, /fee_kind/); assert.match(w, /approval/); assert.match(w, /project_cash_amount/); assert.match(w, /contract/)
 assert.equal(Object.keys(store.phases ?? {}).length, 12, 'phases reached the old server')
 assert.ok(store.projects[pid] && !('plot_cost' in store.projects[pid]), 'the project reached the old server without its plot cost')
 assert.ok(store.projects[plainId] && !('plot_cost' in store.projects[plainId]), 'a project that never had a plot cost sends no such column')
@@ -133,5 +133,7 @@ assert.equal((store.projects[pid] as any).retainer_amount, 100000, 'the retainer
 assert.equal((store.phases[donePhase.id] as any).done, true, 'phase completion arrived')
 assert.ok(Object.values(store.payments).filter((p: any) => p.plan_id).length === 2, 'plan links arrived')
 assert.equal((Object.values(store.payments).find((p: any) => p.purpose === 'Builder entry') as any).approval, 'pending', 'approval state arrived')
+assert.equal((Object.values(store.payments).find((p: any) => p.purpose === 'Builder entry') as any).project_cash_amount, 500, 'project-cash source arrived')
+assert.equal((Object.values(store.transfers)[0] as any).member_id, 'member-a', 'cash holder arrived')
 console.log('after schema update: everything synced')
 stopSync(); server.close(); process.exit(0)
