@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ExternalLink, FileText, Video } from 'lucide-react'
+import { ExternalLink, FileText } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { ApprovalNotice } from '@/components/ApprovalActions'
 import { StatusPill } from '@/components/common'
-import { AudioNote } from '@/components/FilePreview'
+import { AudioNote, MediaPreview } from '@/components/FilePreview'
+import { PaymentAttachmentsDialog } from '@/components/PaymentAttachmentsDialog'
 import { Drawer, DrawerBody, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useAttachments, useContracts, usePhases, useVendors } from '@/db/hooks'
 import type { Attachment, Payment } from '@/db/types'
@@ -26,15 +27,18 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /** A receipt: a photo shows as itself, a video as a plain tile. Shown only when this device has the file. */
-function Proof({ file }: { file: Attachment }) {
+function Proof({ file, onOpen }: { file: Attachment; onOpen: () => void }) {
   const url = useObjectUrl(file.blob)
   if (!file.blob) return null
-  return file.blob.type.startsWith('image/') && url ? (
-    <img src={url} alt="" className="size-20 rounded-lg border object-cover" />
-  ) : (
-    <span aria-hidden="true" className="grid size-20 place-items-center rounded-lg border bg-muted text-muted-foreground">
-      <Video className="size-6" />
-    </span>
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={file.name}
+      className="relative grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted text-muted-foreground outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      {url && <MediaPreview url={url} blob={file.blob} playSize="sm" />}
+    </button>
   )
 }
 
@@ -94,6 +98,7 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
   const phases = usePhases(project?.id)
   const contracts = useContracts(project?.id)
   const files = useAttachments(payment?.id)
+  const [galleryAttachmentId, setGalleryAttachmentId] = useState<string>()
   // The last payment is kept while the sheet slides away, so it does not empty first.
   const last = useRef<Payment | undefined>(undefined)
   if (payment) last.current = payment
@@ -107,9 +112,12 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
   const voices = files.filter((f) => isAudio(f))
   const documents = files.filter((f) => !isPictureOrVideo(f) && !isAudio(f))
 
+  useEffect(() => setGalleryAttachmentId(undefined), [payment?.id])
+
   return (
-    <Drawer open={Boolean(payment)} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent>
+    <>
+      <Drawer open={Boolean(payment)} onOpenChange={(open) => !open && onClose()}>
+        <DrawerContent>
         <DrawerHeader>
           <DrawerTitle className="text-lg font-semibold">{t('pay.details')}</DrawerTitle>
           <DrawerDescription className="sr-only">{p?.purpose ?? t('pay.details')}</DrawerDescription>
@@ -172,7 +180,7 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
               {proofs.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {proofs.map((f) => (
-                    <Proof key={f.id} file={f} />
+                    <Proof key={f.id} file={f} onOpen={() => setGalleryAttachmentId(f.id)} />
                   ))}
                 </div>
               )}
@@ -195,7 +203,13 @@ export function PaymentDetails({ payment, onClose }: { payment?: Payment; onClos
             </>
           )}
         </DrawerBody>
-      </DrawerContent>
-    </Drawer>
+        </DrawerContent>
+      </Drawer>
+      <PaymentAttachmentsDialog
+        payment={galleryAttachmentId ? p : undefined}
+        initialAttachmentId={galleryAttachmentId}
+        onClose={() => setGalleryAttachmentId(undefined)}
+      />
+    </>
   )
 }

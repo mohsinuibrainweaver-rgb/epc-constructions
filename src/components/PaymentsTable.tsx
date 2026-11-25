@@ -125,7 +125,7 @@ export function PaymentsTable({ payments, showPhase = true, compact = false, sho
           event.stopPropagation()
           setAttachmentPayment(p)
         }}
-        className="relative z-10 inline-flex min-h-6 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[0.6875rem] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="relative z-10 inline-flex min-h-6 cursor-pointer items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[0.6875rem] font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <Paperclip aria-hidden="true" className="size-3.5" />
         {count}

@@ -4,6 +4,7 @@ import { useApp } from '@/app/AppContext'
 import { EmptyState, PageHeader } from '@/components/common'
 import { FileDialog } from '@/components/FileDialog'
 import { FileViewer, useFileBlob } from '@/components/FileViewer'
+import { MediaGalleryDialog, type GalleryFile } from '@/components/PaymentAttachmentsDialog'
 import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,10 +17,10 @@ import { DOC_TYPES, type Attachment, type DocType, type FileKind, type Payment, 
 import type { Key } from '@/i18n/en'
 import { fileSize, formatDate, money } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
-import { isAudio } from '@/lib/media'
+import { attachmentMime, isAudio } from '@/lib/media'
 import { documentItems, documentPhaseId, itemPhaseId, photoItems, receiptAsFile } from '@/lib/receipts'
 import { MediaPreview } from '@/components/FilePreview'
-import { ensureAttachmentBlob } from '@/sync/engine'
+import { ensureAttachmentBlob, ensureFileBlob } from '@/sync/engine'
 
 function PhotoTile({ file, onOpen }: { file: ProjectFile; onOpen: () => void }) {
   const { blob } = useFileBlob(file)
@@ -89,6 +90,7 @@ export function Files() {
   // Photos are what was uploaded here plus the receipt photos attached to payments; this narrows to one of the two.
   const [source, setSource] = useState<'' | 'progress' | 'receipt'>('')
   const [docType, setDocType] = useState<'' | DocType>('')
+  const [viewingMediaId, setViewingMediaId] = useState<string>()
   const [viewing, setViewing] = useState<ProjectFile | undefined>()
   const [viewingReceipt, setViewingReceipt] = useState<{ attachment: Attachment; payment: Payment } | undefined>()
   const [editing, setEditing] = useState<ProjectFile | undefined>()
@@ -99,6 +101,25 @@ export function Files() {
   // Documents are what was uploaded here plus the documents (PDF, Word, Excel ...) attached to payments.
   const docs = useMemo(() => documentItems(files, receipts, payments), [files, receipts, payments])
   const photoRows = items.filter((i) => (!source || (source === 'progress') === (i.kind === 'progress')) && (!phase || itemPhaseId(i) === phase))
+  const galleryFiles: GalleryFile[] = photoRows.map((item) =>
+    item.kind === 'progress'
+      ? {
+          id: item.file.id,
+          name: item.file.name,
+          blob: item.file.blob,
+          path: item.file.path,
+          mime: item.file.mime,
+          loadBlob: () => ensureFileBlob(item.file),
+        }
+      : {
+          id: item.attachment.id,
+          name: item.attachment.name,
+          blob: item.attachment.blob,
+          path: item.attachment.path,
+          mime: attachmentMime(item.attachment),
+          loadBlob: () => ensureAttachmentBlob(item.attachment),
+        },
+  )
   const docRows = docs.filter((d) => (!phase || documentPhaseId(d) === phase) && (!docType || (d.kind === 'upload' && d.file.docType === docType)))
   const total = kind === 'photo' ? items.length : docs.length
   const shownCount = kind === 'photo' ? photoRows.length : docRows.length
@@ -211,9 +232,9 @@ export function Files() {
                 {list.map((i) => (
                   <li key={i.id} className="min-w-0">
                     {i.kind === 'progress' ? (
-                      <PhotoTile file={i.file} onOpen={() => setViewing(i.file)} />
+                      <PhotoTile file={i.file} onOpen={() => setViewingMediaId(i.id)} />
                     ) : (
-                      <ReceiptTile attachment={i.attachment} payment={i.payment} onOpen={() => setViewingReceipt({ attachment: i.attachment, payment: i.payment })} />
+                      <ReceiptTile attachment={i.attachment} payment={i.payment} onOpen={() => setViewingMediaId(i.id)} />
                     )}
                   </li>
                 ))}
@@ -262,6 +283,13 @@ export function Files() {
         </Card>
       )}
 
+      <MediaGalleryDialog
+        open={Boolean(viewingMediaId)}
+        files={galleryFiles}
+        initialFileId={viewingMediaId}
+        description={t('nav.files')}
+        onClose={() => setViewingMediaId(undefined)}
+      />
       <FileViewer
         file={current}
         phaseLabel={current?.phaseId ? phaseLabel.get(current.phaseId) : undefined}
