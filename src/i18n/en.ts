@@ -1213,6 +1213,7 @@ export const en = {
   'perm.managePeople.desc': 'Invite members, change permissions and remove members.',
 
   'welcome.syncNote': 'If someone invited you to a project, it appears here after the first sync.',
+  'sync.fetchingProjects': 'Fetching your projects…',
   'join.title': 'Join a project',
   'join.sub': 'Enter the code the project owner sent you.',
   'join.code': 'Invite code',

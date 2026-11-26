@@ -431,8 +431,8 @@ const schedule = (ms: number) => {
   pushTimer = setTimeout(() => void syncNow(), ms)
 }
 
-export function startSync(uid: string): void {
-  if (!supabase) return
+export function startSync(uid: string): Promise<void> {
+  if (!supabase) return Promise.resolve()
   stopSync()
   userId = uid
   set({ state: 'idle' })
@@ -470,7 +470,10 @@ export function startSync(uid: string): void {
   const interval = setInterval(() => void syncNow(), 60_000)
   stops.push(() => clearInterval(interval))
 
-  void syncNow()
+  // Let the caller distinguish the initial server pull from the later background syncs. In
+  // particular, an empty local database must not be treated as "this account has no projects"
+  // until this promise settles.
+  return syncNow()
 }
 
 export function stopSync(): void {

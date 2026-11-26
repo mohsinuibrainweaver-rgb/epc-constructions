@@ -207,7 +207,10 @@ export function Shell() {
     if (!main) return
     const watch = new MutationObserver(update)
     watch.observe(main, { childList: true, subtree: true, characterData: true })
-    return () => watch.disconnect()
+    return () => {
+      watch.disconnect()
+      document.title = app
+    }
   }, [loc.pathname, t])
 
   if (!project) return <Navigate to="/welcome" replace />

@@ -16,7 +16,8 @@ import { SyncProvider, useSync } from './sync/SyncProvider'
 import { SignIn } from './pages/SignIn'
 import { ResetPassword } from './pages/ResetPassword'
 import { onAccessRevoked } from './sync/engine'
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
+import { Loader2 } from 'lucide-react'
 
 function AccessRevokedNotice() {
   const { t } = useApp()
@@ -33,8 +34,14 @@ function AccessRevokedNotice() {
 }
 
 function Gate() {
-  const { configured, loading, session, passwordRecovery, device } = useSync()
+  const { t } = useApp()
+  const { configured, loading, session, passwordRecovery, projectsLoading, device } = useSync()
   const location = useLocation()
+  // Shell owns richer page titles while signed in. As soon as that session ends, replace its
+  // project title before the signed-out screen is painted.
+  useLayoutEffect(() => {
+    if (configured && !session) document.title = t('app.name')
+  }, [configured, session, t])
   if (configured && loading) return null
   // Supabase recovery links intentionally create a short-lived session. Never let that session
   // enter the project UI, even if Supabase redirected to the site root instead of the requested path.
@@ -53,6 +60,18 @@ function Gate() {
   }
   // Signed in, but the local account cache is still being checked/prepared.
   if (configured && device.state === 'checking') return null
+  // Signing out clears the local database. On the next sign-in it is therefore temporarily empty;
+  // do not flash the no-project / join-with-code screen before the first pull has answered.
+  if (configured && session && device.state === 'ok' && projectsLoading) {
+    return (
+      <main className="grid min-h-dvh place-items-center px-4">
+        <div role="status" aria-live="polite" className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
+          <Loader2 aria-hidden="true" className="size-5 animate-spin text-primary" />
+          {t('sync.fetchingProjects')}
+        </div>
+      </main>
+    )
+  }
   return <App />
 }
 
