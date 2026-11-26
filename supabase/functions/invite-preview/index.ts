@@ -67,8 +67,9 @@ async function signedThumbnail(path: string | null | undefined): Promise<string>
   return signed.startsWith('http') ? signed : `${env('SUPABASE_URL')}/storage/v1${signed}`
 }
 
-function html(joinUrl: string, title: string, description: string, image: string): string {
+function html(joinUrl: string, previewUrl: string, title: string, description: string, image: string): string {
   const safeJoin = escapeHtml(joinUrl)
+  const safePreview = escapeHtml(previewUrl)
   const safeTitle = escapeHtml(title)
   const safeDescription = escapeHtml(description)
   const safeImage = escapeHtml(image)
@@ -83,7 +84,7 @@ function html(joinUrl: string, title: string, description: string, image: string
   <meta property="og:site_name" content="EndPoint Construction">
   <meta property="og:title" content="${safeTitle}">
   <meta property="og:description" content="${safeDescription}">
-  <meta property="og:url" content="${safeJoin}">
+  <meta property="og:url" content="${safePreview}">
   ${safeImage ? `<meta property="og:image" content="${safeImage}">
   <meta property="og:image:secure_url" content="${safeImage}">
   <meta property="og:image:alt" content="${safeTitle}">` : ''}
@@ -108,6 +109,10 @@ Deno.serve(async (request) => {
   const joinUrl = new URL('/join', siteUrl)
   joinUrl.searchParams.set('type', 'create')
   joinUrl.searchParams.set('invite', code)
+  const previewUrl = new URL('/api/invite', siteUrl)
+  previewUrl.searchParams.set('invite', code)
+  const previewVersion = requestUrl.searchParams.get('preview')?.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 16)
+  if (previewVersion) previewUrl.searchParams.set('preview', previewVersion)
 
   let invite: InviteRow | null = null
   let image = ''
@@ -142,7 +147,7 @@ Deno.serve(async (request) => {
   const description = valid
     ? `You have been invited to join ${projectName} on EndPoint Construction.`
     : 'Open this invitation to join a construction project.'
-  const response = html(joinUrl.toString(), title, description, image)
+  const response = html(joinUrl.toString(), previewUrl.toString(), title, description, image)
   return new Response(response, {
     status: 200,
     headers: {

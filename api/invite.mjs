@@ -38,6 +38,8 @@ export default async function handler(request, response) {
   const code = cleanInviteCode(request.query?.invite)
   const upstream = new URL(SUPABASE_PREVIEW_URL)
   upstream.searchParams.set('invite', code)
+  const previewVersion = String(request.query?.preview ?? '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 16)
+  if (previewVersion) upstream.searchParams.set('preview', previewVersion)
   const wantsJson = request.query?.format === 'json'
   if (wantsJson) upstream.searchParams.set('format', 'json')
 
@@ -59,7 +61,7 @@ export default async function handler(request, response) {
     }
     const body = upstreamBody
     response.setHeader('Content-Type', 'text/html; charset=utf-8')
-    response.setHeader('Cache-Control', 'no-store, max-age=0')
+    response.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=60')
     response.setHeader('X-Robots-Tag', 'noindex, nofollow')
     return response.status(preview.ok ? 200 : 502).send(body)
   } catch {

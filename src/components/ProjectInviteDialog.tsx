@@ -60,13 +60,20 @@ export function ProjectInviteDialog({ open, project, onClose, onCreated }: {
       .insert({ project_id: project.id, role: 'builder', permissions })
       .select('id, code, permissions, expires_at')
       .single()
-    setBusy(false)
     if (createError) {
+      setBusy(false)
       setError(createError.code === '42501' ? t('people.syncFirst') : createError.message)
       return
     }
-    if (!data) return
+    if (!data) {
+      setBusy(false)
+      return
+    }
     const invite = data as ProjectInvite
+    // Warm the server-rendered preview while the dialog is still busy. WhatsApp's crawler has a short timeout;
+    // the warmed CDN response lets it receive the project title and cover without waiting for a cold Edge Function.
+    await fetch(linkFor(invite.code), { headers: { Accept: 'text/html' }, cache: 'reload' }).catch(() => undefined)
+    setBusy(false)
     setCreated(invite)
     onCreated?.(invite)
     toast.show({ kind: 'success', message: t('people.sent') })
