@@ -28,6 +28,7 @@ export function SignIn() {
   const invite = cleanInviteCode(params.get('invite') ?? '')
   const invited = isCompleteInviteCode(invite)
   const [mode, setMode] = useState<'signin' | 'create'>(() => invited ? 'create' : 'signin')
+  const [forgot, setForgot] = useState(() => params.get('forgot') === '1')
   const create = mode === 'create'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -48,10 +49,33 @@ export function SignIn() {
 
   const switchMode = (m: string) => {
     setMode(m as 'signin' | 'create')
+    setForgot(false)
     setConfirm('')
     setConfirmTouched(false)
     setErrors({})
     setNotice('')
+  }
+
+  const sendReset = async (ev: FormEvent) => {
+    ev.preventDefault()
+    setNotice('')
+    const address = email.trim()
+    if (!EMAIL.test(address)) {
+      setErrors({ email: t('auth.invalidEmail') })
+      return
+    }
+    if (!supabase) return
+    setBusy(true)
+    const target = new URL('/reset-password', window.location.origin)
+    if (invited) target.searchParams.set('invite', invite)
+    const { error } = await supabase.auth.resetPasswordForEmail(address, { redirectTo: target.toString() })
+    if (error) setErrors({ form: error.message })
+    else {
+      setErrors({})
+      // This deliberately does not reveal whether an email is registered.
+      setNotice(t('auth.resetSent'))
+    }
+    setBusy(false)
   }
 
   const submit = async (ev: FormEvent) => {
@@ -124,6 +148,37 @@ export function SignIn() {
       <LanguageSwitcher />
       <div className="grid w-full max-w-lg justify-items-start gap-4 rounded-2xl border bg-card p-6 shadow-sm sm:p-7">
         <BrandLogo className="h-auto w-[min(55%,9.5rem)] justify-self-center" alt={t('app.full')} />
+        {forgot ? (
+          <section className="grid w-full gap-4">
+            <div className="grid gap-1.5">
+              <h1 className="text-3xl font-semibold tracking-tight">{t('auth.forgotTitle')}</h1>
+              <p className="text-sm text-muted-foreground">{t('auth.forgotBody')}</p>
+            </div>
+            <form className="grid gap-3" onSubmit={(e) => void sendReset(e)} noValidate>
+              {errors.form && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{errors.form}</p>}
+              <Field label={t('auth.email')} error={errors.email}>
+                <Input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (errors.email) setErrors((x) => ({ ...x, email: undefined }))
+                  }}
+                />
+              </Field>
+              {notice && <p role="status" className="rounded-xl bg-info-soft p-3 text-sm font-semibold text-info">{notice}</p>}
+              <Button type="submit" size="lg" disabled={busy} className="w-full">
+                {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {t('auth.sendReset')}
+              </Button>
+              <Button type="button" variant="ghost" className="w-full" onClick={() => { setForgot(false); setErrors({}); setNotice('') }}>
+                {t('auth.backToSignIn')}
+              </Button>
+            </form>
+          </section>
+        ) : (
         <Tabs value={mode} onValueChange={switchMode} className="w-full gap-4">
           <TabsList aria-label={t('auth.mode')} className="w-full">
             <TabsTrigger value="signin" className="flex-1 px-2 sm:px-4">{t('auth.signIn')}</TabsTrigger>
@@ -157,6 +212,17 @@ export function SignIn() {
               }}
             />
           </Field>
+          {!create && (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="h-auto w-fit justify-self-end px-0 py-0"
+              onClick={() => { setForgot(true); setErrors({}); setNotice('') }}
+            >
+              {t('auth.forgot')}
+            </Button>
+          )}
           {create && <PasswordStrength id={strengthId} check={check} />}
           {create && (
             <div className="grid gap-1.5">
@@ -187,6 +253,7 @@ export function SignIn() {
         </form>
           </TabsContent>
         </Tabs>
+        )}
       </div>
     </main>
   )

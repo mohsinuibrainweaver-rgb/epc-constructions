@@ -14,8 +14,10 @@ import { ToastProvider, useToast } from './components/Toast'
 import { TooltipProvider } from './components/ui/tooltip'
 import { SyncProvider, useSync } from './sync/SyncProvider'
 import { SignIn } from './pages/SignIn'
+import { ResetPassword } from './pages/ResetPassword'
 import { onAccessRevoked } from './sync/engine'
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 
 function AccessRevokedNotice() {
   const { t } = useApp()
@@ -33,7 +35,11 @@ function AccessRevokedNotice() {
 
 function Gate() {
   const { configured, loading, session, device } = useSync()
+  const location = useLocation()
   if (configured && loading) return null
+  // Password recovery creates a temporary authenticated session, but it must remain on the reset form
+  // instead of entering the project UI before the person has chosen their new password.
+  if (configured && location.pathname === '/reset-password') return <ResetPassword />
   if (configured && !session) return <SignIn />
   // Signed in, but the local account cache is still being checked/prepared.
   if (configured && device.state === 'checking') return null

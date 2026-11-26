@@ -38,7 +38,7 @@ const isCommon = (pw: string): boolean => {
   if (/^(.)\1+$/.test(p)) return true // aaaaaaaa
   if ('0123456789'.includes(p) || '9876543210'.includes(p) || 'abcdefghijklmnopqrstuvwxyz'.includes(p)) return true // 12345678, abcdefgh
   const word = p.replace(/[^a-z]/g, '')
-  return COMMON.some((c) => word === c || (c.length >= 6 && p.startsWith(c)))
+  return COMMON.some((c) => word === c)
 }
 
 export function checkPassword(pw: string): PasswordCheck {
@@ -54,7 +54,11 @@ export function checkPassword(pw: string): PasswordCheck {
 
   const points = rules.filter((r) => r.met).length + (pw.length >= 12 ? 1 : 0) // 0 to 5
   let strength: Strength
-  if (!ok || common) strength = 'weak'
+  if (!ok) strength = 'weak'
+  // A familiar word with the required mix is still guessable, but it is not equivalent to a password
+  // that fails the rules. Keep the warning visible and cap it at Fair instead of incorrectly calling
+  // every otherwise-complex variation Weak.
+  else if (common) strength = 'fair'
   else if (points <= 3) strength = 'fair'
   else if (points === 4) strength = 'good'
   else strength = 'strong'

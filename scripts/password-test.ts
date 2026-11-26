@@ -28,15 +28,16 @@ assert.equal(s('Abcdefg1!'), 'good')
 assert.equal(s('Abcdefg1!xyz'), 'strong')
 assert.equal(s('Abcdefghij1k'), 'good', 'long without a symbol')
 
-// 5. Common passwords are weak even when they meet the rules.
+// 5. A common base still gets a warning, but a valid mixed password is not mislabeled as Weak.
 assert.equal(ok('Password1'), true)
-assert.equal(s('Password1'), 'weak')
+assert.equal(s('Password1'), 'fair')
 assert.equal(checkPassword('Password1').common, true)
-assert.equal(s('Qwerty123!'), 'weak')
-assert.equal(s('Construction1!'), 'weak')
+assert.equal(s('Qwerty123!'), 'fair')
+assert.equal(s('Construction1!'), 'fair')
 assert.equal(checkPassword('12345678').common, true)
 assert.equal(checkPassword('aaaaaaaa').common, true)
 assert.equal(checkPassword('Tr4ctor!Moon').common, false)
+assert.equal(s('EndpointSecure@2026'), 'strong', 'a complex phrase must not be weak just because it starts with a known word')
 
 // 6. Bars match the level, and the symbol rule is advice only.
 assert.deepEqual(['Ab1', 'Abcdefg1', 'Abcdefg1!', 'Abcdefg1!xyz'].map((p) => checkPassword(p).bars), [1, 2, 3, 4])
