@@ -1219,6 +1219,7 @@ export const ur: Record<Key, string> = {
   'join.location': 'پراجیکٹ کا مقام',
   'join.owner': 'پراجیکٹ مالک',
   'join.accept': 'دعوت قبول کریں',
+  'access.removed': 'آپ کو {project} سے ہٹا دیا گیا ہے۔ یہ پراجیکٹ اس ڈیوائس سے بھی ہٹا دیا گیا ہے۔',
   'welcome.join': 'کوڈ سے شامل ہوں',
   'projects.join': 'کوڈ سے شامل ہوں',
   'perm.investorOnly': 'یہ صرف پراجیکٹ مالک کر سکتا ہے۔',

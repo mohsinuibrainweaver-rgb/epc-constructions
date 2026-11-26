@@ -10,10 +10,26 @@ import { recoverOnce } from './pwa/recover'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import { AppProvider, useApp } from './app/AppContext'
-import { ToastProvider } from './components/Toast'
+import { ToastProvider, useToast } from './components/Toast'
 import { TooltipProvider } from './components/ui/tooltip'
 import { SyncProvider, useSync } from './sync/SyncProvider'
 import { SignIn } from './pages/SignIn'
+import { onAccessRevoked } from './sync/engine'
+import { useEffect } from 'react'
+
+function AccessRevokedNotice() {
+  const { t } = useApp()
+  const toast = useToast()
+  useEffect(
+    () => onAccessRevoked(({ projectName }) => toast.show({
+      kind: 'warning',
+      message: t('access.removed', { project: projectName }),
+      duration: 10_000,
+    })),
+    [t, toast],
+  )
+  return null
+}
 
 function Gate() {
   const { configured, loading, session, device } = useSync()
@@ -31,6 +47,7 @@ function Providers() {
     <ToastProvider dismissLabel={t('common.close')} rtl={lang === 'ur'}>
       <TooltipProvider>
         <SyncProvider>
+          <AccessRevokedNotice />
           <Gate />
         </SyncProvider>
       </TooltipProvider>

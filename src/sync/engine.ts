@@ -6,6 +6,7 @@ import { TABLES, type TableDef } from './mapping'
 import { recordConflicts, staleIds } from './conflicts'
 import { fillDefaults } from './payload'
 import { mimeForPath, storageExt } from '../lib/media'
+import { purgeRevokedProjects } from '../db/access'
 
 export type SyncState = 'off' | 'signedOut' | 'idle' | 'syncing' | 'offline' | 'error'
 
@@ -48,6 +49,19 @@ export const onRefused = (f: (n: number) => void): (() => void) => {
   refusedListeners.add(f)
   return () => {
     refusedListeners.delete(f)
+  }
+}
+
+export interface RevokedAccessNotice {
+  projectId: string
+  projectName: string
+}
+const revokedAccessListeners = new Set<(notice: RevokedAccessNotice) => void>()
+/** Announces a server-side membership removal after this device has safely cleared that project's local cache. */
+export const onAccessRevoked = (listener: (notice: RevokedAccessNotice) => void): (() => void) => {
+  revokedAccessListeners.add(listener)
+  return () => {
+    revokedAccessListeners.delete(listener)
   }
 }
 
@@ -272,7 +286,22 @@ export async function refreshMembership(): Promise<void> {
   const rows = (data ?? []) as { project_id: string; role: string }[]
   const keep = new Set(rows.map((r) => `member.role.${r.project_id}`))
   const old = ((await db.settings.toCollection().primaryKeys()) as string[]).filter((k) => k.startsWith('member.role.') && !keep.has(k))
-  await db.settings.bulkDelete(old)
+  const accessibleProjectIds = rows.map((row) => row.project_id)
+  const accessible = new Set(accessibleProjectIds)
+  // Older clients removed the membership setting but left the clean server cache behind. Include those stale rows too,
+  // while preserving dirty projects that were created locally and have not reached the server yet.
+  const staleProjects = (await db.projects.toArray()).filter(
+    (project) => !project.deletedAt && project.dirty !== 1 && !accessible.has(project.id),
+  )
+  const revokedProjectIds = [...new Set([
+    ...old.map((key) => key.slice('member.role.'.length)).filter(Boolean),
+    ...staleProjects.map((project) => project.id),
+  ])]
+  const revokedProjects = (await db.projects.bulkGet(revokedProjectIds))
+    .filter((project): project is Project => Boolean(project))
+    .map((project) => ({ projectId: project.id, projectName: project.name }))
+  await purgeRevokedProjects(revokedProjectIds, accessibleProjectIds)
+  for (const notice of revokedProjects) revokedAccessListeners.forEach((listener) => listener(notice))
   await db.settings.bulkPut(rows.map((r) => ({ key: `member.role.${r.project_id}`, value: r.role })))
   const projectIds = rows.map((r) => r.project_id)
   if (projectIds.length) {

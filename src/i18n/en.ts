@@ -1217,6 +1217,7 @@ export const en = {
   'join.location': 'Project location',
   'join.owner': 'Project owner',
   'join.accept': 'Accept invitation',
+  'access.removed': 'You were removed from {project}. It has been removed from this device.',
   'welcome.join': 'Join with a code',
   'projects.join': 'Join with a code',
   'perm.investorOnly': 'Only the project owner can do this.',
