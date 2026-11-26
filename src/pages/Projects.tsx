@@ -116,7 +116,7 @@ export function Projects() {
           </>
         }
       />
-      <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),22rem))] gap-5">
+      <ul className="grid grid-cols-1 gap-5 sm:grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),22rem))]">
         {projects.map((p) => (
           <li key={p.id} className="min-w-0">
             {/* With only one project there is nothing to tell apart, so none is marked; with several, the open one is. */}

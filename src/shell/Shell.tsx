@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { EmptyState } from '@/components/common'
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Banknote, Bell, BellOff, CalendarClock, ChartColumn, Ellipsis, FileSignature, FileText, FolderOpen, GitCompareArrows, House, Layers3, Plus, ReceiptText, RefreshCw, Scale, Search, Settings as SettingsIcon, ShieldCheck, TriangleAlert, Users, WifiOff } from 'lucide-react'
+import { Banknote, Bell, BellOff, CalendarClock, ChartColumn, Check, ChevronDown, Ellipsis, FileSignature, FileText, FolderOpen, GitCompareArrows, House, Layers3, Loader2, LogOut, Plus, ReceiptText, RefreshCw, Scale, Search, Settings as SettingsIcon, ShieldCheck, TriangleAlert, Users, WifiOff } from 'lucide-react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { BrandLogo, BrandMark } from '@/components/Brand'
 import { useApp } from '@/app/AppContext'
@@ -131,6 +131,76 @@ function AlertsBell({ conflicts, onReviewConflicts }: { conflicts: number; onRev
   )
 }
 
+/** Account actions stay one tap away on every regular screen, on phones and in the desktop sidebar. */
+function AccountMenu({ phone = false }: { phone?: boolean }) {
+  const { t, settings, isOwner } = useApp()
+  const sync = useSync()
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const who = settings.userName || t(settings.role === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')
+
+  const signOut = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      await sync.signOut()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        {phone ? (
+          <Button variant="ghost" size="icon" aria-label={t('set.sec.account')} className="shrink-0">
+            <span aria-hidden="true" className="grid size-8 place-items-center rounded-full mesh-violet text-xs font-extrabold text-white">
+              {initials(who)}
+            </span>
+          </Button>
+        ) : (
+          <button
+            type="button"
+            className="mt-auto flex min-h-10 w-full cursor-pointer items-center justify-center gap-2.5 nav-glass rounded-control px-1 text-start text-sm lg:justify-start"
+          >
+            <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full mesh-violet text-xs font-extrabold text-white">
+              {initials(who)}
+            </span>
+            <span className="hidden min-w-0 lg:grid">
+              <span className="truncate font-semibold">{who}</span>
+              {isOwner() && <span className="text-[0.6875rem] leading-tight text-sidebar-foreground/70">{t('people.owner')}</span>}
+            </span>
+            <span className="sr-only lg:hidden">{t('set.sec.account')}</span>
+          </button>
+        )}
+      </PopoverTrigger>
+      <PopoverContent side={phone ? 'bottom' : 'right'} align="end" className="w-[min(18rem,calc(100vw-2rem))] p-1">
+        <div className="border-b px-3 py-2.5">
+          <p className="truncate text-sm font-semibold">{who}</p>
+          {sync.session?.user.email && <p className="truncate text-xs text-muted-foreground">{sync.session.user.email}</p>}
+        </div>
+        <Link
+          to="/settings/account"
+          onClick={() => setOpen(false)}
+          className="mt-1 flex min-h-11 items-center gap-3 rounded-control px-3 text-sm font-medium transition-colors hover:bg-accent"
+        >
+          <SettingsIcon className="size-4" aria-hidden="true" />
+          {t('nav.settings')}
+        </Link>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void signOut()}
+          className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-control px-3 text-start text-sm font-semibold text-danger transition-colors hover:bg-danger-soft disabled:cursor-wait disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <LogOut className="size-4 rtl:-scale-x-100" aria-hidden="true" />}
+          {t('sync.signOut')}
+        </button>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 export function Shell() {
   const { t, project, projects, settings, isOwner, can } = useApp()
   const loc = useLocation()
@@ -139,6 +209,7 @@ export function Shell() {
   const online = useOnline()
   const sync = useSync()
   const [q, setQ] = useState('')
+  const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false)
 
   // The server did not accept some changes (only the investor may make them): they were taken off this phone, so say so.
   useEffect(() => onRefused(() => toast.show({ kind: 'warning', message: t('sync.refused') })), [toast, t])
@@ -217,8 +288,6 @@ export function Shell() {
 
   // Forms open full screen on phones (no tab bar, no header).
   const fullscreen = /^\/(add|payments\/)/.test(loc.pathname)
-  const who = settings.userName || t(settings.role === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')
-
   const submitSearch = (e: FormEvent) => {
     e.preventDefault()
     navigate(`/ledger?q=${encodeURIComponent(q.trim())}`)
@@ -312,29 +381,59 @@ export function Shell() {
           ))}
         </nav>
 
-        <Link
-          to="/settings"
-          className="mt-auto flex min-h-10 items-center justify-center gap-2.5 nav-glass rounded-control px-1 text-sm lg:justify-start"
-        >
-          <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full mesh-violet text-xs font-extrabold text-white">
-            {initials(who)}
-          </span>
-          <span className="hidden min-w-0 lg:grid">
-            <span className="truncate font-semibold">{who}</span>
-            {isOwner() && <span className="text-[0.6875rem] leading-tight text-sidebar-foreground/70">{t('people.owner')}</span>}
-          </span>
-          <span className="sr-only lg:hidden">{who}</span>
-        </Link>
+        <AccountMenu />
       </aside>
 
       <div className="flex min-h-[calc(100dvh-2*var(--page-gap))] min-w-0 flex-col overflow-clip bg-card sm:rounded-2xl sm:border sm:shadow-sm print:overflow-visible print:rounded-none print:border-0 print:bg-white print:shadow-none">
         <header className={cn('sticky top-0 z-20 border-b bg-card pt-[env(safe-area-inset-top)] sm:hidden print:hidden', fullscreen && 'hidden')}>
           <div className="container-page flex min-h-14 items-center gap-3">
             <BrandMark width={18} />
-            <Link to="/projects" className="flex min-h-11 min-w-0 flex-1 items-center font-extrabold"><span className="truncate">{project.name}</span>
-            </Link>
+            <Popover open={projectSwitcherOpen} onOpenChange={setProjectSwitcherOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-control px-1 text-start font-extrabold transition-colors hover:bg-accent"
+                  aria-label={`${t('nav.projects')}: ${project.name}`}
+                >
+                  <span className="truncate">{project.name}</span>
+                  <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[min(20rem,calc(100vw-2rem))] p-1">
+                <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">{t('nav.projects')}</p>
+                <div className="grid gap-0.5">
+                  {projects.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setProjectSwitcherOpen(false)
+                        if (item.id !== project.id) void setSetting('currentProjectId', item.id)
+                      }}
+                      className={cn(
+                        'flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-control px-3 text-start text-sm transition-colors hover:bg-accent',
+                        item.id === project.id && 'bg-accent font-semibold',
+                      )}
+                      aria-current={item.id === project.id ? 'true' : undefined}
+                    >
+                      <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                      {item.id === project.id && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
+                    </button>
+                  ))}
+                </div>
+                <Link
+                  to="/projects"
+                  onClick={() => setProjectSwitcherOpen(false)}
+                  className="mt-1 flex min-h-11 items-center gap-3 border-t px-3 pt-1 text-sm font-semibold text-primary"
+                >
+                  <FolderOpen className="size-4" aria-hidden="true" />
+                  {t('nav.projects')}
+                </Link>
+              </PopoverContent>
+            </Popover>
             {statusChip(false)}
             <AlertsBell conflicts={conflictCount ?? 0} onReviewConflicts={() => setConflictsOpen(true)} />
+            <AccountMenu phone />
           </div>
         </header>
 
