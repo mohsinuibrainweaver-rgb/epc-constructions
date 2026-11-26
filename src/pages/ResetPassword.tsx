@@ -24,11 +24,18 @@ export function ResetPassword() {
   const [confirmTouched, setConfirmTouched] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
   const uid = useId()
   const strengthId = `${uid}-strength`
   const confirmId = `${uid}-confirm`
   const check = checkPassword(password)
   const confirmState = confirm === '' ? 'idle' : confirm === password ? 'match' : confirmTouched || confirm.length >= password.length ? 'mismatch' : 'idle'
+
+  const openSignIn = () => {
+    const next = new URLSearchParams({ passwordReset: '1', type: 'signin' })
+    if (isCompleteInviteCode(invite)) next.set('invite', invite)
+    nav(`/?${next.toString()}`, { replace: true })
+  }
 
   const submit = async (ev: FormEvent) => {
     ev.preventDefault()
@@ -51,12 +58,11 @@ export function ResetPassword() {
     else {
       // A recovery link creates a temporary authenticated session. End it after changing the
       // password so password recovery never doubles as a login bypass.
+      setDone(true)
       const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' })
-      if (signOutError) setError(signOutError.message)
-      else {
-        const next = new URLSearchParams({ passwordReset: '1', type: 'signin' })
-        if (isCompleteInviteCode(invite)) next.set('invite', invite)
-        nav(`/?${next.toString()}`, { replace: true })
+      if (signOutError) {
+        setDone(false)
+        setError(signOutError.message)
       }
     }
     setBusy(false)
@@ -72,7 +78,12 @@ export function ResetPassword() {
           <p className="text-sm text-muted-foreground">{t('auth.newPasswordBody')}</p>
         </div>
 
-        {!session ? (
+        {done ? (
+          <div className="grid gap-3">
+            <p role="status" className="rounded-xl bg-info-soft p-3 text-sm font-semibold text-info">{t('auth.passwordUpdated')}</p>
+            <Button type="button" size="lg" onClick={openSignIn}>{t('auth.backToSignIn')}</Button>
+          </div>
+        ) : !session ? (
           <div className="grid gap-3">
             <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{t('auth.resetInvalid')}</p>
             <Button type="button" variant="outline" onClick={() => nav('/?forgot=1', { replace: true })}>{t('auth.sendReset')}</Button>

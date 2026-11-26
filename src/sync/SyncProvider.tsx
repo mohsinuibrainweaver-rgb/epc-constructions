@@ -7,13 +7,15 @@ import { setSetting } from '../db/actions'
 import type { Role } from '../db/types'
 import { profileToApply, readProfile } from '../lib/profile'
 import { disablePush } from '../push/push'
-import { supabase, syncConfigured } from './supabase'
+import { passwordRecoveryInUrl, supabase, syncConfigured } from './supabase'
 
 interface SyncCtx {
   configured: boolean
   /** True while the first session check is running. */
   loading: boolean
   session: Session | null
+  /** A recovery link made a temporary session; project UI must remain blocked until a new password is chosen. */
+  passwordRecovery: boolean
   status: SyncStatus
   /** Whether the data on this phone is this account's (checked after sign-in, before anything syncs). */
   device: DeviceCheck
@@ -27,6 +29,7 @@ const Ctx = createContext<SyncCtx | null>(null)
 
 export function SyncProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
+  const [passwordRecovery, setPasswordRecovery] = useState(passwordRecoveryInUrl)
   const [loading, setLoading] = useState(syncConfigured)
   const status = useSyncExternalStore(subscribe, getStatus)
   const [device, setDevice] = useState<DeviceCheck>({ state: 'checking' })
@@ -41,8 +44,10 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       setSession(data.session)
       setLoading(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
       if (!s) {
+        setPasswordRecovery(false)
         setLoading(true)
         setSession(null)
         void clearDeviceData().finally(() => alive && setLoading(false))
@@ -60,7 +65,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const userId = session?.user.id
   useEffect(() => {
     setDevice({ state: 'checking' })
-    if (!userId) return
+    if (!userId || passwordRecovery) return
     let alive = true
     void checkDevice(userId)
       .catch((): DeviceCheck => ({ state: 'ok' }))
@@ -68,21 +73,21 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     return () => {
       alive = false
     }
-  }, [userId])
+  }, [userId, passwordRecovery])
 
   const deviceOk = device.state === 'ok'
   useEffect(() => {
     if (!supabase) return
-    if (userId && deviceOk) startSync(userId)
+    if (userId && deviceOk && !passwordRecovery) startSync(userId)
     else stopSync()
     return () => stopSync()
-  }, [userId, deviceOk])
+  }, [userId, deviceOk, passwordRecovery])
 
   // The name and role belong to the account (its metadata), not to the phone: when the phone is this account's it takes them from the
   // account, so values left on the phone by another account never show up. Changes made in Settings are saved to the account too.
   const meta = session?.user.user_metadata
   useEffect(() => {
-    if (!userId || !deviceOk) return
+    if (!userId || !deviceOk || passwordRecovery) return
     void (async () => {
       await db.settings.put({ key: 'account.userId', value: userId })
       const change = profileToApply(readProfile(meta), {
@@ -93,13 +98,14 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       if (change.role !== undefined) await setSetting('role', change.role)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, deviceOk])
+  }, [userId, deviceOk, passwordRecovery])
 
   const value = useMemo<SyncCtx>(
     () => ({
       configured: syncConfigured,
       loading,
       session,
+      passwordRecovery,
       status,
       device,
       takeOverDevice: async () => {
@@ -116,7 +122,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         if (!error) await clearDeviceData()
       },
     }),
-    [loading, session, status, device, userId],
+    [loading, session, passwordRecovery, status, device, userId],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

@@ -33,9 +33,14 @@ function AccessRevokedNotice() {
 }
 
 function Gate() {
-  const { configured, loading, session, device } = useSync()
+  const { configured, loading, session, passwordRecovery, device } = useSync()
   const location = useLocation()
   if (configured && loading) return null
+  // Supabase recovery links intentionally create a short-lived session. Never let that session
+  // enter the project UI, even if Supabase redirected to the site root instead of the requested path.
+  if (configured && passwordRecovery && location.pathname !== '/reset-password') {
+    return <Navigate to={`/reset-password${location.search}`} replace />
+  }
   // Password recovery creates a temporary authenticated session, but it must remain on the reset form
   // instead of entering the project UI before the person has chosen their new password.
   if (configured && location.pathname === '/reset-password') return <ResetPassword />
