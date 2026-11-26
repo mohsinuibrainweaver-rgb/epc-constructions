@@ -1100,6 +1100,7 @@ export const ur: Record<Key, string> = {
   'auth.newPasswordBody': 'اپنے اکاؤنٹ کے لیے نیا پاس ورڈ لکھیں۔',
   'auth.savePassword': 'نیا پاس ورڈ محفوظ کریں',
   'auth.passwordUpdated': 'آپ کا پاس ورڈ کامیابی سے تبدیل ہو گیا ہے۔',
+  'auth.passwordUpdatedSignIn': 'پاس ورڈ کامیابی سے تبدیل ہو گیا ہے۔ اپنی ای میل اور نئے پاس ورڈ سے سائن ان کریں۔',
   'auth.resetInvalid': 'یہ پاس ورڈ ری سیٹ لنک درست نہیں یا اس کی مدت ختم ہو چکی ہے۔ نیا لنک منگوائیں۔',
   'auth.continue': 'آگے بڑھیں',
   'auth.exists': 'اس ای میل کا اکاؤنٹ پہلے سے موجود ہے۔ "سائن ان" چنیں۔',

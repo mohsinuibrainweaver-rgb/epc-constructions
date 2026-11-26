@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, Navigate, useLocation } from 'react-router-dom'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/noto-naskh-arabic'
 import './index.css'
@@ -17,7 +17,6 @@ import { SignIn } from './pages/SignIn'
 import { ResetPassword } from './pages/ResetPassword'
 import { onAccessRevoked } from './sync/engine'
 import { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
 
 function AccessRevokedNotice() {
   const { t } = useApp()
@@ -40,7 +39,13 @@ function Gate() {
   // Password recovery creates a temporary authenticated session, but it must remain on the reset form
   // instead of entering the project UI before the person has chosen their new password.
   if (configured && location.pathname === '/reset-password') return <ResetPassword />
-  if (configured && !session) return <SignIn />
+  if (configured && !session) {
+    // Do not leave a protected page such as /settings/account in the address bar after sign-out.
+    // Invite URLs must remain intact because SignIn reads their code from the query string.
+    const publicAuthPath = location.pathname === '/' || location.pathname === '/join' || location.pathname === '/api/invite'
+    if (!publicAuthPath) return <Navigate to="/" replace />
+    return <SignIn />
+  }
   // Signed in, but the local account cache is still being checked/prepared.
   if (configured && device.state === 'checking') return null
   return <App />

@@ -1098,6 +1098,7 @@ export const en = {
   'auth.newPasswordBody': 'Enter a new password for your account.',
   'auth.savePassword': 'Save new password',
   'auth.passwordUpdated': 'Your password has been updated successfully.',
+  'auth.passwordUpdatedSignIn': 'Password updated successfully. Sign in with your email and new password.',
   'auth.resetInvalid': 'This password reset link is invalid or has expired. Request a new link.',
   'auth.continue': 'Continue',
   'auth.exists': 'This email already has an account. Choose Sign in.',

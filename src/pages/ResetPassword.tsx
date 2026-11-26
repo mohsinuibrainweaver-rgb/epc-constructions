@@ -24,18 +24,11 @@ export function ResetPassword() {
   const [confirmTouched, setConfirmTouched] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [done, setDone] = useState(false)
   const uid = useId()
   const strengthId = `${uid}-strength`
   const confirmId = `${uid}-confirm`
   const check = checkPassword(password)
   const confirmState = confirm === '' ? 'idle' : confirm === password ? 'match' : confirmTouched || confirm.length >= password.length ? 'mismatch' : 'idle'
-
-  const continueAfterReset = () => {
-    if (isCompleteInviteCode(invite)) {
-      nav(`/join?${new URLSearchParams({ invite, accept: 'auto' }).toString()}`, { replace: true })
-    } else nav('/', { replace: true })
-  }
 
   const submit = async (ev: FormEvent) => {
     ev.preventDefault()
@@ -55,7 +48,17 @@ export function ResetPassword() {
     setError('')
     const { error: updateError } = await supabase.auth.updateUser({ password })
     if (updateError) setError(updateError.message)
-    else setDone(true)
+    else {
+      // A recovery link creates a temporary authenticated session. End it after changing the
+      // password so password recovery never doubles as a login bypass.
+      const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' })
+      if (signOutError) setError(signOutError.message)
+      else {
+        const next = new URLSearchParams({ passwordReset: '1', type: 'signin' })
+        if (isCompleteInviteCode(invite)) next.set('invite', invite)
+        nav(`/?${next.toString()}`, { replace: true })
+      }
+    }
     setBusy(false)
   }
 
@@ -66,12 +69,10 @@ export function ResetPassword() {
         <BrandLogo className="h-auto w-[min(55%,9.5rem)] justify-self-center" alt={t('app.full')} />
         <div className="grid gap-1.5">
           <h1 className="text-3xl font-semibold tracking-tight">{t('auth.newPasswordTitle')}</h1>
-          <p className="text-sm text-muted-foreground">{done ? t('auth.passwordUpdated') : t('auth.newPasswordBody')}</p>
+          <p className="text-sm text-muted-foreground">{t('auth.newPasswordBody')}</p>
         </div>
 
-        {done ? (
-          <Button type="button" size="lg" onClick={continueAfterReset}>{t('auth.continue')}</Button>
-        ) : !session ? (
+        {!session ? (
           <div className="grid gap-3">
             <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{t('auth.resetInvalid')}</p>
             <Button type="button" variant="outline" onClick={() => nav('/?forgot=1', { replace: true })}>{t('auth.sendReset')}</Button>

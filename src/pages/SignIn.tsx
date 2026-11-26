@@ -27,7 +27,7 @@ export function SignIn() {
   const [params] = useSearchParams()
   const invite = cleanInviteCode(params.get('invite') ?? '')
   const invited = isCompleteInviteCode(invite)
-  const [mode, setMode] = useState<'signin' | 'create'>(() => invited ? 'create' : 'signin')
+  const [mode, setMode] = useState<'signin' | 'create'>(() => invited && params.get('type') !== 'signin' ? 'create' : 'signin')
   const [forgot, setForgot] = useState(() => params.get('forgot') === '1')
   const create = mode === 'create'
   const [name, setName] = useState('')
@@ -37,7 +37,7 @@ export function SignIn() {
   const [confirmTouched, setConfirmTouched] = useState(false)
   const [busy, setBusy] = useState(false)
   const [errors, setErrors] = useState<{ form?: string; name?: string; email?: string; password?: string; confirm?: string }>({})
-  const [notice, setNotice] = useState('')
+  const [notice, setNotice] = useState(() => params.get('passwordReset') === '1' ? t('auth.passwordUpdatedSignIn') : '')
   const formRef = useRef<HTMLFormElement>(null)
   const uid = useId()
   const strengthId = `${uid}-strength`
