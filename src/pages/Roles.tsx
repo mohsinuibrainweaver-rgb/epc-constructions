@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ChevronRight, ShieldCheck, UserRound, UsersRound } from 'lucide-react'
+import { ArrowLeft, ChevronRight, ShieldCheck, UserPlus, UserRound, UsersRound } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useApp } from '@/app/AppContext'
-import { PageHeader } from '@/components/common'
+import { EmptyState, PageHeader } from '@/components/common'
 import { PermissionEditor } from '@/components/PermissionEditor'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { db } from '@/db/db'
 import { EMPTY_PERMISSIONS, FULL_PERMISSIONS, type Action, type PermissionMap } from '@/lib/permissions'
@@ -78,7 +79,19 @@ export function Roles() {
         />
       </div>
       {members.length <= 1 ? (
-        <Card><CardContent className="p-5 text-sm text-muted-foreground">{t('roles.empty')}</CardContent></Card>
+        <Card className="self-start">
+          <EmptyState
+            compact
+            icon={UserPlus}
+            title={t('people.inviteTitle')}
+            body={t('roles.empty')}
+            action={
+              <Button asChild>
+                <Link to="/settings/project">{t('roles.openProjectSettings')}</Link>
+              </Button>
+            }
+          />
+        </Card>
       ) : (
         <>
           <div className="md:hidden">

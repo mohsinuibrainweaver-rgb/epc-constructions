@@ -51,7 +51,7 @@ export const PERMISSIONS: PermissionDefinition[] = [
   { key: 'viewPhases', group: 'access', label: 'View phases', description: 'Open the phases list and phase details.' },
   { key: 'viewVendors', group: 'access', label: 'View vendors', description: 'Open vendors and supplier details.' },
   { key: 'viewContracts', group: 'access', label: 'View contracts', description: 'Open contracts and their details.' },
-  { key: 'viewLedger', group: 'access', label: 'View ledger', description: 'See payment entries and their details.' },
+  { key: 'viewLedger', group: 'access', label: 'View payments', description: 'See payment entries and their details.' },
   { key: 'viewPlans', group: 'access', label: 'View weekly payments', description: 'See recurring and weekly payment plans.' },
   { key: 'viewForecast', group: 'access', label: 'View cash forecast', description: 'See projected cash requirements.' },
   { key: 'viewSettlement', group: 'access', label: 'View settlement', description: 'See project settlement and transfers.' },

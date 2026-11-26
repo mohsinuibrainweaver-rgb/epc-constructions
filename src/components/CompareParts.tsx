@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { Badge } from '@/components/ui/badge'
-import { useElementWidth } from '@/components/useElementWidth'
 import type { Delta } from '@/lib/compare'
-import { axisTicks, compact, noBreak } from '@/lib/chart'
+import { compact, noBreak } from '@/lib/chart'
 import { meshCard } from '@/lib/mesh'
 import { cn } from '@/lib/utils'
 
@@ -14,6 +13,7 @@ export const pctText = (pct: number): string => `${pct > 0 ? '+' : ''}${pct}%`
 /** The two projects everywhere on the Compare page: the earlier one is orange, this one is blue. Colour marks only; text stays in ink. */
 export const SIDE_A = { bar: 'bg-viz-a', stroke: 'stroke-viz-a', fill: 'fill-viz-a' }
 export const SIDE_B = { bar: 'bg-viz-b', stroke: 'stroke-viz-b', fill: 'fill-viz-b' }
+export const COMPARE_GRID = 'sm:grid-cols-[13rem_minmax(0,1fr)_minmax(0,1fr)_11rem] lg:grid-cols-[16rem_minmax(0,1fr)_minmax(0,1fr)_11rem]'
 
 /** A colour key and a name: the mark beside the text carries the identity, the text stays in ink. */
 export function KeyChip({ side, children }: { side: 'a' | 'b'; children: React.ReactNode }) {
@@ -53,7 +53,7 @@ export function DeltaBadge({ d, format, showAmount = false, soFar = false }: { d
   const variant = same || soFar ? 'neutral' : up ? 'warning' : 'success'
   const word = same ? t('compare.same') : up ? t('compare.more') : t('compare.less')
   return (
-    <Badge variant={variant} className="h-auto w-fit whitespace-normal">
+    <Badge variant={variant} className="h-auto w-fit shrink-0 whitespace-nowrap">
       <Icon aria-hidden="true" />
       <span>{soFar && !same ? t('compare.soFar', { word }) : word}</span>
       {!same && (
@@ -101,94 +101,83 @@ export interface BarRow {
   soFar?: boolean
 }
 
-/**
- * Two bars per row, one for each project, on one shared scale, the value at the tip of each bar, and how they differ at the
- * top right of the row. Bars are 12px thick and square where they start, rounded where the value ends.
- */
-export function CompareBars({ rows, format, labelWidth }: { rows: BarRow[]; format: (n: number) => string; labelWidth: string }) {
+/** Each subject is one comparison row: the two project values stay in fixed columns, with a shared-scale bar and difference. */
+export function CompareBars({ rows, format }: { rows: BarRow[]; format: (n: number) => string }) {
   const { t } = useApp()
   const max = Math.max(1e-9, ...rows.flatMap((r) => [r.a, r.b]))
   return (
-    <ul className="grid gap-4 sm:gap-6">
+    <div className="overflow-hidden rounded-lg border">
+      <div className={cn('hidden border-b bg-muted/40 text-sm font-semibold sm:grid', COMPARE_GRID)}>
+        <span aria-hidden="true" className="p-3" />
+        <span className="border-s p-3"><KeyChip side="a">{t('compare.projectA')}</KeyChip></span>
+        <span className="border-s p-3"><KeyChip side="b">{t('compare.projectB')}</KeyChip></span>
+        <span className="min-w-28 border-s p-3 text-muted-foreground">{t('compare.difference')}</span>
+      </div>
+      <ul className="divide-y">
       {rows.map((r) => {
         const d: Delta = { delta: r.b - r.a, pct: r.a > 0 ? Math.round(((r.b - r.a) / r.a) * 100) : undefined }
         return (
-          <li key={r.key} className="grid gap-2">
-            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+          <li key={r.key} className={cn('grid grid-cols-2', COMPARE_GRID)}>
+            <div className="col-span-2 flex min-w-0 items-start justify-between gap-3 p-3 pb-2 sm:col-span-1 sm:block sm:p-3">
               <span className="min-w-0">
                 <span className="font-semibold">{r.label}</span>
                 {r.note && <span className="block text-sm text-muted-foreground">{r.note}</span>}
               </span>
-              {(r.a > 0 || r.b > 0) && <DeltaBadge d={d} format={format} soFar={r.soFar} />}
+              {(r.a > 0 || r.b > 0) && <span className="sm:hidden"><DeltaBadge d={d} format={format} soFar={r.soFar} /></span>}
             </div>
             {([['a', r.a, t('compare.projectA')], ['b', r.b, t('compare.projectB')]] as const).map(([side, v, name]) => (
-              <div key={side} role="img" aria-label={`${name}: ${v > 0 ? format(v) : '0'}`} className="flex items-center gap-2" dir="ltr">
-                <div
-                  className={cn('h-3 rounded-e-[4px]', side === 'a' ? SIDE_A.bar : SIDE_B.bar)}
-                  style={{ width: v > 0 ? `max(3px, calc((100% - ${labelWidth}) * ${v / max}))` : '0px' }}
-                />
-                <span className="tabular shrink-0 text-sm whitespace-nowrap">{v > 0 ? format(v) : '—'}</span>
+              <div key={side} role="img" aria-label={`${name}: ${v > 0 ? format(v) : '0'}`} className="grid min-w-0 gap-2 border-t border-s p-3 sm:border-t-0" dir="ltr">
+                <span className="flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
+                  <span className={cn('size-2 rounded-full', side === 'a' ? SIDE_A.bar : SIDE_B.bar)} />
+                  {name}
+                </span>
+                <span className="tabular text-sm font-semibold whitespace-nowrap">{v > 0 ? format(v) : '—'}</span>
+                <span className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                  <span className={cn('block h-full rounded-full', side === 'a' ? SIDE_A.bar : SIDE_B.bar)} style={{ width: v > 0 ? `${Math.max(2, (v / max) * 100)}%` : '0%' }} />
+                </span>
               </div>
             ))}
+            <div className="hidden min-w-28 border-s p-3 sm:block">
+              {(r.a > 0 || r.b > 0) ? <DeltaBadge d={d} format={format} soFar={r.soFar} /> : <span className="text-muted-foreground">—</span>}
+            </div>
           </li>
         )
       })}
-    </ul>
+      </ul>
+    </div>
   )
 }
-
-const H_FULL = 240
-const H_PHONE = 184
-const PAD = { top: 16, right: 18, bottom: 28, left: 46 }
 
 const inRange = (s: number[], i: number): boolean => i >= 0 && i < s.length
 
 /**
- * Total spent by the end of each month since the start, one line for each project. Move over the chart, touch it, or use the
- * arrow keys to read any month: the two values and their difference are written under the chart. It opens on the month where
- * this project stands now, so the first thing read is the fair comparison at the same stage.
+ * Paired cumulative bars for every elapsed month. Missing future months stay empty instead of extending a line with no data.
+ * Selecting a month writes both values and their difference below the chart.
  */
 export function PaceChart({ a, b, format }: { a: number[]; b: number[]; format: (n: number) => string }) {
   const { t } = useApp()
-  const { ref, width } = useElementWidth<HTMLDivElement>()
   const n = Math.max(a.length, b.length)
   const endB = b.length - 1
-  const endA = a.length - 1
   const [picked, setPicked] = useState<number | null>(null)
   const active = Math.min(picked ?? endB, n - 1)
-  const { top, ticks } = axisTicks(Math.max(0, ...a, ...b))
-  // A shorter chart on a phone: the line needs width, not height, and the figures under it matter more than empty space above it.
-  const H = width > 0 && width < 420 ? H_PHONE : H_FULL
-  const innerW = width - PAD.left - PAD.right
-  const innerH = H - PAD.top - PAD.bottom
-  const x = (i: number): number => PAD.left + (n <= 1 ? innerW / 2 : (i * innerW) / (n - 1))
-  const y = (v: number): number => PAD.top + innerH - (v / top) * innerH
-  const path = (s: number[]): string => s.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
-  const step = Math.ceil(n / Math.max(2, Math.floor(innerW / 44)))
+  const top = Math.max(1, ...a, ...b)
 
-  // A finished project stays at its final total after its last month.
-  const va = a.length === 0 ? undefined : a[Math.min(active, a.length - 1)]
+  const va = inRange(a, active) ? a[active] : undefined
   const vb = inRange(b, active) ? b[active] : undefined
-
-  const pick = (clientX: number, el: SVGSVGElement) => {
-    const box = el.getBoundingClientRect()
-    const i = n <= 1 ? 0 : Math.round(((clientX - box.left - PAD.left) / innerW) * (n - 1))
-    setPicked(Math.max(0, Math.min(n - 1, i)))
-  }
 
   return (
     <div className="grid gap-3">
-      <div ref={ref} dir="ltr" className="w-full">
-        <svg
-          width={width}
-          height={H}
+      <div className="grid grid-cols-[3rem_minmax(0,1fr)] gap-2" dir="ltr">
+        <div aria-hidden="true" className="flex h-56 flex-col justify-between pb-7 text-right text-xs text-muted-foreground">
+          <span>{compact(top)}</span>
+          <span>{compact(top / 2)}</span>
+          <span>0</span>
+        </div>
+        <div
           role="group"
           tabIndex={0}
           aria-label={t('compare.paceAria')}
-          className="block max-w-full touch-pan-y overflow-visible rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onPointerMove={(e) => pick(e.clientX, e.currentTarget)}
-          onPointerDown={(e) => pick(e.clientX, e.currentTarget)}
-          onPointerLeave={(e) => e.pointerType === 'mouse' && setPicked(null)}
+          className="relative min-w-0 overflow-x-auto rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onKeyDown={(e) => {
             if (e.key === 'ArrowRight') setPicked(Math.min(n - 1, active + 1))
             else if (e.key === 'ArrowLeft') setPicked(Math.max(0, active - 1))
@@ -197,50 +186,54 @@ export function PaceChart({ a, b, format }: { a: number[]; b: number[]; format: 
             e.preventDefault()
           }}
         >
-          {ticks.map((v) => (
-            <g key={v}>
-              <line x1={PAD.left} x2={width - PAD.right} y1={y(v)} y2={y(v)} className="stroke-border" strokeWidth={1} />
-              <text x={PAD.left - 8} y={y(v)} dy="0.32em" textAnchor="end" className="fill-muted-foreground" fontSize={12}>
-                {compact(v)}
-              </text>
-            </g>
-          ))}
-          {/* The chosen month: a guide line, and a dot on each line with a ring in the card colour. */}
-          <line x1={x(active)} x2={x(active)} y1={PAD.top} y2={PAD.top + innerH} className="stroke-muted-foreground" strokeWidth={1} strokeDasharray="3 3" />
-          {a.length > 0 && <path d={path(a)} fill="none" className={SIDE_A.stroke} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />}
-          {b.length > 0 && <path d={path(b)} fill="none" className={SIDE_B.stroke} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />}
-          {endA >= 0 && endA !== active && <circle cx={x(endA)} cy={y(a[endA])} r={4} className={cn(SIDE_A.fill, 'stroke-card')} strokeWidth={2} />}
-          {endB >= 0 && endB !== active && <circle cx={x(endB)} cy={y(b[endB])} r={4} className={cn(SIDE_B.fill, 'stroke-card')} strokeWidth={2} />}
-          {va !== undefined && <circle cx={x(active)} cy={y(va)} r={5} className={cn(SIDE_A.fill, 'stroke-card')} strokeWidth={2} />}
-          {vb !== undefined && <circle cx={x(active)} cy={y(vb)} r={5} className={cn(SIDE_B.fill, 'stroke-card')} strokeWidth={2} />}
-          {Array.from({ length: n }, (_, i) =>
-            i === active || (i % step === 0 && Math.abs(i - active) > 1) ? (
-              <text key={i} x={x(i)} y={H - 10} textAnchor={i === 0 && n > 1 ? 'start' : 'middle'} className={i === active ? 'fill-foreground' : 'fill-muted-foreground'} fontSize={12} fontWeight={i === active ? 700 : 400}>
-                {i + 1}
-              </text>
-            ) : null,
-          )}
-        </svg>
-        <p className="text-center text-sm text-muted-foreground">{t('compare.paceAxis')}</p>
+          <span aria-hidden="true" className="absolute inset-x-0 top-0 border-t" />
+          <span aria-hidden="true" className="absolute inset-x-0 top-[calc(50%-0.875rem)] border-t" />
+          <span aria-hidden="true" className="absolute inset-x-0 bottom-7 border-t" />
+          <div className="grid h-56 min-w-full grid-flow-col auto-cols-[minmax(4rem,1fr)] items-end gap-2 px-1">
+            {Array.from({ length: n }, (_, i) => {
+              const av = inRange(a, i) ? a[i] : undefined
+              const bv = inRange(b, i) ? b[i] : undefined
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  aria-pressed={active === i}
+                  aria-label={t('compare.month', { n: i + 1 })}
+                  className={cn('grid h-full w-16 grid-rows-[1fr_1.75rem] rounded-md px-1 pt-2 text-xs outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring', active === i && 'bg-muted')}
+                  onClick={() => setPicked(i)}
+                >
+                  <span className="flex items-end justify-center gap-1.5">
+                    <span className={cn('w-4 rounded-t-sm', SIDE_A.bar)} style={{ height: av === undefined ? 0 : `${Math.max(2, (av / top) * 100)}%` }} />
+                    <span className={cn('w-4 rounded-t-sm', SIDE_B.bar)} style={{ height: bv === undefined ? 0 : `${Math.max(2, (bv / top) * 100)}%` }} />
+                  </span>
+                  <span className="self-center font-medium text-muted-foreground">{i + 1}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
+      <p className="text-center text-sm text-muted-foreground">{t('compare.paceAxis')}</p>
 
-      <div role="status" aria-live="polite" className="grid gap-2 rounded-xl bg-muted/60 p-3">
-        <p className="font-semibold">{t('compare.month', { n: active + 1 })}</p>
-        <dl className="grid gap-1.5 sm:grid-cols-2 sm:gap-x-6">
-          <div className="flex items-center justify-between gap-3">
+      <div role="status" aria-live="polite" className={cn('grid grid-cols-2 overflow-hidden rounded-lg border', COMPARE_GRID)}>
+        <p className="col-span-2 p-3 font-semibold sm:col-span-1">{t('compare.month', { n: active + 1 })}</p>
+        <dl className="contents">
+          <div className="grid gap-1 border-t border-s p-3 sm:border-t-0">
             <dt>
               <KeyChip side="a">{t('compare.projectA')}</KeyChip>
             </dt>
             <dd className="tabular font-bold">{va === undefined ? '—' : format(va)}</dd>
           </div>
-          <div className="flex items-center justify-between gap-3">
+          <div className="grid gap-1 border-t border-s p-3 sm:border-t-0">
             <dt>
               <KeyChip side="b">{t('compare.projectB')}</KeyChip>
             </dt>
             <dd className="tabular font-bold">{vb === undefined ? '—' : format(vb)}</dd>
           </div>
         </dl>
-        {va !== undefined && vb !== undefined && va > 0 && <DeltaBadge d={{ delta: vb - va, pct: Math.round(((vb - va) / va) * 100) }} format={format} />}
+        <div className="hidden border-s p-3 sm:block">
+          {va !== undefined && vb !== undefined && va > 0 ? <DeltaBadge d={{ delta: vb - va, pct: Math.round(((vb - va) / va) * 100) }} format={format} /> : <span className="text-muted-foreground">—</span>}
+        </div>
       </div>
       <p className="text-sm text-muted-foreground">{t('compare.paceHint')}</p>
 
@@ -284,50 +277,33 @@ export interface RateRow {
  */
 export function RateChangeBars({ rows }: { rows: RateRow[] }) {
   const { t } = useApp()
-  const max = Math.max(5, ...rows.map((r) => Math.abs(r.pct ?? 0)))
   return (
-    <div className="grid gap-4">
-      <div className="flex items-center gap-3 text-xs text-muted-foreground" dir="ltr" aria-hidden="true">
-        <div className="flex min-w-0 flex-1 items-center justify-between">
-          <span>← {t('compare.less')}</span>
-          <span>0%</span>
-          <span>{t('compare.more')} →</span>
-        </div>
-        <span className="w-24 shrink-0" />
+    <div className="overflow-hidden rounded-lg border">
+      <div className={cn('hidden border-b bg-muted/40 text-sm font-semibold sm:grid', COMPARE_GRID)}>
+        <span className="p-3">{t('compare.materials')}</span>
+        <span className="border-s p-3"><KeyChip side="a">{t('compare.projectA')}</KeyChip></span>
+        <span className="border-s p-3"><KeyChip side="b">{t('compare.projectB')}</KeyChip></span>
+        <span className="border-s p-3 text-muted-foreground">{t('compare.difference')}</span>
       </div>
-      <ul className="grid gap-5">
+      <ul className="divide-y">
       {rows.map((r) => {
         const pct = r.pct ?? 0
         const up = pct > 0
         const Icon = pct === 0 ? Minus : up ? TrendingUp : TrendingDown
         const word = pct === 0 ? t('compare.same') : up ? t('compare.more') : t('compare.less')
         return (
-          <li key={r.key} className="grid gap-1.5">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+          <li key={r.key} className={cn('grid grid-cols-2', COMPARE_GRID)}>
+            <div className="col-span-2 p-3 sm:col-span-1">
               <span className="font-semibold">
                 {r.label} <span className="text-sm font-normal text-muted-foreground">/ {r.unit}</span>
               </span>
-              <span className="tabular text-sm text-muted-foreground">
-                <bdi>
-                  {r.from} → {r.to}
-                </bdi>
-              </span>
             </div>
-            <div className="flex items-center gap-3" dir="ltr">
-              <div role="img" aria-label={r.pct === undefined ? '' : `${word} ${Math.abs(pct)}%`} className="relative h-3 min-w-0 flex-1">
-                <span aria-hidden="true" className="absolute inset-y-[-3px] left-1/2 w-px bg-border" />
-                {pct !== 0 && (
-                  <span
-                    className={cn('absolute inset-y-0', up ? 'left-1/2 rounded-e-[4px] bg-viz-up' : 'right-1/2 rounded-s-[4px] bg-viz-down')}
-                    style={{ width: `${(Math.abs(pct) / max) * 50}%` }}
-                  />
-                )}
-              </div>
-              <span className="flex w-24 shrink-0 items-center gap-1 text-sm font-semibold">
+            <div className="border-t border-s p-3 text-sm font-semibold sm:border-t-0">{r.from}</div>
+            <div className="border-t border-s p-3 text-sm font-semibold sm:border-t-0">{r.to}</div>
+            <div role="img" aria-label={r.pct === undefined ? '' : `${word} ${Math.abs(pct)}%`} className="col-span-2 flex items-center gap-1 border-t p-3 text-sm font-semibold sm:col-span-1 sm:border-t-0 sm:border-s">
                 <Icon aria-hidden="true" className="size-4" />
                 <span>{word}</span>
                 <bdi className="tabular">{r.pct === undefined ? '' : `${Math.abs(pct)}%`}</bdi>
-              </span>
             </div>
           </li>
         )

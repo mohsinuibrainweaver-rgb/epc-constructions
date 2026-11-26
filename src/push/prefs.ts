@@ -2,18 +2,26 @@ import type { Lang } from '@/db/types'
 import { getRegion, type Region } from '@/lib/region'
 
 /** The kinds of reminder a device can switch on or off. Mirrors `Prefs` in the send-reminders function. */
-export const PUSH_TYPES = ['due', 'budget80', 'budget100', 'approvalRequests', 'approvalDecisions'] as const
+export const PUSH_TYPES = ['activity', 'due', 'attention', 'budget80', 'budget100', 'approvalRequests', 'approvalDecisions'] as const
 export type PushType = (typeof PUSH_TYPES)[number]
 export type PushPrefs = Record<PushType, boolean>
 
-export const DEFAULT_PUSH_PREFS: PushPrefs = { due: true, budget80: true, budget100: true, approvalRequests: true, approvalDecisions: true }
+export const DEFAULT_PUSH_PREFS: PushPrefs = {
+  activity: true,
+  due: true,
+  attention: true,
+  budget80: true,
+  budget100: true,
+  approvalRequests: true,
+  approvalDecisions: true,
+}
 export const DEFAULT_REMINDER_HOUR = 9
 
 /** One tap to a sensible setup. Recommended is everything. */
 export const PUSH_PRESETS = {
   recommended: DEFAULT_PUSH_PREFS,
-  minimal: { due: false, budget80: false, budget100: true, approvalRequests: true, approvalDecisions: true },
-  approvals: { due: false, budget80: false, budget100: false, approvalRequests: true, approvalDecisions: true },
+  minimal: { activity: false, due: false, attention: true, budget80: false, budget100: true, approvalRequests: true, approvalDecisions: true },
+  approvals: { activity: false, due: false, attention: false, budget80: false, budget100: false, approvalRequests: true, approvalDecisions: true },
 } as const satisfies Record<string, PushPrefs>
 export type PushPreset = keyof typeof PUSH_PRESETS
 export const PUSH_PRESET_IDS = Object.keys(PUSH_PRESETS) as PushPreset[]

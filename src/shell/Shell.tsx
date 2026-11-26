@@ -516,6 +516,7 @@ export function Shell() {
               />
             </form> : <span className="flex-1" />}
             <span className="flex-1" />
+            <AlertsBell conflicts={conflictCount ?? 0} onReviewConflicts={() => setConflictsOpen(true)} />
             {!fullscreen && can('addPayments') && (
               <Button asChild>
                 <Link to={addPaymentPath(loc.pathname)}>
@@ -524,7 +525,6 @@ export function Shell() {
                 </Link>
               </Button>
             )}
-            <AlertsBell conflicts={conflictCount ?? 0} onReviewConflicts={() => setConflictsOpen(true)} />
           </div>
         </header>
 

@@ -930,7 +930,7 @@ create table if not exists public.push_subscriptions (
   lang text not null default 'en' check (lang in ('en', 'ur')),
   created_at timestamptz not null default now()
 );
--- What this device wants to hear about (due, budget80, budget100, approvalRequests, approvalDecisions: true or
+-- What this device wants to hear about (activity, due, attention, budget80, budget100, approvalRequests, approvalDecisions: true or
 -- false; a missing key means yes) and the hour it wants the daily reminders, in Pakistan time.
 alter table public.push_subscriptions add column if not exists prefs jsonb not null default '{}'::jsonb;
 alter table public.push_subscriptions add column if not exists reminder_hour smallint not null default 9

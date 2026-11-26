@@ -10,7 +10,7 @@ const PROJECT = 'p1'
 // Works on any day: the due payment is dated today, Pakistan time (what the function itself uses).
 const TODAY = new Date(Date.now() + 5 * 3600 * 1000).toISOString().slice(0, 10)
 const data: Record<string, any[]> = {
-  projects: [{ id: PROJECT, name: 'Block E', budget: 1000, deleted_at: null }],
+  projects: [{ id: PROJECT, name: 'Block E', budget: 1000, owner_id: 'u-investor', target_finish: null, deleted_at: null }],
   project_members: [
     { project_id: PROJECT, user_id: 'u-investor', role: 'investor' },
     { project_id: PROJECT, user_id: 'u-builder', role: 'builder' },
@@ -27,6 +27,12 @@ const data: Record<string, any[]> = {
     { id: 'pay-1', project_id: PROJECT, purpose: 'Sand 10 trolleys', amount: 600, date: TODAY, status: 'paid', approval: 'pending', added_by: 'Imran', deleted_at: null },
     { project_id: PROJECT, purpose: 'Deleted', amount: 999999, date: '2026-11-01', status: 'paid', deleted_at: 5 },
   ],
+  phases: [],
+  contracts: [],
+  transfers: [],
+  attachments: [],
+  project_invites: [],
+  member_permissions: [{ project_id: PROJECT, user_id: 'u-builder', permission: 'viewLedger', enabled: true }],
   push_log: [],
 }
 
@@ -264,6 +270,23 @@ assert.deepEqual(sent.map((s: any) => s.endpoint), ['https://push/builder-phone'
 
 // A deleted entry or an unknown one sends nothing.
 assert.deepEqual((await (await event(CRON, 'pending', 'nope')).json()).sent, 0)
+
+// General activity fans out once, excludes the actor and respects page permissions.
+const activity = (eventName: string, extra: Record<string, unknown> = {}) =>
+  call(CRON, 'activity-event', { event: eventName, project_id: PROJECT, record_id: 'pay-1', actor_id: 'u-investor', ...extra })
+data.push_subscriptions = [
+  { endpoint: 'https://push/investor-phone', p256dh: 'k', auth: 'a', lang: 'en', user_id: 'u-investor' },
+  { endpoint: 'https://push/builder-phone', p256dh: 'k', auth: 'a', lang: 'en', user_id: 'u-builder' },
+]
+Object.assign(data.payments.find((p) => p.id === 'pay-1')!, { approval: null })
+sent.length = 0
+r = await (await activity('payment_added')).json()
+assert.equal(r.sent, 1); assert.deepEqual(sent.map((s: any) => s.endpoint), ['https://push/builder-phone'])
+assert.match(sent[0].payload.body, /Sand 10 trolleys · Rs 600/, 'a member with view permission gets useful detail')
+data.member_permissions = []
+sent.length = 0
+await activity('payment_added')
+assert.equal(sent[0].payload.body, 'There is new activity in Block E.', 'a restricted member gets no financial detail')
 
 console.log('push flow: all checks passed')
 server.close()

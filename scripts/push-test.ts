@@ -2,7 +2,7 @@
 // Run: npx vite-node scripts/push-test.ts
 import assert from 'node:assert/strict'
 import {
-  DEFAULT_PREFS, buildApprovalMessage, buildMessages, deviceId, hourOf, karachiHour, karachiToday, keysToLog, prefsOf, sentFor, testMessage, wantsApproval,
+  DEFAULT_PREFS, buildActivityMessage, buildApprovalMessage, buildAttentionMessages, buildMessages, deviceId, hourOf, karachiHour, karachiToday, keysToLog, prefsOf, sentFor, testMessage, wantsApproval,
   type Payment, type Project,
 } from '../supabase/functions/send-reminders/index'
 import { DEFAULT_PUSH_PREFS, DEFAULT_REMINDER_HOUR, PUSH_PRESETS, PUSH_TYPES, countOn, hourFrom, hourLabel, prefsFrom, presetOf, reminderHours } from '../src/push/prefs'
@@ -84,6 +84,32 @@ assert.equal(a.title, 'اندراج آپ کی منظوری کا منتظر ہے'
 a = buildApprovalMessage('rejected', { ...entry, approval: 'rejected' }, 'Block E', 'pay-1', 'en')!
 assert.ok(!a.body.includes('Reason'), 'no reason, no reason line')
 
+// Project activity is specific for a permitted member and generic when the page is hidden.
+let act = buildActivityMessage({ event: 'payment_added', project: 'Block E', actor: 'Ammar', item: 'Bricks', amount: 50000, id: 'pay-2' }, 'en', true)
+assert.equal(act.title, 'New payment added'); assert.match(act.body, /Bricks · Rs 50,000 by Ammar/); assert.equal(act.url, '/payments/pay-2')
+act = buildActivityMessage({ event: 'payment_added', project: 'Block E', actor: 'Ammar', item: 'Bricks', amount: 50000, id: 'pay-2' }, 'en', false)
+assert.equal(act.body, 'There is new activity in Block E.')
+act = buildActivityMessage({ event: 'member_removed', project: 'Block E' }, 'en')
+assert.equal(act.body, 'You were removed from Block E.'); assert.equal(act.url, '/projects')
+
+// Daily attention: old approvals, missing proof, phase thresholds, deadlines and cash shortages.
+const attention = buildAttentionMessages({
+  project: { ...P, owner_id: 'owner', target_finish: '2026-11-20' },
+  payments: [
+    { id: 'pending', purpose: 'Sand', amount: 100, date: '2026-11-10', status: 'paid', approval: 'pending', created_at: 1, paid_by: 'worker' },
+    { id: 'spent', purpose: 'Bricks', amount: 850, date: '2026-11-10', status: 'paid', created_at: 1, phase_id: 'ph1', paid_by: 'worker', project_cash_amount: 850 },
+    { id: 'future', purpose: 'Labour', amount: 500, date: '2026-11-18', status: 'planned', paid_by: 'worker' },
+  ],
+  phases: [{ id: 'ph1', name: 'Structure', budget: 1000, done: false }], contracts: [],
+  transfers: [{ member_id: 'worker', amount: 1000, kind: 'advance' }], attachmentPaymentIds: new Set(), invites: [],
+  today: '2026-11-15', nowMs: Date.parse('2026-11-15T09:00:00Z'), sent: new Set(), userId: 'owner', permissions: new Set(), prefs: DEFAULT_PREFS,
+}, 'en')
+assert.ok(attention.some((x) => x.title === 'Approval still waiting'))
+assert.ok(attention.some((x) => x.title === 'Receipt or proof is missing'))
+assert.ok(attention.some((x) => x.title === 'Phase estimate 80% used' && x.logKey === 'phase80-ph1'))
+assert.ok(attention.some((x) => x.title === 'Project target date is near'))
+assert.ok(attention.some((x) => x.title === 'Project cash may be short'))
+
 assert.equal(testMessage('en').url, '/settings/notifications')
 
 // ---- Preferences: what a device chose decides what it is sent.
@@ -133,9 +159,9 @@ for (const raw of [undefined, 3, 24, 'x']) assert.equal(hourFrom(raw), hourOf(ra
 assert.deepEqual(PUSH_PRESETS.recommended, DEFAULT_PREFS)
 assert.equal(presetOf(PUSH_PRESETS.recommended), 'recommended'); assert.equal(presetOf(PUSH_PRESETS.minimal), 'minimal'); assert.equal(presetOf(PUSH_PRESETS.approvals), 'approvals')
 assert.equal(presetOf({ ...PUSH_PRESETS.minimal, due: true }), 'custom')
-assert.deepEqual(Object.entries(PUSH_PRESETS.minimal).filter(([, v]) => v).map(([k]) => k), ['budget100', 'approvalRequests', 'approvalDecisions'], 'minimal: approvals and the budget limit')
+assert.deepEqual(Object.entries(PUSH_PRESETS.minimal).filter(([, v]) => v).map(([k]) => k), ['attention', 'budget100', 'approvalRequests', 'approvalDecisions'], 'minimal: critical attention, approvals and the budget limit')
 assert.deepEqual(Object.entries(PUSH_PRESETS.approvals).filter(([, v]) => v).map(([k]) => k), ['approvalRequests', 'approvalDecisions'])
-assert.equal(countOn(PUSH_PRESETS.recommended), 5); assert.equal(countOn(PUSH_PRESETS.minimal), 3); assert.equal(countOn(PUSH_PRESETS.approvals), 2)
+assert.equal(countOn(PUSH_PRESETS.recommended), 7); assert.equal(countOn(PUSH_PRESETS.minimal), 4); assert.equal(countOn(PUSH_PRESETS.approvals), 2)
 
 // Hours offered and how they read.
 assert.deepEqual(reminderHours(9), [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22])

@@ -4,8 +4,12 @@ Reminders reach the lock screen even when the app is closed. Three things make t
 a small function on Supabase that sends them (`supabase/functions/send-reminders/index.ts`), and an hourly schedule.
 
 **What people get**
-- A payment due today, and payments that are overdue (status Planned).
-- "Budget 80% used" and "Budget reached", once each per project.
+- Project activity at once: manually added or materially changed payments, completed/reopened phases, project cash,
+  contracts, members, permissions and important project changes. The actor is excluded and hidden pages never leak details.
+- A payment due in the next 3 days, due today, and payments that are overdue (status Planned).
+- Daily attention reminders for stale approvals/rejections, missing payment proof, project/phase deadlines, expiring invites,
+  contract overpayment and project-cash shortages.
+- "Budget 80% used", "Budget reached", and phase estimate thresholds, once each per device.
 - At once: the investor is told when the builder submits an entry for approval, and the builder is told when it is
   approved or rejected (step 6).
 - Messages arrive in the language the person chose in the app.
@@ -63,11 +67,15 @@ A missed run (Supabase was down at that hour) is not made up later.
 2. Settings, **Notifications**, **Turn on reminders**, allow.
 3. Press **Send a test**. A notification should arrive within seconds.
 
-## 6. Instant approval notifications (optional, after step 1 to 5)
+## 6. Instant project activity and approval notifications (after step 1 to 5)
 Run `supabase/push-triggers.sql` once in the SQL Editor, with two placeholders replaced: the function URL
 (`https://YOUR-PROJECT.supabase.co/functions/v1/send-reminders`) and the same secret as `CRON_SECRET`. It adds a database
-trigger that asks the function to send a notification when an entry becomes pending, approved or rejected. A problem
-with notifying never blocks saving a payment. Update the function (paste `index.ts` again) first.
+trigger that asks the function to send a notification for approval events and meaningful changes to payments, phases,
+project cash, contracts, members, permissions and the project itself. A notification problem never blocks saving data.
+Update the function (paste `index.ts` again) first.
+
+The hourly schedule is only about 720 function invocations in a 30-day month. Activity events add one invocation per
+meaningful action (not one per recipient), keeping ordinary projects comfortably inside the Free plan's function quota.
 
 ## Checks
 `npx vite-node scripts/push-test.ts` (what is sent, when, and what each choice changes), `npx vite-node scripts/push-flow-test.ts` (the whole
