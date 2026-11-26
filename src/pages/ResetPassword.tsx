@@ -1,4 +1,5 @@
-import { useId, useState, type FormEvent } from 'react'
+import { useEffect, useId, useState, type FormEvent } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { Loader2 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BrandLogo } from '@/components/Brand'
@@ -9,13 +10,11 @@ import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { checkPassword } from '@/lib/password'
 import { cleanInviteCode, isCompleteInviteCode } from '@/lib/invite'
-import { useSync } from '@/sync/SyncProvider'
-import { supabase } from '@/sync/supabase'
+import { recoverySupabase } from '@/sync/supabase'
 
 /** The destination of Supabase's password-recovery email. The recovery link creates a short-lived session first. */
 export function ResetPassword() {
   const { t } = useApp()
-  const { session } = useSync()
   const nav = useNavigate()
   const [params] = useSearchParams()
   const invite = cleanInviteCode(params.get('invite') ?? '')
@@ -23,6 +22,8 @@ export function ResetPassword() {
   const [confirm, setConfirm] = useState('')
   const [confirmTouched, setConfirmTouched] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [checking, setChecking] = useState(true)
+  const [session, setSession] = useState<Session | null>(null)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
   const uid = useId()
@@ -30,6 +31,28 @@ export function ResetPassword() {
   const confirmId = `${uid}-confirm`
   const check = checkPassword(password)
   const confirmState = confirm === '' ? 'idle' : confirm === password ? 'match' : confirmTouched || confirm.length >= password.length ? 'mismatch' : 'idle'
+
+  useEffect(() => {
+    if (!recoverySupabase) {
+      setChecking(false)
+      return
+    }
+    let alive = true
+    void recoverySupabase.auth.getSession().then(({ data }) => {
+      if (!alive) return
+      setSession(data.session)
+      setChecking(false)
+    })
+    const { data } = recoverySupabase.auth.onAuthStateChange((_event, next) => {
+      if (!alive) return
+      setSession(next)
+      setChecking(false)
+    })
+    return () => {
+      alive = false
+      data.subscription.unsubscribe()
+    }
+  }, [])
 
   const openSignIn = () => {
     const next = new URLSearchParams({ passwordReset: '1', type: 'signin' })
@@ -47,19 +70,19 @@ export function ResetPassword() {
       setError(!confirm ? t('auth.confirmRequired') : t('auth.confirmMismatch'))
       return
     }
-    if (!supabase || !session) {
+    if (!recoverySupabase || !session) {
       setError(t('auth.resetInvalid'))
       return
     }
     setBusy(true)
     setError('')
-    const { error: updateError } = await supabase.auth.updateUser({ password })
+    const { error: updateError } = await recoverySupabase.auth.updateUser({ password })
     if (updateError) setError(updateError.message)
     else {
       // A recovery link creates a temporary authenticated session. End it after changing the
       // password so password recovery never doubles as a login bypass.
       setDone(true)
-      const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' })
+      const { error: signOutError } = await recoverySupabase.auth.signOut({ scope: 'local' })
       if (signOutError) {
         setDone(false)
         setError(signOutError.message)
@@ -78,7 +101,11 @@ export function ResetPassword() {
           <p className="text-sm text-muted-foreground">{t('auth.newPasswordBody')}</p>
         </div>
 
-        {done ? (
+        {checking ? (
+          <div className="grid min-h-24 place-items-center" role="status" aria-label={t('common.loading')}>
+            <Loader2 className="animate-spin" aria-hidden="true" />
+          </div>
+        ) : done ? (
           <div className="grid gap-3">
             <p role="status" className="rounded-xl bg-info-soft p-3 text-sm font-semibold text-info">{t('auth.passwordUpdated')}</p>
             <Button type="button" size="lg" onClick={openSignIn}>{t('auth.backToSignIn')}</Button>

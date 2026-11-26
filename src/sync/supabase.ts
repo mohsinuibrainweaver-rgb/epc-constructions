@@ -10,7 +10,7 @@ export const passwordRecoveryInUrl = (() => {
   try {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''))
     const query = new URLSearchParams(window.location.search)
-    return hash.get('type') === 'recovery' || query.get('type') === 'recovery'
+    return window.location.pathname === '/reset-password' || hash.get('type') === 'recovery' || query.get('type') === 'recovery'
   } catch {
     return false
   }
@@ -22,7 +22,21 @@ export const syncConfigured = Boolean(!import.meta.env.VITE_DISABLE_SYNC && url 
 
 export const supabase: SupabaseClient | null = syncConfigured
   ? createClient(url as string, key as string, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      // A recovery URL is handled by the isolated client below. Letting this persistent client consume
+      // it would save and broadcast the temporary recovery session, logging every open app tab in.
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: !passwordRecoveryInUrl },
+    })
+  : null
+
+/** Memory-only auth client used exclusively while choosing a new password. It never signs in other tabs. */
+export const recoverySupabase: SupabaseClient | null = syncConfigured && passwordRecoveryInUrl
+  ? createClient(url as string, key as string, {
+      auth: {
+        storageKey: 'epc-password-recovery',
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: true,
+      },
     })
   : null
 
