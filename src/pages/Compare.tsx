@@ -88,11 +88,12 @@ export function Compare() {
 
   // The two choices. The colour key beside each name is the key for every chart below.
   const controls = (
-    <Card className="overflow-hidden p-0">
+    <Card className="gap-0 overflow-hidden p-0">
       <p className="border-b px-4 py-3 text-sm text-muted-foreground sm:px-5 sm:py-4 sm:text-base">{t('compare.intro')}</p>
-      <div className="grid grid-cols-2 divide-x">
+      <div className="relative grid grid-cols-2">
+        <span aria-hidden="true" className="pointer-events-none absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-border" />
         {([['a', t('compare.projectA'), aId], ['b', t('compare.projectB'), bId]] as const).map(([side, label, value]) => (
-          <div key={side} className="grid min-w-0 content-start gap-2 px-3 py-3 sm:px-5">
+          <div key={side} className="grid min-w-0 content-start gap-2 px-3 py-2.5 sm:px-5 sm:py-3">
             <span className="text-xs font-semibold text-muted-foreground sm:text-sm">
               <KeyChip side={side}>{label}</KeyChip>
             </span>

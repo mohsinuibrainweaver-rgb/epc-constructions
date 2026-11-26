@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { useAttachments } from '@/db/hooks'
 import type { Payment } from '@/db/types'
+import { money } from '@/lib/format'
 import { useObjectUrl } from '@/lib/image'
 import { attachmentMime, isAudioType, isImageType, isVideoType, mimeForPath } from '@/lib/media'
 import { cn } from '@/lib/utils'
@@ -14,6 +15,9 @@ import { ensureAttachmentBlob } from '@/sync/engine'
 export interface GalleryFile {
   id: string
   name: string
+  /** Human-readable context shown in the viewer instead of the stored filename. */
+  title?: string
+  subtitle?: string
   blob?: Blob
   path?: string
   mime?: string
@@ -204,10 +208,15 @@ export function MediaGalleryDialog({
         showCloseButton={false}
         className="!inset-0 !top-0 !left-0 !grid !h-dvh !max-h-none !w-screen !max-w-none !translate-x-0 !translate-y-0 !grid-rows-[auto_minmax(0,1fr)_auto] !gap-3 !overflow-hidden !rounded-none !border-0 !bg-black/25 !p-3 text-white shadow-none sm:!p-5 [&>span:first-child]:hidden"
       >
-        <header className="mx-auto grid min-h-11 w-full max-w-5xl grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-1">
-          <DialogTitle dir="ltr" className="block min-w-0 flex-1 truncate text-left text-sm font-semibold text-white sm:text-base">
-            {current?.name || description || t('ledger.attachments')}
-          </DialogTitle>
+        <header className="mx-auto grid min-h-12 w-full max-w-5xl grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-xl border border-white/10 bg-black/85 px-3 py-2 shadow-xl backdrop-blur-md sm:gap-3 sm:px-4">
+          <div className="grid min-w-0 gap-0.5 text-left leading-tight">
+            <DialogTitle className="block min-w-0 truncate text-sm font-bold text-white drop-shadow-sm sm:text-base">
+              {current?.title || description || current?.name || t('ledger.attachments')}
+            </DialogTitle>
+            {current?.subtitle && (
+              <p className="truncate text-xs font-semibold tabular-nums text-white/75 sm:text-sm">{current.subtitle}</p>
+            )}
+          </div>
           <DialogDescription className="sr-only">{description ?? t('ledger.attachments')}</DialogDescription>
           {currentUrl ? (
             <Button asChild variant="secondary" size="sm" className="shrink-0 rounded-full border-0 !bg-white !text-black shadow-lg hover:!bg-white/90 hover:!text-black">
@@ -273,11 +282,13 @@ export function MediaGalleryDialog({
         </div>
 
         {files.length > 1 && (
-          <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-lg border border-white/10 bg-black/90 px-3 py-3 shadow-2xl sm:px-5">
-            <div ref={thumbnailStrip} className="mx-auto flex max-w-4xl gap-2 overflow-x-auto p-1 [scrollbar-color:rgba(255,255,255,.35)_transparent] [scrollbar-width:thin]">
+          <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-lg border border-white/10 bg-black/90 py-3 shadow-2xl">
+            <div ref={thumbnailStrip} className="flex w-full gap-2 overflow-x-auto pb-1 [scrollbar-color:rgba(255,255,255,.3)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-[2px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-track]:bg-transparent">
+              <span aria-hidden="true" className="w-1 shrink-0" />
               {files.map((file, fileIndex) => (
                 <GalleryThumb key={file.id} file={file} selected={fileIndex === index} onClick={() => setIndex(fileIndex)} />
               ))}
+              <span aria-hidden="true" className="w-1 shrink-0" />
             </div>
           </div>
         )}
@@ -303,6 +314,8 @@ export function PaymentAttachmentsDialog({
   const files: GalleryFile[] = attachments.map((attachment) => ({
     id: attachment.id,
     name: attachment.name,
+    title: currentPayment?.purpose,
+    subtitle: currentPayment ? money(currentPayment.amount) : undefined,
     blob: attachment.blob,
     path: attachment.path,
     mime: attachmentMime(attachment),

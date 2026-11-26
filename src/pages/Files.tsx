@@ -106,6 +106,7 @@ export function Files() {
       ? {
           id: item.file.id,
           name: item.file.name,
+          title: item.file.title,
           blob: item.file.blob,
           path: item.file.path,
           mime: item.file.mime,
@@ -114,6 +115,8 @@ export function Files() {
       : {
           id: item.attachment.id,
           name: item.attachment.name,
+          title: item.payment.purpose,
+          subtitle: money(item.payment.amount),
           blob: item.attachment.blob,
           path: item.attachment.path,
           mime: attachmentMime(item.attachment),

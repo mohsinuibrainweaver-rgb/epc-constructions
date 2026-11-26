@@ -443,7 +443,13 @@ export function Shell() {
       <div className="flex min-h-[calc(100dvh-2*var(--page-gap))] min-w-0 flex-col overflow-clip bg-card sm:rounded-2xl sm:border sm:shadow-sm print:overflow-visible print:rounded-none print:border-0 print:bg-white print:shadow-none">
         <header className={cn('sticky top-0 z-20 border-b bg-card pt-[env(safe-area-inset-top)] sm:hidden print:hidden', fullscreen && 'hidden')}>
           <div className="container-page flex min-h-14 items-center gap-3">
-            <BrandMark width={18} />
+            <Link
+              to="/"
+              aria-label={t('nav.home')}
+              className="-mx-2 flex size-10 shrink-0 items-center justify-center rounded-control transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            >
+              <BrandMark width={18} />
+            </Link>
             {projects.length > 1 ? (
               <Popover open={projectSwitcherOpen} onOpenChange={setProjectSwitcherOpen}>
                 <PopoverTrigger asChild>
