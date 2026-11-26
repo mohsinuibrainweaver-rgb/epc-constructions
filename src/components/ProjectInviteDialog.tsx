@@ -6,10 +6,12 @@ import { PermissionEditor } from '@/components/PermissionEditor'
 import { useToast } from '@/components/Toast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { db } from '@/db/db'
 import type { Project } from '@/db/types'
 import { formatDate } from '@/lib/format'
 import { groupInviteCode, inviteLink } from '@/lib/invite'
 import { EMPTY_PERMISSIONS, type Action, type PermissionMap } from '@/lib/permissions'
+import { useSync } from '@/sync/SyncProvider'
 import { supabase } from '@/sync/supabase'
 
 export interface ProjectInvite {
@@ -27,6 +29,7 @@ export function ProjectInviteDialog({ open, project, onClose, onCreated }: {
   onCreated?: (invite: ProjectInvite) => void
 }) {
   const { t, lang } = useApp()
+  const { syncNow } = useSync()
   const toast = useToast()
   const [permissions, setPermissions] = useState<PermissionMap>({ ...EMPTY_PERMISSIONS })
   const [created, setCreated] = useState<ProjectInvite>()
@@ -47,6 +50,11 @@ export function ProjectInviteDialog({ open, project, onClose, onCreated }: {
     if (!supabase) return
     setError('')
     setBusy(true)
+    // Make sure the project's cover has been uploaded and its storage path has reached the server
+    // before creating a share link. Social crawlers cannot read the browser's local thumbnail Blob.
+    await syncNow()
+    const syncedProject = await db.projects.get(project.id)
+    if (syncedProject?.thumbnail && syncedProject.thumbnailPath && syncedProject.dirty === 1) await syncNow()
     const { data, error: createError } = await supabase
       .from('project_invites')
       .insert({ project_id: project.id, role: 'builder', permissions })

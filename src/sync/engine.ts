@@ -340,10 +340,17 @@ async function backfillBlobs(): Promise<void> {
   const photos = (await db.files.toArray()).filter((f) => f.kind === 'photo' && f.path && !f.blob && !f.deletedAt).slice(0, 20)
   for (const f of photos) await ensureFileBlob(f)
   const thumbs = (await db.projects.toArray()).filter((p) => p.thumbnailPath && !p.thumbnail && !p.deletedAt)
-  for (const p of thumbs) {
-    const { data } = await supabase!.storage.from(BUCKET).download(p.thumbnailPath!)
-    if (data) await remoteTx([db.projects], () => db.projects.update(p.id, { thumbnail: data }).then(() => undefined))
-  }
+  for (const p of thumbs) await ensureProjectThumbnail(p)
+}
+
+/** Downloads a project cover uploaded from another device when a screen needs it immediately. */
+export async function ensureProjectThumbnail(project: Project): Promise<Blob | undefined> {
+  if (project.thumbnail) return project.thumbnail
+  if (!supabase || !project.thumbnailPath) return undefined
+  const { data } = await supabase.storage.from(BUCKET).download(project.thumbnailPath)
+  if (!data) return undefined
+  await remoteTx([db.projects], () => db.projects.update(project.id, { thumbnail: data }).then(() => undefined))
+  return data
 }
 
 export async function ensureAttachmentBlob(a: Attachment): Promise<Blob | undefined> {

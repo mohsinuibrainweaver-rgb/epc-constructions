@@ -41,7 +41,6 @@ async function validInvite(code: string): Promise<InviteRow | null> {
   const params = new URLSearchParams({
     select: 'expires_at,accepted_at,project:projects(name,location,owner_id,thumbnail_path,members:project_members(user_id,display_name))',
     code: `eq.${code}`,
-    accepted_at: 'is.null',
     limit: '1',
   })
   const response = await fetch(`${env('SUPABASE_URL')}/rest/v1/project_invites?${params}`, {

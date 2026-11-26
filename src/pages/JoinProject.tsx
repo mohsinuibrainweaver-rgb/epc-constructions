@@ -12,7 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { setSetting } from '@/db/actions'
 import { db } from '@/db/db'
 import { groupInviteCode, isCompleteInviteCode } from '@/lib/invite'
-import { joinProject } from '@/sync/engine'
+import { useObjectUrl } from '@/lib/image'
+import { ensureProjectThumbnail, joinProject } from '@/sync/engine'
 import { useSync } from '@/sync/SyncProvider'
 import { supabase } from '@/sync/supabase'
 
@@ -44,6 +45,13 @@ export function JoinProject() {
   const back = projects.length > 0 ? '/projects' : '/welcome'
   const joiningFromLink = isCompleteInviteCode(linkedCode)
   const autoAccept = joiningFromLink && params.get('accept') === 'auto'
+  const existingProject = projects.find((project) => project.id === existingProjectId)
+  const existingProjectImage = useObjectUrl(existingProject?.thumbnail)
+
+  useEffect(() => {
+    if (inviteState !== 'already_member' || !existingProject || existingProject.thumbnail || !existingProject.thumbnailPath) return
+    void ensureProjectThumbnail(existingProject)
+  }, [existingProject, inviteState])
 
   useEffect(() => {
     if (!joiningFromLink || !supabase) {
@@ -150,13 +158,19 @@ export function JoinProject() {
   }
 
   if (joiningFromLink) {
-    const project = preview?.project
+    const previewProject = preview?.project
+    const project = {
+      name: previewProject?.name || existingProject?.name || '',
+      location: previewProject?.location || existingProject?.location || '',
+      ownerName: previewProject?.ownerName || '',
+      image: previewProject?.image || existingProjectImage || '',
+    }
     const alreadyMember = inviteState === 'already_member'
     return (
       <main className="grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center px-4 py-8">
         <Card className="w-full max-w-lg gap-0 overflow-hidden py-0 shadow-sm">
           <div className="relative aspect-[16/7] min-h-40 overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-background">
-            {project?.image ? (
+            {project.image ? (
               <img src={project.image} alt="" className="size-full object-cover" />
             ) : previewLoading ? (
               <Skeleton className="size-full rounded-none" />
@@ -167,10 +181,6 @@ export function JoinProject() {
                 </span>
               </div>
             )}
-            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/45 to-transparent" />
-            <span className="absolute bottom-4 left-5 rounded-full border border-white/30 bg-black/35 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-              {t(alreadyMember ? 'join.alreadyBadge' : 'join.invitedTo')}
-            </span>
           </div>
           <CardContent className="grid gap-5 px-5 py-5 sm:px-7 sm:py-6">
             <div className="grid gap-2 text-center">
@@ -181,12 +191,12 @@ export function JoinProject() {
                 </>
               ) : (
                 <>
-                  <h1 className="text-2xl font-semibold tracking-tight">{project?.name || t('join.inviteTitle')}</h1>
+                  <h1 className="text-2xl font-semibold tracking-tight">{project.name || t('join.inviteTitle')}</h1>
                   <p className="text-sm text-muted-foreground">{t(alreadyMember ? 'join.alreadySub' : 'join.inviteSub')}</p>
                 </>
               )}
             </div>
-            {(project?.location || project?.ownerName) && (
+            {(project.location || project.ownerName) && (
               <dl className="grid gap-3 rounded-control bg-muted/55 p-4 text-left">
                 {project.location && (
                   <div className="grid grid-cols-[auto_1fr] gap-x-3">

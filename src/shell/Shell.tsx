@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { EmptyState } from '@/components/common'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { Dialog, EmptyState } from '@/components/common'
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Banknote, Bell, BellOff, CalendarClock, ChartColumn, Check, ChevronDown, Ellipsis, FileSignature, FileText, FolderOpen, GitCompareArrows, House, Layers3, Loader2, LogOut, Plus, ReceiptText, RefreshCw, Scale, Search, Settings as SettingsIcon, ShieldCheck, TriangleAlert, Users, WifiOff } from 'lucide-react'
+import { Banknote, Bell, BellOff, CalendarClock, ChartColumn, Check, ChevronDown, ChevronRight, Ellipsis, FileSignature, FileText, FolderOpen, GitCompareArrows, House, KeyRound, Layers3, Loader2, LogOut, Plus, ReceiptText, RefreshCw, Scale, Search, Settings as SettingsIcon, ShieldCheck, TriangleAlert, Users, WifiOff } from 'lucide-react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { BrandLogo, BrandMark } from '@/components/Brand'
 import { useApp } from '@/app/AppContext'
@@ -25,6 +25,8 @@ import { cn } from '@/lib/utils'
 import { syncPushLanguage } from '@/push/push'
 import { onRefused } from '@/sync/engine'
 import { useSync } from '@/sync/SyncProvider'
+
+const PasswordDialog = lazy(() => import('@/components/AccountDialogs').then((m) => ({ default: m.PasswordDialog })))
 
 const NAV: { to: string; key: Key; icon: typeof House; end?: boolean; ownerOnly?: boolean; permission?: Action }[] = [
   { to: '/', key: 'nav.home', icon: House, end: true },
@@ -136,6 +138,7 @@ function AccountMenu({ phone = false }: { phone?: boolean }) {
   const { t, settings, isOwner } = useApp()
   const sync = useSync()
   const [open, setOpen] = useState(false)
+  const [passwordOpen, setPasswordOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const who = settings.userName || t(settings.role === 'investor' ? 'set.roleInvestor' : 'set.roleBuilder')
 
@@ -150,6 +153,7 @@ function AccountMenu({ phone = false }: { phone?: boolean }) {
   }
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         {phone ? (
@@ -174,30 +178,51 @@ function AccountMenu({ phone = false }: { phone?: boolean }) {
           </button>
         )}
       </PopoverTrigger>
-      <PopoverContent side={phone ? 'bottom' : 'right'} align="end" className="w-[min(18rem,calc(100vw-2rem))] p-1">
-        <div className="border-b px-3 py-2.5">
+      <PopoverContent
+        side={phone ? 'bottom' : 'top'}
+        align={phone ? 'end' : 'start'}
+        className={cn('p-1', phone ? 'w-[min(13.5rem,calc(100vw-2rem))]' : 'w-[min(12.5rem,calc(100vw-2rem))]')}
+      >
+        <div className={cn('border-b', phone ? 'px-2.5 py-2' : 'px-2.5 py-1.5')}>
           <p className="truncate text-sm font-semibold">{who}</p>
-          {sync.session?.user.email && <p className="truncate text-xs text-muted-foreground">{sync.session.user.email}</p>}
+          {sync.session?.user.email && <p className="truncate text-[0.6875rem] text-muted-foreground">{sync.session.user.email}</p>}
         </div>
         <Link
           to="/settings/account"
           onClick={() => setOpen(false)}
-          className="mt-1 flex min-h-11 items-center gap-3 rounded-control px-3 text-sm font-medium transition-colors hover:bg-accent"
+          className={cn('mt-1 flex items-center rounded-control text-sm font-medium transition-colors hover:bg-accent', phone ? 'min-h-10 gap-2.5 px-2.5' : 'min-h-9 gap-2 px-2.5')}
         >
           <SettingsIcon className="size-4" aria-hidden="true" />
           {t('nav.settings')}
         </Link>
         <button
           type="button"
+          onClick={() => {
+            setOpen(false)
+            setPasswordOpen(true)
+          }}
+          className={cn('flex w-full cursor-pointer items-center rounded-control text-start text-sm font-medium transition-colors hover:bg-accent', phone ? 'min-h-10 gap-2.5 px-2.5' : 'min-h-9 gap-2 px-2.5')}
+        >
+          <KeyRound className="size-4" aria-hidden="true" />
+          {t('set.pw.title')}
+        </button>
+        <button
+          type="button"
           disabled={busy}
           onClick={() => void signOut()}
-          className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-control px-3 text-start text-sm font-semibold text-danger transition-colors hover:bg-danger-soft disabled:cursor-wait disabled:opacity-60"
+          className={cn('flex w-full cursor-pointer items-center rounded-control text-start text-sm font-semibold text-danger transition-colors hover:bg-danger-soft disabled:cursor-wait disabled:opacity-60', phone ? 'min-h-10 gap-2.5 px-2.5' : 'min-h-9 gap-2 px-2.5')}
         >
           {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <LogOut className="size-4 rtl:-scale-x-100" aria-hidden="true" />}
           {t('sync.signOut')}
         </button>
       </PopoverContent>
     </Popover>
+    {passwordOpen && sync.session?.user.email && (
+      <Suspense fallback={null}>
+        <PasswordDialog open email={sync.session.user.email} onClose={() => setPasswordOpen(false)} />
+      </Suspense>
+    )}
+    </>
   )
 }
 
@@ -210,6 +235,7 @@ export function Shell() {
   const sync = useSync()
   const [q, setQ] = useState('')
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   // The server did not accept some changes (only the investor may make them): they were taken off this phone, so say so.
   useEffect(() => onRefused(() => toast.show({ kind: 'warning', message: t('sync.refused') })), [toast, t])
@@ -311,12 +337,42 @@ export function Shell() {
     )
 
   const sideChip = statusChip(true)
+  const mobileStatusChip = sync.configured && sync.session
+    ? (sync.status.state === 'offline' || sync.status.state === 'error' || (sync.status.state !== 'syncing' && sync.status.pending > 0) ? statusChip(false) : null)
+    : statusChip(false)
   const mobileTabs = [
     { to: '/', key: 'nav.home' as Key, icon: House, end: true },
     ...(can('viewPhases') ? [{ to: '/phases', key: 'nav.phases' as Key, icon: Layers3, end: false }] : []),
     ...(can('viewVendors') ? [{ to: '/vendors', key: 'nav.vendors' as Key, icon: Users, end: false }] : []),
   ]
-  const mobileTabCount = mobileTabs.length + (can('addPayments') ? 1 : 0) + 1
+  const moreItems: { to: string; key: Key; icon: typeof ReceiptText; ownerOnly?: boolean; permission?: Action }[] = [
+    { to: '/contracts', key: 'nav.contracts', icon: FileSignature, permission: 'viewContracts' },
+    { to: '/ledger', key: 'nav.ledger', icon: ReceiptText, permission: 'viewLedger' },
+    { to: '/plans', key: 'nav.plans', icon: CalendarClock, permission: 'viewPlans' },
+    { to: '/forecast', key: 'nav.forecast', icon: Banknote, permission: 'viewForecast' },
+    { to: '/settlement', key: 'nav.settlement', icon: Scale, permission: 'viewSettlement' },
+    { to: '/reports', key: 'nav.reports', icon: ChartColumn, permission: 'viewReports' },
+    { to: '/compare', key: 'nav.compare', icon: GitCompareArrows, permission: 'viewCompare' },
+    { to: '/statements', key: 'nav.statements', icon: FileText, permission: 'viewStatements' },
+    { to: '/files', key: 'nav.files', icon: FolderOpen, permission: 'viewFiles' },
+    { to: '/projects', key: 'nav.projects', icon: FolderOpen },
+    { to: '/roles', key: 'nav.roles', icon: ShieldCheck, ownerOnly: true },
+    { to: '/settings', key: 'nav.settings', icon: SettingsIcon },
+  ]
+  const accessibleMoreItems = moreItems.filter(({ ownerOnly, permission }) => (!ownerOnly || isOwner()) && (!permission || can(permission)))
+  const allMobileTabs = [
+    ...mobileTabs,
+    ...accessibleMoreItems.map(({ to, key, icon }) => ({ to, key, icon, end: false })),
+  ]
+  const canAddPayment = can('addPayments')
+  // Keep the first three destinations visible. When there are more, the original five-slot
+  // balance stays intact: two tabs, centred +, one tab, then More.
+  const useMore = allMobileTabs.length > 3
+  const directLimit = useMore ? 3 : allMobileTabs.length
+  const visibleMobileTabs = allMobileTabs.slice(0, directLimit)
+  const sheetItems = useMore ? allMobileTabs.slice(directLimit) : []
+  const mobileTabSplit = Math.ceil(visibleMobileTabs.length / 2)
+  const mobileTabCount = visibleMobileTabs.length + (canAddPayment ? 1 : 0) + (useMore ? 1 : 0)
   return (
     <div className="grid min-h-[calc(100dvh-2*var(--page-gap))] grid-cols-1 gap-[var(--page-gap)] sm:grid-cols-[4.5rem_minmax(0,1fr)] lg:grid-cols-[15rem_minmax(0,1fr)] print:block">
       <a
@@ -388,50 +444,56 @@ export function Shell() {
         <header className={cn('sticky top-0 z-20 border-b bg-card pt-[env(safe-area-inset-top)] sm:hidden print:hidden', fullscreen && 'hidden')}>
           <div className="container-page flex min-h-14 items-center gap-3">
             <BrandMark width={18} />
-            <Popover open={projectSwitcherOpen} onOpenChange={setProjectSwitcherOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-control px-1 text-start font-extrabold transition-colors hover:bg-accent"
-                  aria-label={`${t('nav.projects')}: ${project.name}`}
-                >
-                  <span className="truncate">{project.name}</span>
-                  <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[min(20rem,calc(100vw-2rem))] p-1">
-                <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">{t('nav.projects')}</p>
-                <div className="grid gap-0.5">
-                  {projects.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        setProjectSwitcherOpen(false)
-                        if (item.id !== project.id) void setSetting('currentProjectId', item.id)
-                      }}
-                      className={cn(
-                        'flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-control px-3 text-start text-sm transition-colors hover:bg-accent',
-                        item.id === project.id && 'bg-accent font-semibold',
-                      )}
-                      aria-current={item.id === project.id ? 'true' : undefined}
-                    >
-                      <span className="min-w-0 flex-1 truncate">{item.name}</span>
-                      {item.id === project.id && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
-                    </button>
-                  ))}
-                </div>
-                <Link
-                  to="/projects"
-                  onClick={() => setProjectSwitcherOpen(false)}
-                  className="mt-1 flex min-h-11 items-center gap-3 border-t px-3 pt-1 text-sm font-semibold text-primary"
-                >
-                  <FolderOpen className="size-4" aria-hidden="true" />
-                  {t('nav.projects')}
-                </Link>
-              </PopoverContent>
-            </Popover>
-            {statusChip(false)}
+            {projects.length > 1 ? (
+              <Popover open={projectSwitcherOpen} onOpenChange={setProjectSwitcherOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-control px-1 text-start font-extrabold transition-colors hover:bg-accent"
+                    aria-label={`${t('nav.projects')}: ${project.name}`}
+                  >
+                    <span className="truncate">{project.name}</span>
+                    <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[min(20rem,calc(100vw-2rem))] p-1">
+                  <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">{t('nav.projects')}</p>
+                  <div className="grid gap-0.5">
+                    {projects.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setProjectSwitcherOpen(false)
+                          if (item.id !== project.id) void setSetting('currentProjectId', item.id)
+                        }}
+                        className={cn(
+                          'flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-control px-3 text-start text-sm transition-colors hover:bg-accent',
+                          item.id === project.id && 'bg-accent font-semibold',
+                        )}
+                        aria-current={item.id === project.id ? 'true' : undefined}
+                      >
+                        <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                        {item.id === project.id && <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />}
+                      </button>
+                    ))}
+                  </div>
+                  <Link
+                    to="/projects/new"
+                    onClick={() => setProjectSwitcherOpen(false)}
+                    className="mt-1 flex min-h-11 items-center gap-3 border-t px-3 pt-1 text-sm font-semibold text-primary"
+                  >
+                    <Plus className="size-4" aria-hidden="true" />
+                    {t('projects.new')}
+                  </Link>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <div className="flex min-h-11 min-w-0 flex-1 items-center px-1 font-extrabold">
+                <span className="truncate">{project.name}</span>
+              </div>
+            )}
+            {mobileStatusChip}
             <AlertsBell conflicts={conflictCount ?? 0} onReviewConflicts={() => setConflictsOpen(true)} />
             <AccountMenu phone />
           </div>
@@ -495,10 +557,10 @@ export function Shell() {
         className={cn('fixed inset-x-0 bottom-0 z-30 border-t bg-background pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden', fullscreen && 'hidden')}
       >
         <div className="mx-auto grid h-[4.25rem] max-w-lg items-center" style={{ gridTemplateColumns: `repeat(${mobileTabCount}, minmax(0, 1fr))` }}>
-          {mobileTabs.slice(0, 2).map(({ to, key, icon: Icon, end }) => (
+          {visibleMobileTabs.slice(0, mobileTabSplit).map(({ to, key, icon: Icon, end }) => (
             <TabLink key={to} to={to} end={end} label={t(key)} icon={<Icon className="size-[1.375rem]" aria-hidden="true" />} />
           ))}
-          {can('addPayments') && (
+          {canAddPayment && (
             <Link
               to={addPaymentPath(loc.pathname)}
               aria-label={t('pay.add')}
@@ -507,12 +569,54 @@ export function Shell() {
               <Plus className="size-7" aria-hidden="true" />
             </Link>
           )}
-          {mobileTabs.slice(2).map(({ to, key, icon: Icon, end }) => (
+          {visibleMobileTabs.slice(mobileTabSplit).map(({ to, key, icon: Icon, end }) => (
             <TabLink key={to} to={to} end={end} label={t(key)} icon={<Icon className="size-[1.375rem]" aria-hidden="true" />} />
           ))}
-          <TabLink to="/more" label={t('nav.more')} icon={<Ellipsis className="size-[1.375rem]" aria-hidden="true" />} />
+          {useMore && (
+            <button
+              type="button"
+              onClick={() => setMoreOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={moreOpen}
+              className={cn(
+                'grid min-h-11 cursor-pointer content-center justify-items-center gap-0.5 text-xs font-semibold transition-colors',
+                moreOpen ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Ellipsis className="size-[1.375rem]" aria-hidden="true" />
+              {t('nav.more')}
+            </button>
+          )}
         </div>
       </nav>
+      <Dialog open={moreOpen} title={t('more.title')} onClose={() => setMoreOpen(false)} contentClassName="sm:hidden">
+        <ul className="-m-4 divide-y">
+          {sheetItems.map(({ to, key, icon: Icon }) => {
+              const selected = loc.pathname === to || loc.pathname.startsWith(`${to}/`)
+              return (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    onClick={() => setMoreOpen(false)}
+                    aria-current={selected ? 'page' : undefined}
+                    className={cn(
+                      'flex min-h-14 items-center gap-3 border-s-2 border-transparent px-4 transition-colors hover:bg-accent active:bg-accent',
+                      selected && 'border-primary bg-primary/10 text-primary',
+                    )}
+                  >
+                    <Icon className={cn('size-5 shrink-0', selected ? 'text-primary' : 'text-muted-foreground')} aria-hidden="true" />
+                    <span className="min-w-0 flex-1 font-semibold">{t(key)}</span>
+                    {selected ? (
+                      <Check className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    ) : (
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" aria-hidden="true" />
+                    )}
+                  </Link>
+                </li>
+              )
+            })}
+        </ul>
+      </Dialog>
       <ConflictsDialog open={conflictsOpen} onClose={() => setConflictsOpen(false)} />
     </div>
   )
