@@ -24,5 +24,7 @@ export const inviteLink = (origin: string, code: string): string => {
 
   const url = new URL('/api/invite', origin)
   url.searchParams.set('invite', cleanInviteCode(code))
+  // A changed preview URL makes social apps fetch fresh Open Graph metadata instead of reusing an old generic card.
+  url.searchParams.set('preview', '2')
   return url.toString()
 }
