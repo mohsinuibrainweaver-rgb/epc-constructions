@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Link, NavLink, Navigate, Outlet, useParams } from 'react-router-dom'
-import { Building2, ChevronRight, DatabaseBackup, Globe, Info, KeyRound, LogOut, MonitorSmartphone, Palette, RefreshCw, ShieldCheck, Trash2, TriangleAlert, UserRound } from 'lucide-react'
+import { Building2, ChevronRight, DatabaseBackup, Globe, Info, KeyRound, LogOut, Palette, RefreshCw, ShieldCheck, Trash2, TriangleAlert, UserRound } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { BackLink, PageHeader } from '@/components/common'
-import { PasswordDialog, SignOutEverywhereDialog } from '@/components/AccountDialogs'
+import { PasswordDialog } from '@/components/AccountDialogs'
 import { AppearanceCards } from '@/components/AppearanceCards'
 import { DeleteProjectDialog } from '@/components/DeleteProjectDialog'
 import { People } from '@/components/People'
@@ -138,7 +138,6 @@ function AccountSection() {
   const { t, settings } = useApp()
   const sync = useSync()
   const [pw, setPw] = useState(false)
-  const [everywhere, setEverywhere] = useState(false)
   const email = sync.session?.user.email ?? ''
   // The name and role are kept in the account too, so the next phone or sign-in has the same ones.
   const toast = useToast()
@@ -192,28 +191,13 @@ function AccountSection() {
                 </Button>
               }
             />
-            <SettingRow
-              label={t('set.out.title')}
-              help={t('set.out.help')}
-              control={
-                <Button variant="outline" onClick={() => setEverywhere(true)}>
-                  <MonitorSmartphone aria-hidden="true" />
-                  {t('set.out.title')}
-                </Button>
-              }
-            />
           </>
         ) : (
           <SettingRow label={t('sync.notConfigured')} help={t('sync.notConfiguredBody')} />
         )}
       </SettingsSection>
 
-      {sync.session && (
-        <>
-          <PasswordDialog open={pw} email={email} onClose={() => setPw(false)} />
-          <SignOutEverywhereDialog open={everywhere} userId={sync.session.user.id} onClose={() => setEverywhere(false)} />
-        </>
-      )}
+      {sync.session && <PasswordDialog open={pw} email={email} onClose={() => setPw(false)} />}
     </>
   )
 }

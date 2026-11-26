@@ -73,7 +73,7 @@ export function PasswordStrength({ id, check }: { id: string; check: PasswordChe
       </div>
 
       {/* No visible heading: the four lines say what is needed. The list still has a name for screen readers. */}
-      <div className="grid gap-1.5">
+      <div className="hidden gap-1.5 sm:grid">
         <ul aria-label={t('auth.rules')} className="grid gap-1 text-xs leading-tight sm:grid-cols-2 sm:gap-x-4">
           {check.rules.map((r) => (
             <li key={r.id} className={cn('flex items-start gap-1.5', r.met ? 'text-success' : 'text-muted-foreground')}>

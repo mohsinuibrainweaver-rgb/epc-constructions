@@ -5,8 +5,7 @@ import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { MIN_PASSWORD, changePassword, signOutEverywhere, type PasswordResult } from '@/auth/account'
-import { disablePush } from '@/push/push'
+import { MIN_PASSWORD, changePassword, type PasswordResult } from '@/auth/account'
 import { supabase } from '@/sync/supabase'
 
 /** Change the password: current one first (to prove it is you), then the new one twice. */
@@ -89,47 +88,6 @@ export function PasswordDialog({ open, email, onClose }: { open: boolean; email:
         </label>
         <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
       </form>
-    </Dialog>
-  )
-}
-
-/** Confirms signing out of every device, and says what else it does (reminders stop). */
-export function SignOutEverywhereDialog({ open, userId, onClose }: { open: boolean; userId: string; onClose: () => void }) {
-  const { t } = useApp()
-  const toast = useToast()
-  const [busy, setBusy] = useState(false)
-
-  const go = async () => {
-    if (!supabase || busy) return
-    setBusy(true)
-    const ok = await signOutEverywhere(supabase, userId, disablePush)
-    setBusy(false)
-    if (!ok) toast.show({ kind: 'error', message: t('set.out.failed') })
-    // On success the app notices the sign-out by itself and returns to the sign-in screen.
-  }
-
-  return (
-    <Dialog
-      open={open}
-      title={t('set.out.title')}
-      description={t('set.out.body')}
-      onClose={onClose}
-      footer={
-        <>
-          <Button variant="outline" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button variant="destructive" disabled={busy} onClick={() => void go()}>
-            {t('set.out.confirm')}
-          </Button>
-        </>
-      }
-    >
-      <ul className="grid list-disc gap-2 ps-5 text-sm text-muted-foreground">
-        <li>{t('set.out.point1')}</li>
-        <li>{t('set.out.point2')}</li>
-        <li>{t('set.out.point3')}</li>
-      </ul>
     </Dialog>
   )
 }

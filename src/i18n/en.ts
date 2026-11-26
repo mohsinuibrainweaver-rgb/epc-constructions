@@ -882,14 +882,6 @@ export const en = {
   'set.pw.err.weak': 'That password is too easy to guess. Choose a longer or less common one.',
   'set.pw.err.same': 'Choose a password different from the current one.',
   'set.pw.err.mismatch': 'The two new passwords are not the same.',
-  'set.out.title': 'Sign out everywhere',
-  'set.out.help': 'Ends your sign-in on every phone and computer, for example if you lost one.',
-  'set.out.body': 'This signs you out on all your devices.',
-  'set.out.point1': 'Every phone and computer must sign in again with your password.',
-  'set.out.point2': 'Reminders stop on all of them until you turn them on again.',
-  'set.out.point3': 'Your project and your data are not touched.',
-  'set.out.confirm': 'Sign out everywhere',
-  'set.out.failed': 'Could not sign out everywhere. Check your connection and try again.',
 
   'soon.title': 'Coming in the next stage',
 
