@@ -14,6 +14,7 @@ import { db } from '@/db/db'
 import { groupInviteCode, isCompleteInviteCode } from '@/lib/invite'
 import { joinProject } from '@/sync/engine'
 import { useSync } from '@/sync/SyncProvider'
+import { supabase } from '@/sync/supabase'
 
 interface InvitePreview {
   valid: boolean
@@ -28,7 +29,7 @@ interface InvitePreview {
 /** Join a project with the one-time code its owner sent. Standalone, so it also works before any project exists. */
 export function JoinProject() {
   const { t, projects } = useApp()
-  const { status } = useSync()
+  const { status, syncNow } = useSync()
   const nav = useNavigate()
   const toast = useToast()
   const [params] = useSearchParams()
@@ -38,9 +39,31 @@ export function JoinProject() {
   const [busy, setBusy] = useState(false)
   const [preview, setPreview] = useState<InvitePreview | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
+  const [inviteState, setInviteState] = useState<'checking' | 'available' | 'already_member'>('checking')
+  const [existingProjectId, setExistingProjectId] = useState('')
   const back = projects.length > 0 ? '/projects' : '/welcome'
   const joiningFromLink = isCompleteInviteCode(linkedCode)
   const autoAccept = joiningFromLink && params.get('accept') === 'auto'
+
+  useEffect(() => {
+    if (!joiningFromLink || !supabase) {
+      setInviteState('available')
+      return
+    }
+    let alive = true
+    setInviteState('checking')
+    void supabase.rpc('invite_status', { p_code: linkedCode }).then(({ data, error: statusError }) => {
+      if (!alive) return
+      const result = data as { status?: string; project_id?: string } | null
+      if (!statusError && result?.status === 'already_member' && result.project_id) {
+        setExistingProjectId(result.project_id)
+        setInviteState('already_member')
+      } else setInviteState('available')
+    })
+    return () => {
+      alive = false
+    }
+  }, [joiningFromLink, linkedCode])
 
   useEffect(() => {
     if (!joiningFromLink || autoAccept) return
@@ -92,13 +115,21 @@ export function JoinProject() {
     nav('/')
   }, [busy, code, nav, t, toast])
 
+  const openExistingProject = useCallback(async () => {
+    if (!existingProjectId) return
+    if (!(await db.projects.get(existingProjectId))) await syncNow()
+    if (await db.projects.get(existingProjectId)) await setSetting('currentProjectId', existingProjectId)
+    nav('/', { replace: true })
+  }, [existingProjectId, nav, syncNow])
+
   const autoTried = useRef(false)
   useEffect(() => {
     const syncReady = status.state !== 'off' && status.state !== 'signedOut'
-    if (autoTried.current || !autoAccept || !syncReady || !isCompleteInviteCode(linkedCode)) return
+    if (autoTried.current || !autoAccept || !syncReady || inviteState === 'checking' || !isCompleteInviteCode(linkedCode)) return
     autoTried.current = true
-    void join()
-  }, [autoAccept, join, linkedCode, status.state])
+    if (inviteState === 'already_member') void openExistingProject()
+    else void join()
+  }, [autoAccept, inviteState, join, linkedCode, openExistingProject, status.state])
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -120,6 +151,7 @@ export function JoinProject() {
 
   if (joiningFromLink) {
     const project = preview?.project
+    const alreadyMember = inviteState === 'already_member'
     return (
       <main className="grid min-h-[calc(100dvh-2*var(--page-gap))] place-items-center px-4 py-8">
         <Card className="w-full max-w-lg gap-0 overflow-hidden py-0 shadow-sm">
@@ -137,7 +169,7 @@ export function JoinProject() {
             )}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/45 to-transparent" />
             <span className="absolute bottom-4 left-5 rounded-full border border-white/30 bg-black/35 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-              {t('join.invitedTo')}
+              {t(alreadyMember ? 'join.alreadyBadge' : 'join.invitedTo')}
             </span>
           </div>
           <CardContent className="grid gap-5 px-5 py-5 sm:px-7 sm:py-6">
@@ -150,7 +182,7 @@ export function JoinProject() {
               ) : (
                 <>
                   <h1 className="text-2xl font-semibold tracking-tight">{project?.name || t('join.inviteTitle')}</h1>
-                  <p className="text-sm text-muted-foreground">{t('join.inviteSub')}</p>
+                  <p className="text-sm text-muted-foreground">{t(alreadyMember ? 'join.alreadySub' : 'join.inviteSub')}</p>
                 </>
               )}
             </div>
@@ -181,9 +213,13 @@ export function JoinProject() {
               <Button type="button" variant="outline" onClick={() => nav(projects.length > 0 ? '/projects' : '/welcome')} disabled={busy}>
                 {t('common.cancel')}
               </Button>
-              <Button type="button" onClick={() => void join()} disabled={busy}>
-                {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
-                {t('join.accept')}
+              <Button
+                type="button"
+                onClick={() => void (alreadyMember ? openExistingProject() : join())}
+                disabled={busy || inviteState === 'checking'}
+              >
+                {(busy || inviteState === 'checking') && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {t(alreadyMember ? 'join.openProject' : 'join.accept')}
               </Button>
             </div>
           </CardContent>

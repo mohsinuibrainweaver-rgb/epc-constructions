@@ -27,7 +27,7 @@ export function SignIn() {
   const [params] = useSearchParams()
   const invite = cleanInviteCode(params.get('invite') ?? '')
   const invited = isCompleteInviteCode(invite)
-  const [mode, setMode] = useState<'signin' | 'create'>(() => (params.get('type') === 'create' && invited ? 'create' : 'signin'))
+  const [mode, setMode] = useState<'signin' | 'create'>(() => invited ? 'create' : 'signin')
   const create = mode === 'create'
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')

@@ -111,13 +111,16 @@ const inviteCode = (await db.query<{ code: string }>('select code from project_i
 
 await as(B, 'b@x.com')
 assert.equal(await count('transfers'), 0, 'B sees nothing before joining')
+assert.equal((await db.query<{ s: string }>(`select invite_status('${inviteCode}') ->> 'status' as s`)).rows[0].s, 'available', 'a valid invite is available before joining')
 await db.exec(`select join_project('${inviteCode}')`)
+assert.equal((await db.query<{ s: string }>(`select invite_status('${inviteCode}') ->> 'status' as s`)).rows[0].s, 'already_member', 'the accepted link recognizes its existing member')
 assert.equal(await count('transfers'), 1); assert.equal(await count('payment_plans'), 1); assert.equal(await count('payments'), 2); assert.equal(await count('materials'), 1, 'B sees the material line'); assert.equal(await count('project_files'), 1, 'B sees the file row'); assert.equal(await count('contracts'), 1, 'B sees the contract')
 // A builder cannot add a transfer: the write is ignored (see scripts/roles-test.ts for the rest of the role rules).
 await db.exec(`insert into transfers (id, project_id, date, amount, kind, created_at, updated_at) values ('55555555-5555-5555-5555-555555555555','${P}','2026-11-09',25000,'fee',2,2)`)
 assert.equal(await count('transfers'), 1, 'the builder\'s transfer was ignored')
 
 await as(C, 'c@x.com')
+assert.equal((await db.query<{ s: string }>(`select invite_status('${inviteCode}') ->> 'status' as s`)).rows[0].s, 'invalid', 'a used invite is invalid for a stranger')
 assert.equal(await count('transfers'), 0); assert.equal(await count('payment_plans'), 0); assert.equal(await count('materials'), 0, 'stranger sees no materials'); assert.equal(await count('project_files'), 0, 'stranger sees no files'); assert.equal(await count('contracts'), 0, 'stranger sees no contracts')
 await assert.rejects(db.exec(`insert into contracts (id, project_id, title, amount, date, created_at, updated_at) values ('99999999-0000-0000-0000-000000000009','${P}','x',1,'2026-11-01',3,3)`), /row-level security/)
 await assert.rejects(db.exec(`insert into materials (id, project_id, date, item, quantity, unit, rate, amount, created_at, updated_at) values ('99999999-9999-9999-9999-999999999999','${P}','2026-11-09','x',1,'bag',1,1,3,3)`), /row-level security/)

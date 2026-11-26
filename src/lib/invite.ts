@@ -7,10 +7,10 @@ export const groupInviteCode = (raw: string): string => (cleanInviteCode(raw).ma
 /** A complete code is 12 characters. */
 export const isCompleteInviteCode = (raw: string): boolean => cleanInviteCode(raw).length === 12
 
-/** The app page that accepts an invitation. It opens on sign-in by default so an existing account is never pushed
- * through account creation; a new person can still choose Create account and the same code stays in the URL. */
+/** The app page that accepts an invitation. Signed-out recipients always start on Create account and can switch to Sign in. */
 export const inviteJoinLink = (origin: string, code: string, autoAccept = false): string => {
   const url = new URL('/join', origin)
+  url.searchParams.set('type', 'create')
   url.searchParams.set('invite', cleanInviteCode(code))
   if (autoAccept) url.searchParams.set('accept', 'auto')
   return url.toString()

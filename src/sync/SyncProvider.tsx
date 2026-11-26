@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { getStatus, startSync, stopSync, subscribe, syncNow, type SyncStatus } from './engine'
-import { checkDevice, takeOverDevice, type DeviceCheck } from './device'
+import { checkDevice, clearDeviceData, takeOverDevice, type DeviceCheck } from './device'
 import { db } from '../db/db'
 import { setSetting } from '../db/actions'
 import type { Role } from '../db/types'
@@ -34,12 +34,20 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!supabase) return
     let alive = true
-    void supabase.auth.getSession().then(({ data }) => {
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (!alive) return
+      if (!data.session) await clearDeviceData()
       if (!alive) return
       setSession(data.session)
       setLoading(false)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (!s) {
+        setLoading(true)
+        setSession(null)
+        void clearDeviceData().finally(() => alive && setLoading(false))
+        return
+      }
       setSession(s)
       setLoading(false)
     })
@@ -104,7 +112,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         // This device stops showing reminders for the account it is leaving (needs the session, so it comes first).
         await disablePush().catch(() => undefined)
         // 'local' = this device only. The library's default is 'global', which would also sign out the other phone.
-        await supabase?.auth.signOut({ scope: 'local' })
+        const { error } = await supabase?.auth.signOut({ scope: 'local' }) ?? { error: undefined }
+        if (!error) await clearDeviceData()
       },
     }),
     [loading, session, status, device, userId],

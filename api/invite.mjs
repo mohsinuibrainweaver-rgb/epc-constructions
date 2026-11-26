@@ -57,11 +57,7 @@ export default async function handler(request, response) {
       response.setHeader('X-Robots-Tag', 'noindex, nofollow')
       return response.status(preview.ok ? 200 : 502).json(payload)
     }
-    // Older deployed preview functions used to force every recipient onto account creation. Strip that hint here so
-    // this Vercel endpoint remains correct even before the Edge Function deployment catches up.
     const body = upstreamBody
-      .replaceAll('type=create&amp;', '')
-      .replaceAll('type=create&', '')
     response.setHeader('Content-Type', 'text/html; charset=utf-8')
     response.setHeader('Cache-Control', 'no-store, max-age=0')
     response.setHeader('X-Robots-Tag', 'noindex, nofollow')
@@ -73,6 +69,7 @@ export default async function handler(request, response) {
       return response.status(502).json({ valid: false, project: null })
     }
     const join = new URL('/join', 'https://epc-construction.vercel.app')
+    join.searchParams.set('type', 'create')
     join.searchParams.set('invite', code)
     response.setHeader('Location', join.toString())
     return response.status(302).end()

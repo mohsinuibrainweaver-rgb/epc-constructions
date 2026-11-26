@@ -107,6 +107,7 @@ Deno.serve(async (request) => {
   const code = cleanCode(requestUrl.searchParams.get('invite') ?? '')
   const siteUrl = (env('SITE_URL') || 'https://epc-construction.vercel.app').replace(/\/$/, '')
   const joinUrl = new URL('/join', siteUrl)
+  joinUrl.searchParams.set('type', 'create')
   joinUrl.searchParams.set('invite', code)
 
   let invite: InviteRow | null = null

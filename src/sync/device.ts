@@ -15,14 +15,25 @@ export async function readDeviceOwner(): Promise<string | undefined> {
   return (await db.settings.get(OWNER))?.value as string | undefined
 }
 
-/** Empties this phone and hands it to `uid`: every table, and every setting except language and region. */
-export async function takeOverDevice(uid: string): Promise<void> {
+/** Clears all account/project data from this browser. Language and region are device preferences, so they remain. */
+export async function clearDeviceData(): Promise<void> {
   await db.transaction('rw', db.tables, async () => {
     for (const t of db.tables) if (t.name !== 'settings') await t.clear()
     const keys = (await db.settings.toCollection().primaryKeys()) as string[]
     await db.settings.bulkDelete(keys.filter((k) => !KEEP.has(k)))
-    await db.settings.put({ key: OWNER, value: uid })
   })
+  try {
+    // Form memory can describe the previous account's activity, so it must not cross a sign-out boundary.
+    localStorage.removeItem('epc.lastCategory')
+  } catch {
+    /* Storage may be unavailable in private browsing. */
+  }
+}
+
+/** Empties this phone and hands it to `uid`: every table, and every setting except language and region. */
+export async function takeOverDevice(uid: string): Promise<void> {
+  await clearDeviceData()
+  await db.settings.put({ key: OWNER, value: uid })
 }
 
 /**

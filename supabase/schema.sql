@@ -719,6 +719,37 @@ as $$
   );
 $$;
 
+-- Lets an authenticated recipient distinguish an invitation for a project they already belong to. It exposes no project
+-- identifier unless the caller is already a member, and it never accepts or consumes the invitation.
+create or replace function public.invite_status(p_code text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  inv record;
+begin
+  if auth.uid() is null then return jsonb_build_object('status', 'invalid'); end if;
+  select project_id, accepted_at, expires_at into inv
+  from public.project_invites
+  where upper(code) = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g'))
+  limit 1;
+  if not found then return jsonb_build_object('status', 'invalid'); end if;
+  if exists (
+    select 1 from public.project_members
+    where project_id = inv.project_id and user_id = auth.uid()
+  ) then
+    return jsonb_build_object('status', 'already_member', 'project_id', inv.project_id);
+  end if;
+  if inv.accepted_at is null and (inv.expires_at is null or inv.expires_at > now()) then
+    return jsonb_build_object('status', 'available');
+  end if;
+  return jsonb_build_object('status', 'invalid');
+end;
+$$;
+
 -- A shared signup link sends its one-time code in Auth metadata. Claim it in the same transaction that creates the account,
 -- so the first authenticated sync already sees the project and the invited role; no manual Join screen is needed. If that
 -- code is invalid, expired or already used, raising here rolls back the auth.users insert too: no orphan account is created.
@@ -782,6 +813,8 @@ grant execute on function public.claim_invites() to authenticated;
 grant execute on function public.join_project(text) to authenticated;
 revoke all on function public.signup_invite_is_valid(text) from public;
 grant execute on function public.signup_invite_is_valid(text) to anon, authenticated;
+revoke all on function public.invite_status(text) from public;
+grant execute on function public.invite_status(text) to authenticated;
 grant execute on function public.role_of(uuid) to authenticated;
 grant execute on function public.is_member(uuid) to authenticated;
 

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { deviceVerdict } from '../src/lib/device-owner'
 import { db } from '../src/db/db'
 import { createProject } from '../src/db/actions'
-import { takeOverDevice, readDeviceOwner } from '../src/sync/device'
+import { clearDeviceData, takeOverDevice, readDeviceOwner } from '../src/sync/device'
 
 // --- the verdict
 assert.equal(deviceVerdict({ marker: 'A', uid: 'A', syncedProjectIds: ['p1'] }), 'mine')
@@ -32,5 +32,11 @@ assert.equal(await readDeviceOwner(), 'B')
 assert.equal((await db.settings.get('language'))?.value, 'ur', 'language stays')
 assert.ok(await db.settings.get('region'), 'region stays')
 for (const k of ['userName', 'role', 'currentProjectId', 'sync.cursor.projects']) assert.equal(await db.settings.get(k), undefined, `${k} is cleared`)
+
+// Signing out clears the account marker and all account data while keeping device preferences.
+await clearDeviceData()
+assert.equal(await readDeviceOwner(), undefined, 'sign-out clears the device owner')
+assert.equal((await db.settings.get('language'))?.value, 'ur', 'sign-out keeps language')
+assert.ok(await db.settings.get('region'), 'sign-out keeps region')
 
 console.log('device owner: all checks passed')
