@@ -2,7 +2,7 @@
 // Run: npx vite-node scripts/push-test.ts
 import assert from 'node:assert/strict'
 import {
-  DEFAULT_PREFS, buildActivityMessage, buildApprovalMessage, buildAttentionMessages, buildMessages, deviceId, hourOf, karachiHour, karachiToday, keysToLog, prefsOf, sentFor, testMessage, wantsApproval,
+  DEFAULT_PREFS, buildActivityMessage, buildApprovalMessage, buildAttentionMessages, buildMessages, deviceId, hourOf, karachiHour, karachiToday, keysToLog, prefsOf, sentFor, testMessage, wantsActivity, wantsApproval,
   type Payment, type Project,
 } from '../supabase/functions/send-reminders/index'
 import { DEFAULT_PUSH_PREFS, DEFAULT_REMINDER_HOUR, PUSH_PRESETS, PUSH_TYPES, countOn, hourFrom, hourLabel, prefsFrom, presetOf, reminderHours } from '../src/push/prefs'
@@ -91,6 +91,12 @@ act = buildActivityMessage({ event: 'payment_added', project: 'Block E', actor: 
 assert.equal(act.body, 'There is new activity in Block E.')
 act = buildActivityMessage({ event: 'member_removed', project: 'Block E' }, 'en')
 assert.equal(act.body, 'You were removed from Block E.'); assert.equal(act.url, '/projects')
+assert.equal(wantsActivity({ ...DEFAULT_PREFS, paymentActivity: false }, 'payment_added'), false)
+assert.equal(wantsActivity({ ...DEFAULT_PREFS, phaseActivity: false }, 'phase_completed'), false)
+assert.equal(wantsActivity({ ...DEFAULT_PREFS, cashActivity: false }, 'cash_added'), false)
+assert.equal(wantsActivity({ ...DEFAULT_PREFS, contractActivity: false }, 'contract_changed'), false)
+assert.equal(wantsActivity({ ...DEFAULT_PREFS, memberActivity: false }, 'permissions_changed'), false)
+assert.equal(wantsActivity({ ...DEFAULT_PREFS, projectActivity: false }, 'project_budget_changed'), false)
 
 // Daily attention: old approvals, missing proof, phase thresholds, deadlines and cash shortages.
 const attention = buildAttentionMessages({
@@ -135,6 +141,7 @@ assert.equal(wantsApproval(DEFAULT_PREFS, 'pending'), true)
 // What the database holds: missing or odd values mean yes; only an explicit false turns a type off.
 assert.deepEqual(prefsOf(undefined), DEFAULT_PREFS); assert.deepEqual(prefsOf({}), DEFAULT_PREFS); assert.deepEqual(prefsOf('x'), DEFAULT_PREFS)
 assert.deepEqual(prefsOf({ due: false, budget80: 'no', other: false }), { ...DEFAULT_PREFS, due: false })
+assert.ok(['paymentActivity', 'phaseActivity', 'cashActivity', 'contractActivity', 'memberActivity', 'projectActivity'].every((k) => !prefsOf({ activity: false })[k as keyof typeof DEFAULT_PREFS]), 'the old activity switch migrates to all activity families')
 assert.equal(hourOf(undefined), 9); assert.equal(hourOf(null), 9); assert.equal(hourOf(24), 9); assert.equal(hourOf(7.5), 9); assert.equal(hourOf(0), 0); assert.equal(hourOf(21), 21)
 
 // Reminder hour is Pakistan time: 04:00 UTC is 9, 19:00 UTC is midnight.
@@ -159,9 +166,9 @@ for (const raw of [undefined, 3, 24, 'x']) assert.equal(hourFrom(raw), hourOf(ra
 assert.deepEqual(PUSH_PRESETS.recommended, DEFAULT_PREFS)
 assert.equal(presetOf(PUSH_PRESETS.recommended), 'recommended'); assert.equal(presetOf(PUSH_PRESETS.minimal), 'minimal'); assert.equal(presetOf(PUSH_PRESETS.approvals), 'approvals')
 assert.equal(presetOf({ ...PUSH_PRESETS.minimal, due: true }), 'custom')
-assert.deepEqual(Object.entries(PUSH_PRESETS.minimal).filter(([, v]) => v).map(([k]) => k), ['attention', 'budget100', 'approvalRequests', 'approvalDecisions'], 'minimal: critical attention, approvals and the budget limit')
+assert.deepEqual(Object.entries(PUSH_PRESETS.minimal).filter(([, v]) => v).map(([k]) => k), ['memberActivity', 'attention', 'budget100', 'approvalRequests', 'approvalDecisions'], 'minimal: access changes, critical attention, approvals and the budget limit')
 assert.deepEqual(Object.entries(PUSH_PRESETS.approvals).filter(([, v]) => v).map(([k]) => k), ['approvalRequests', 'approvalDecisions'])
-assert.equal(countOn(PUSH_PRESETS.recommended), 7); assert.equal(countOn(PUSH_PRESETS.minimal), 4); assert.equal(countOn(PUSH_PRESETS.approvals), 2)
+assert.equal(countOn(PUSH_PRESETS.recommended), 12); assert.equal(countOn(PUSH_PRESETS.minimal), 5); assert.equal(countOn(PUSH_PRESETS.approvals), 2)
 
 // Hours offered and how they read.
 assert.deepEqual(reminderHours(9), [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22])

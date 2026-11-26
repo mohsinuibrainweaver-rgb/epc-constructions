@@ -60,8 +60,13 @@ export const karachiHour = (now: Date): number => (now.getUTCHours() + 5) % 24
 
 /** What a device wants to hear about. A missing value means yes, so devices saved before this existed get everything. */
 export interface Prefs {
-  /** Important changes made by another project member. */
-  activity: boolean
+  /** Important changes made by another project member, split so each family can be controlled in the UI. */
+  paymentActivity: boolean
+  phaseActivity: boolean
+  cashActivity: boolean
+  contractActivity: boolean
+  memberActivity: boolean
+  projectActivity: boolean
   /** Payments due today and overdue ones. */
   due: boolean
   /** Follow-ups such as stale approvals, missing proof and deadlines. */
@@ -74,7 +79,12 @@ export interface Prefs {
   approvalDecisions: boolean
 }
 export const DEFAULT_PREFS: Prefs = {
-  activity: true,
+  paymentActivity: true,
+  phaseActivity: true,
+  cashActivity: true,
+  contractActivity: true,
+  memberActivity: true,
+  projectActivity: true,
   due: true,
   attention: true,
   budget80: true,
@@ -87,7 +97,10 @@ export const DEFAULT_HOUR = 9
 export function prefsOf(raw: unknown): Prefs {
   const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
   const out = { ...DEFAULT_PREFS }
-  for (const k of Object.keys(DEFAULT_PREFS) as (keyof Prefs)[]) if (r[k] === false) out[k] = false
+  const activityKeys: (keyof Prefs)[] = ['paymentActivity', 'phaseActivity', 'cashActivity', 'contractActivity', 'memberActivity', 'projectActivity']
+  for (const k of Object.keys(DEFAULT_PREFS) as (keyof Prefs)[]) {
+    if (r[k] === false || (activityKeys.includes(k) && r[k] === undefined && r.activity === false)) out[k] = false
+  }
   return out
 }
 
@@ -313,6 +326,16 @@ export function buildActivityMessage(c: ActivityContext, lang: Lang, detailed = 
     body = `${c.project}${detail ? `: ${detail}` : ''}${c.actor ? t.by(c.actor) : ''}`
   }
   return { title, body, tag: `activity-${c.event}-${c.id ?? c.project}`, url }
+}
+
+/** The activity switch that owns an instant event. Shared by delivery and tests so the settings cannot drift. */
+export function wantsActivity(prefs: Prefs, event: ActivityEvent): boolean {
+  if (event.startsWith('payment_')) return prefs.paymentActivity
+  if (event.startsWith('phase_')) return prefs.phaseActivity
+  if (event.startsWith('cash_')) return prefs.cashActivity
+  if (event.startsWith('contract_')) return prefs.contractActivity
+  if (event.startsWith('member_') || event === 'permissions_changed') return prefs.memberActivity
+  return prefs.projectActivity
 }
 
 export interface AttentionPhase { id: string; name?: string | null; key?: string | null; budget?: number | null; done?: boolean | null }
@@ -618,7 +641,7 @@ async function runActivityEvent(req: ActivityRequest): Promise<Response> {
   const send = await pusher()
   let sent = 0
   for (const s of subs) {
-    if (!prefsOf(s.prefs).activity) continue
+    if (!wantsActivity(prefsOf(s.prefs), req.event)) continue
     // A pending entry already gives approvers the stronger approval notification.
     if (pending && hasApproval(s.user_id)) continue
     const message = buildActivityMessage({ event: req.event, project: project.name, actor, subject: subject || undefined, item, amount, id: req.record_id }, s.lang, detailedFor(s.user_id))

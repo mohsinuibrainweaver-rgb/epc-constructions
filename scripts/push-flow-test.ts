@@ -287,6 +287,13 @@ data.member_permissions = []
 sent.length = 0
 await activity('payment_added')
 assert.equal(sent[0].payload.body, 'There is new activity in Block E.', 'a restricted member gets no financial detail')
+data.push_subscriptions[1].prefs = { paymentActivity: false }
+sent.length = 0
+r = await (await activity('payment_added')).json()
+assert.equal(r.sent, 0, 'the payment activity switch silences payment events')
+data.push_subscriptions[1].prefs = { activity: false }
+r = await (await activity('payment_added')).json()
+assert.equal(r.sent, 0, 'the old combined activity switch remains respected')
 
 console.log('push flow: all checks passed')
 server.close()

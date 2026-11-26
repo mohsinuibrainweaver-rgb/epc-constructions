@@ -2,12 +2,18 @@ import type { Lang } from '@/db/types'
 import { getRegion, type Region } from '@/lib/region'
 
 /** The kinds of reminder a device can switch on or off. Mirrors `Prefs` in the send-reminders function. */
-export const PUSH_TYPES = ['activity', 'due', 'attention', 'budget80', 'budget100', 'approvalRequests', 'approvalDecisions'] as const
+export const ACTIVITY_PUSH_TYPES = ['paymentActivity', 'phaseActivity', 'cashActivity', 'contractActivity', 'memberActivity', 'projectActivity'] as const
+export const PUSH_TYPES = [...ACTIVITY_PUSH_TYPES, 'due', 'attention', 'budget80', 'budget100', 'approvalRequests', 'approvalDecisions'] as const
 export type PushType = (typeof PUSH_TYPES)[number]
 export type PushPrefs = Record<PushType, boolean>
 
 export const DEFAULT_PUSH_PREFS: PushPrefs = {
-  activity: true,
+  paymentActivity: true,
+  phaseActivity: true,
+  cashActivity: true,
+  contractActivity: true,
+  memberActivity: true,
+  projectActivity: true,
   due: true,
   attention: true,
   budget80: true,
@@ -20,8 +26,8 @@ export const DEFAULT_REMINDER_HOUR = 9
 /** One tap to a sensible setup. Recommended is everything. */
 export const PUSH_PRESETS = {
   recommended: DEFAULT_PUSH_PREFS,
-  minimal: { activity: false, due: false, attention: true, budget80: false, budget100: true, approvalRequests: true, approvalDecisions: true },
-  approvals: { activity: false, due: false, attention: false, budget80: false, budget100: false, approvalRequests: true, approvalDecisions: true },
+  minimal: { paymentActivity: false, phaseActivity: false, cashActivity: false, contractActivity: false, memberActivity: true, projectActivity: false, due: false, attention: true, budget80: false, budget100: true, approvalRequests: true, approvalDecisions: true },
+  approvals: { paymentActivity: false, phaseActivity: false, cashActivity: false, contractActivity: false, memberActivity: false, projectActivity: false, due: false, attention: false, budget80: false, budget100: false, approvalRequests: true, approvalDecisions: true },
 } as const satisfies Record<string, PushPrefs>
 export type PushPreset = keyof typeof PUSH_PRESETS
 export const PUSH_PRESET_IDS = Object.keys(PUSH_PRESETS) as PushPreset[]
@@ -30,7 +36,9 @@ export const PUSH_PRESET_IDS = Object.keys(PUSH_PRESETS) as PushPreset[]
 export function prefsFrom(raw: unknown): PushPrefs {
   const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
   const out = { ...DEFAULT_PUSH_PREFS }
-  for (const k of PUSH_TYPES) if (r[k] === false) out[k] = false
+  // `activity` was the original single switch. Keep that choice while exposing the clearer controls.
+  for (const k of ACTIVITY_PUSH_TYPES) if (r[k] === false || (r[k] === undefined && r.activity === false)) out[k] = false
+  for (const k of PUSH_TYPES) if (!(ACTIVITY_PUSH_TYPES as readonly string[]).includes(k) && r[k] === false) out[k] = false
   return out
 }
 
