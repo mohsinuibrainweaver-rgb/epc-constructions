@@ -100,6 +100,7 @@ export default function App() {
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/projects/new" element={<ProjectForm />} />
         <Route path="/join" element={<JoinProject />} />
+        <Route path="/api/invite" element={<JoinProject />} />
         <Route path="/projects/:id/edit" element={<ProjectForm />} />
         <Route element={<Shell />}>
           <Route index element={<Home />} />

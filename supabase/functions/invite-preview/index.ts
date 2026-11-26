@@ -5,7 +5,13 @@
 interface InviteRow {
   expires_at: string | null
   accepted_at: string | null
-  project: { name: string; thumbnail_path: string | null } | null
+  project: {
+    name: string
+    location: string
+    owner_id: string
+    thumbnail_path: string | null
+    members: Array<{ user_id: string; display_name: string | null }>
+  } | null
 }
 
 const env = (key: string): string => Deno.env.get(key) ?? ''
@@ -33,7 +39,7 @@ async function validInvite(code: string): Promise<InviteRow | null> {
   if (code.length !== 12) return null
   const key = serverKey()
   const params = new URLSearchParams({
-    select: 'expires_at,accepted_at,project:projects(name,thumbnail_path)',
+    select: 'expires_at,accepted_at,project:projects(name,location,owner_id,thumbnail_path,members:project_members(user_id,display_name))',
     code: `eq.${code}`,
     accepted_at: 'is.null',
     limit: '1',
@@ -101,20 +107,37 @@ Deno.serve(async (request) => {
   const code = cleanCode(requestUrl.searchParams.get('invite') ?? '')
   const siteUrl = (env('SITE_URL') || 'https://epc-construction.vercel.app').replace(/\/$/, '')
   const joinUrl = new URL('/join', siteUrl)
-  joinUrl.searchParams.set('type', 'create')
   joinUrl.searchParams.set('invite', code)
 
-  let projectName = ''
+  let invite: InviteRow | null = null
   let image = ''
   try {
-    const invite = await validInvite(code)
-    projectName = invite?.project?.name ?? ''
+    invite = await validInvite(code)
     image = await signedThumbnail(invite?.project?.thumbnail_path)
   } catch (error) {
     console.error(error)
   }
 
+  const projectName = invite?.project?.name ?? ''
   const valid = Boolean(projectName)
+  const ownerName = (invite?.project?.members ?? []).find((member) => member.user_id === invite?.project?.owner_id)?.display_name ?? ''
+  if (requestUrl.searchParams.get('format') === 'json' || request.headers.get('accept')?.includes('application/json')) {
+    return Response.json({
+      valid,
+      project: valid ? {
+        name: projectName,
+        location: invite?.project?.location ?? '',
+        ownerName,
+        image,
+      } : null,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+        'Access-Control-Allow-Origin': '*',
+        'X-Robots-Tag': 'noindex, nofollow',
+      },
+    })
+  }
   const title = valid ? `${projectName} · Project invitation` : 'Project invitation · EndPoint Construction'
   const description = valid
     ? `You have been invited to join ${projectName} on EndPoint Construction.`

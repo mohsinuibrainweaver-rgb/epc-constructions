@@ -39,6 +39,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,woff}'],
         navigateFallback: '/index.html',
+        // Invite preview URLs are Vercel functions. Let them reach the network so link crawlers receive Open Graph HTML;
+        // the app also has an /api/invite fallback route for phones still running an older service worker.
+        navigateFallbackDenylist: [/^\/api\//],
         importScripts: ['/push-sw.js'],
         cleanupOutdatedCaches: true,
         skipWaiting: true,

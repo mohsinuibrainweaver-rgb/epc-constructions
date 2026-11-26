@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type FormEvent } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BrandLogo } from '@/components/Brand'
 import { useApp } from '@/app/AppContext'
 import { Field } from '@/components/common'
@@ -23,6 +23,7 @@ const MIN_PASSWORD = 6
  */
 export function SignIn() {
   const { t } = useApp()
+  const nav = useNavigate()
   const [params] = useSearchParams()
   const invite = cleanInviteCode(params.get('invite') ?? '')
   const invited = isCompleteInviteCode(invite)
@@ -87,7 +88,7 @@ export function SignIn() {
         ...creds,
         options: {
           data: { name: name.trim(), ...(invited ? { invite_code: invite } : {}) },
-          ...(invited ? { emailRedirectTo: inviteJoinLink(window.location.origin, invite) } : {}),
+          ...(invited ? { emailRedirectTo: inviteJoinLink(window.location.origin, invite, true) } : {}),
         },
       })
       if (error) {
@@ -102,10 +103,18 @@ export function SignIn() {
       else {
         // With "Confirm email" on, no session comes back until the emailed link is used.
         if (!data.session) setNotice(t('auth.confirmEmail'))
+        else if (invited) {
+          const next = new URLSearchParams({ invite, accept: 'auto' })
+          nav(`/join?${next.toString()}`, { replace: true })
+        }
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword(creds)
       if (error) setErrors({ password: /invalid login/i.test(error.message) ? t('auth.wrongLogin') : error.message })
+      else if (invited) {
+        const next = new URLSearchParams({ invite, accept: 'auto' })
+        nav(`/join?${next.toString()}`, { replace: true })
+      }
     }
     setBusy(false)
   }

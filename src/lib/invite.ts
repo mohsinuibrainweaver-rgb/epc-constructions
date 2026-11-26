@@ -7,12 +7,12 @@ export const groupInviteCode = (raw: string): string => (cleanInviteCode(raw).ma
 /** A complete code is 12 characters. */
 export const isCompleteInviteCode = (raw: string): boolean => cleanInviteCode(raw).length === 12
 
-/** The app page that creates an account and joins the project. Kept separate from the public preview URL because
- * Supabase Auth must redirect straight back to the app after email confirmation. */
-export const inviteJoinLink = (origin: string, code: string): string => {
+/** The app page that accepts an invitation. It opens on sign-in by default so an existing account is never pushed
+ * through account creation; a new person can still choose Create account and the same code stays in the URL. */
+export const inviteJoinLink = (origin: string, code: string, autoAccept = false): string => {
   const url = new URL('/join', origin)
-  url.searchParams.set('type', 'create')
   url.searchParams.set('invite', cleanInviteCode(code))
+  if (autoAccept) url.searchParams.set('accept', 'auto')
   return url.toString()
 }
 
