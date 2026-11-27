@@ -13,19 +13,7 @@
     />
     <meta name="theme-color" content="#f5f5f5" />
     <meta name="color-scheme" content="light dark" />
-    <script>
-      // Apply the saved theme before the first paint, so a dark page never flashes white.
-      (function () {
-        try {
-          var p = localStorage.getItem('epc.theme');
-          var dark = p === 'dark' || (p !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-          var r = document.documentElement;
-          if (dark) { r.classList.add('dark'); r.style.colorScheme = 'dark'; }
-          var m = document.querySelector('meta[name="theme-color"]');
-          if (m && dark) m.setAttribute('content', '#0a0a0a');
-        } catch (e) {}
-      })();
-    </script>
+    <script src="/theme-init.js"></script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="EndPoint Construction" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />

@@ -28,6 +28,13 @@ interface SyncCtx {
 }
 
 const Ctx = createContext<SyncCtx | null>(null)
+const AUTH_TAB_EVENT_KEY = 'epc.auth-tab-event'
+const AUTH_TAB_CHANNEL = 'epc-auth-tabs'
+
+interface AuthTabEvent {
+  type: 'signed-out'
+  id: string
+}
 
 export function SyncProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -35,6 +42,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(syncConfigured)
   const [projectsLoading, setProjectsLoading] = useState(false)
   const signedInUser = useRef<string | undefined>(undefined)
+  const authTabChannel = useRef<BroadcastChannel | null>(null)
+  const handledAuthTabEvent = useRef<string | undefined>(undefined)
   const status = useSyncExternalStore(subscribe, getStatus)
   const [device, setDevice] = useState<DeviceCheck>({ state: 'checking' })
 
@@ -69,6 +78,47 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     return () => {
       alive = false
       sub.subscription.unsubscribe()
+    }
+  }, [])
+
+  // Supabase already synchronizes auth through its own BroadcastChannel. This small, token-free
+  // application event is a defensive fallback for browsers/PWA contexts where that delivery is
+  // delayed: it immediately removes account data and signed-in UI from every open tab.
+  useEffect(() => {
+    if (!supabase) return
+
+    const handleSignedOut = (event: AuthTabEvent | undefined) => {
+      if (!event || event.type !== 'signed-out' || handledAuthTabEvent.current === event.id) return
+      handledAuthTabEvent.current = event.id
+      signedInUser.current = undefined
+      setPasswordRecovery(false)
+      setSession(null)
+      setProjectsLoading(false)
+      setLoading(true)
+      stopSync()
+      void clearDeviceData().finally(() => setLoading(false))
+    }
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== AUTH_TAB_EVENT_KEY || !event.newValue) return
+      try {
+        handleSignedOut(JSON.parse(event.newValue) as AuthTabEvent)
+      } catch {
+        // Ignore malformed/non-app storage values.
+      }
+    }
+
+    if ('BroadcastChannel' in window) {
+      const channel = new BroadcastChannel(AUTH_TAB_CHANNEL)
+      authTabChannel.current = channel
+      channel.onmessage = (message: MessageEvent<AuthTabEvent>) => handleSignedOut(message.data)
+    }
+    window.addEventListener('storage', onStorage)
+
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      authTabChannel.current?.close()
+      authTabChannel.current = null
     }
   }, [])
 
@@ -138,8 +188,23 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         // This device stops showing reminders for the account it is leaving (needs the session, so it comes first).
         await disablePush().catch(() => undefined)
         // 'local' = this device only. The library's default is 'global', which would also sign out the other phone.
-        const { error } = await supabase?.auth.signOut({ scope: 'local' }) ?? { error: undefined }
-        if (!error) await clearDeviceData()
+        try {
+          await supabase?.auth.signOut({ scope: 'local' })
+        } finally {
+          // A local-scope sign-out clears the browser session before Supabase attempts server-side
+          // revocation, so every tab must leave the account even when that network request fails.
+          const event: AuthTabEvent = { type: 'signed-out', id: crypto.randomUUID() }
+          handledAuthTabEvent.current = event.id
+          authTabChannel.current?.postMessage(event)
+          // The storage event covers older browsers and WebViews without BroadcastChannel. It is
+          // intentionally non-sensitive and fires only in the other tabs on this origin.
+          try {
+            localStorage.setItem(AUTH_TAB_EVENT_KEY, JSON.stringify(event))
+          } catch {
+            // Restricted storage does not prevent BroadcastChannel or this tab's own cleanup.
+          }
+          await clearDeviceData()
+        }
       },
     }),
     [loading, session, passwordRecovery, projectsLoading, status, device, userId],
