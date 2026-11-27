@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Layers3, Package, Plus, Printer, Scale, Tags, Timer, TrendingDown, TrendingUp } from 'lucide-react'
+import { Layers3, Package, Plus, Printer, Scale, Tags, Timer } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { cn } from '@/lib/utils'
 
 const COMPACT_HEADING = 'gap-2 text-base [&>span:first-child]:size-7 [&>span:first-child>svg]:size-4'
 import { CardHeading } from '@/components/CardHeading'
-import { COMPARE_GRID, CompareBars, DeltaBadge, KeyChip, Legend, PaceChart, RateChangeBars, type BarRow, type RateRow } from '@/components/CompareParts'
+import { CompareBars, DeltaSentence, KeyChip, Legend, PaceChart, RateChangeBars, type BarRow, type RateRow } from '@/components/CompareParts'
 import { EmptyState, PageHeader } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -19,7 +19,6 @@ import {
   type Delta, type PhaseSort, type Side,
 } from '@/lib/compare'
 import { formatDate, money, moneyRate, todayISO } from '@/lib/format'
-import { pctText } from '@/components/CompareParts'
 
 const num = (n: number): string => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)
 
@@ -145,7 +144,7 @@ function CompareBody({
   const basis = perArea ? areaBasis : TOTALS
   const fmt = (n: number): string => (perArea ? t('compare.perSqft', { amount: moneyRate(n) }) : money(n))
   const today = todayISO()
-  const [phaseSort, setPhaseSort] = useState<PhaseSort>('order')
+  const [phaseSort, setPhaseSort] = useState<PhaseSort>('difference')
 
   const sumA = summarizeSide(sideA)
   const sumB = summarizeSide(sideB)
@@ -155,7 +154,7 @@ function CompareBody({
 
   const phaseRows = useMemo(() => comparePhases(sideA, sideB, basis), [sideA, sideB, basis])
   const catRows = useMemo(() => compareCategories(sideA, sideB, basis), [sideA, sideB, basis])
-  const insights = useMemo(() => phaseInsights(phaseRows, 2), [phaseRows])
+  const insights = useMemo(() => phaseInsights(phaseRows, 4), [phaseRows])
   const materials = useMemo(() => compareMaterials(sideA.payments, sideB.payments), [sideA.payments, sideB.payments])
 
   // A project with a phase that is not complete is still being built: totals and unfinished phases are "so far", not a verdict.
@@ -185,16 +184,26 @@ function CompareBody({
   })
   const catBars: BarRow[] = catRows.map((r) => ({ key: r.category, label: t(`cat.${r.category}` as Key), a: r.a, b: r.b, soFar: anyUnfinished }))
   const rateRows: RateRow[] = materials.map((m) => ({ key: m.key, label: m.item, unit: t(`unit.${m.unit}` as Key), from: moneyRate(m.rateA), to: moneyRate(m.rateB), pct: m.pct }))
+  const highlightBars: BarRow[] = [...insights.higher, ...insights.lower]
+    .sort((x, y) => Math.abs(y.d.delta) - Math.abs(x.d.delta))
+    .slice(0, 4)
+    .map(({ row }) => ({
+      key: row.id,
+      label: row.phase ? phaseName(row.phase) : t('reports.noPhase'),
+      a: row.a,
+      b: row.b,
+      soFar: !row.doneA || !row.doneB,
+    }))
 
   const sqft = (n: number | undefined) => (n ? t('compare.sqft', { n: num(n) }) : '—')
   const date = (d: string | undefined) => (d ? formatDate(d, lang) : '—')
   const spentDelta = delta(sumA.spent, sumB.spent)
 
   // Keep the most useful figures in one aligned table so both projects can be scanned row by row.
-  const metrics: { label: string; a: string; b: string; d?: Delta; money?: boolean }[] = [
-    { label: t('compare.spent'), a: money(sumA.spent), b: money(sumB.spent), d: spentDelta, money: true },
+  const metrics: { label: string; a: string; b: string; d?: Delta; aValue?: number; bValue?: number; deltaFormat?: (n: number) => string }[] = [
+    { label: t('compare.spent'), a: money(sumA.spent), b: money(sumB.spent), d: spentDelta, aValue: sumA.spent, bValue: sumB.spent, deltaFormat: money },
     ...(sumA.perArea !== undefined && sumB.perArea !== undefined
-      ? [{ label: t('compare.perArea'), a: t('compare.perSqft', { amount: moneyRate(sumA.perArea) }), b: t('compare.perSqft', { amount: moneyRate(sumB.perArea) }), d: delta(sumA.perArea, sumB.perArea) }]
+      ? [{ label: t('compare.perArea'), a: t('compare.perSqft', { amount: moneyRate(sumA.perArea) }), b: t('compare.perSqft', { amount: moneyRate(sumB.perArea) }), d: delta(sumA.perArea, sumB.perArea), aValue: sumA.perArea, bValue: sumB.perArea, deltaFormat: moneyRate }]
       : []),
     { label: t('compare.budget'), a: sumA.budget ? money(sumA.budget) : '—', b: sumB.budget ? money(sumB.budget) : '—' },
     ...(sumA.plotCost || sumB.plotCost ? [{ label: t('compare.plotCost'), a: sumA.plotCost ? money(sumA.plotCost) : '—', b: sumB.plotCost ? money(sumB.plotCost) : '—' }] : []),
@@ -227,73 +236,7 @@ function CompareBody({
       <Card className="gap-0 overflow-hidden p-0 print:hidden">
         {controls}
 
-        {/* The high-level comparison and chart sit before the continuous tables below. */}
-        {pace && pacePct !== undefined && heroWord && (
-          <section className="grid gap-3 p-3 sm:p-4">
-            <div className="grid gap-1">
-              <p className="text-sm font-medium text-muted-foreground">{t('compare.heroTitle', { month: pace.month + 1 })}</p>
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <p className="flex items-center gap-2 text-4xl leading-none font-extrabold tracking-tight sm:text-5xl">
-                  {heroWord === 'more' ? <TrendingUp aria-hidden="true" className="size-9 text-danger" /> : heroWord === 'less' ? <TrendingDown aria-hidden="true" className="size-9 text-success" /> : null}
-                  <bdi>{pacePct === 0 ? '0%' : `${Math.abs(pacePct)}%`}</bdi>
-                </p>
-                <p className="text-lg font-semibold">{t(heroWord === 'more' ? 'compare.heroMore' : heroWord === 'less' ? 'compare.heroLess' : 'compare.heroSame')}</p>
-              </div>
-            </div>
-            <dl className="grid gap-2 sm:grid-cols-2 sm:gap-x-8">
-              <div className="flex items-center justify-between gap-3">
-                <dt><KeyChip side="a">{t('compare.projectA')}</KeyChip></dt>
-                <dd className="tabular font-bold">{fmt(pace.a)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <dt><KeyChip side="b">{t('compare.projectB')}</KeyChip></dt>
-                <dd className="tabular font-bold">{fmt(pace.b)}</dd>
-              </div>
-            </dl>
-            {(insights.higher.length > 0 || insights.lower.length > 0) && (
-              <div className="grid gap-3 border-t pt-3 md:grid-cols-2 md:gap-6">
-                {([['higher', insights.higher, TrendingUp, 'compare.higher'], ['lower', insights.lower, TrendingDown, 'compare.lower']] as const).map(([k, list, Icon, title]) => (
-                  <section key={k} aria-label={t(title)} className="grid content-start gap-1.5">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold">
-                      <Icon aria-hidden="true" className={cn('size-4', k === 'higher' ? 'text-danger' : 'text-success')} />
-                      {t(title)}
-                    </h3>
-                    {list.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">{t('compare.noneHere')}</p>
-                    ) : (
-                      <ul className="grid gap-1">
-                        {list.map(({ row, d }) => (
-                          <li key={row.id} className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
-                            <span className="min-w-0 font-medium">{row.phase ? phaseName(row.phase) : ''}</span>
-                            <span className={cn('tabular', k === 'higher' ? 'text-danger' : 'text-success')}>
-                              <bdi>
-                                {d.delta > 0 ? '+' : '-'}
-                                {fmt(Math.abs(d.delta))}
-                                {d.pct !== undefined ? ` (${pctText(d.pct)})` : ''}
-                              </bdi>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </section>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
-        {pace && (
-          <section className="border-t">
-            <div className="px-4 pt-3">
-              <CardHeading icon={Timer} className={COMPACT_HEADING}>{t('compare.paceTitle')}</CardHeading>
-            </div>
-            <Legend className="mt-2 px-4" />
-            <div className="mt-2 px-4 pb-3"><PaceChart a={paceA} b={paceB} format={fmt} /></div>
-          </section>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2 border-t bg-muted/15 px-4 py-2 sm:px-5">
+        <div className="flex flex-wrap items-center gap-2 border-b bg-muted/15 px-4 py-2 sm:px-5">
           <span className="text-sm font-semibold">{t('compare.basis')}</span>
           <ViewTabs
             label={t('compare.basis')}
@@ -306,31 +249,85 @@ function CompareBody({
           />
           {areaBasis === undefined && <span className="text-sm text-muted-foreground">{t('compare.noArea')}</span>}
         </div>
+
+        {/* The exact outcome and the largest differences come first, before the detailed tables. */}
+        {pace && pacePct !== undefined && heroWord && (
+          <section className="grid gap-4 p-3 sm:p-4">
+            <div className={cn('grid gap-3 rounded-lg border-s-4 px-3 py-3 sm:px-4', pacePct > 0 ? 'border-danger bg-danger-soft/40' : pacePct < 0 ? 'border-success bg-success-soft/40' : 'border-border bg-muted/30')}>
+              <p className="text-sm font-medium text-muted-foreground">{t('compare.heroTitle', { month: pace.month + 1 })}</p>
+              <DeltaSentence a={pace.a} b={pace.b} format={fmt} nameA={nameA} nameB={nameB} className="text-base sm:text-lg" />
+              <dl className="grid grid-cols-2 gap-2 sm:max-w-2xl">
+                <div className="rounded-md bg-white px-3 py-2 text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.16)]">
+                  <dt className="text-xs text-slate-500"><KeyChip side="a">{nameA}</KeyChip></dt>
+                  <dd className="tabular mt-1 font-bold">{fmt(pace.a)}</dd>
+                </div>
+                <div className="rounded-md bg-white px-3 py-2 text-slate-900 shadow-[0_5px_14px_rgba(15,23,42,0.16)]">
+                  <dt className="text-xs text-slate-500"><KeyChip side="b">{nameB}</KeyChip></dt>
+                  <dd className="tabular mt-1 font-bold">{fmt(pace.b)}</dd>
+                </div>
+              </dl>
+            </div>
+            {highlightBars.length > 0 && (
+              <section aria-labelledby="compare-highlights-title" className="grid gap-2">
+                <CardHeading id="compare-highlights-title" icon={Scale} className={COMPACT_HEADING}>{t('compare.insights')}</CardHeading>
+                <CompareBars rows={highlightBars} format={fmt} nameA={nameA} nameB={nameB} caption={t('compare.insights')} subjectLabel={t('compare.phase')} />
+              </section>
+            )}
+          </section>
+        )}
+
+        {pace && (
+          <section className="border-t">
+            <div className="px-4 pt-3">
+              <CardHeading icon={Timer} className={COMPACT_HEADING}>{t('compare.paceTitle')}</CardHeading>
+            </div>
+            <Legend nameA={nameA} nameB={nameB} className="mt-2 px-4" />
+            <div className="mt-2 px-4 pb-3"><PaceChart a={paceA} b={paceB} format={fmt} nameA={nameA} nameB={nameB} /></div>
+          </section>
+        )}
         <div className="px-4 py-2 sm:px-4">
           <CardHeading icon={Scale} className={COMPACT_HEADING}>{t('compare.summary')}</CardHeading>
         </div>
-        <div role="table" aria-label={t('compare.summary')}>
-          <div role="row" className={cn('grid grid-cols-[minmax(7rem,.8fr)_minmax(0,1fr)_minmax(0,1fr)] border-b bg-muted/40 text-sm font-semibold', COMPARE_GRID)}>
-            <span aria-hidden="true" className="px-3 py-2 sm:px-4" />
-            <span role="columnheader" className="min-w-0 border-s px-3 py-2 sm:px-4">
-              <KeyChip side="a">{nameA}</KeyChip>
-            </span>
-            <span role="columnheader" className="min-w-0 border-s px-3 py-2 sm:px-4">
-              <KeyChip side="b">{nameB}</KeyChip>
-            </span>
-            <span role="columnheader" className="hidden border-s px-4 py-2 text-muted-foreground sm:block">{t('compare.difference')}</span>
-          </div>
-          {metrics.map((m) => (
-            <div key={m.label} role="row" className={cn('grid grid-cols-[minmax(7rem,.8fr)_minmax(0,1fr)_minmax(0,1fr)] border-b last:border-b-0', COMPARE_GRID)}>
-              <span role="rowheader" className="px-3 py-2 text-sm font-medium text-muted-foreground sm:px-4">{m.label}</span>
-              <span role="cell" className="tabular min-w-0 border-s px-3 py-2 text-sm font-semibold break-words sm:px-4 sm:text-base">{m.a}</span>
-              <span role="cell" className="tabular min-w-0 border-s px-3 py-2 text-sm font-semibold break-words sm:px-4 sm:text-base">{m.b}</span>
-              <span role="cell" className="hidden min-w-28 border-s px-4 py-2 sm:block">
-                {m.d ? <DeltaBadge d={m.d} format={m.money ? money : moneyRate} soFar={anyUnfinished} /> : <span className="text-muted-foreground">—</span>}
-              </span>
-            </div>
-          ))}
+        <div className="hidden overflow-x-auto border-t lg:block">
+          <table className="w-full min-w-[48rem] table-fixed text-start">
+            <caption className="sr-only">{t('compare.summary')}</caption>
+            <colgroup><col className="w-[22%]" /><col className="w-[22%]" /><col className="w-[22%]" /><col className="w-[34%]" /></colgroup>
+          <thead className="border-b bg-muted/55 text-sm">
+              <tr>
+                <th scope="col" className="bg-muted/35 px-4 py-3 text-start text-muted-foreground">{t('compare.details')}</th>
+                <th scope="col" className="border-s border-border/60 bg-viz-a/5 px-4 py-3 text-start"><span className="block text-xs font-medium text-muted-foreground">{t('compare.projectA')}</span><KeyChip side="a">{nameA}</KeyChip></th>
+                <th scope="col" className="border-s border-border/60 bg-viz-b/5 px-4 py-3 text-start"><span className="block text-xs font-medium text-muted-foreground">{t('compare.projectB')}</span><KeyChip side="b">{nameB}</KeyChip></th>
+                <th scope="col" className="border-s border-border/60 bg-muted/35 px-4 py-3 text-start text-muted-foreground">{t('compare.whatChanged')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {metrics.map((m, index) => (
+                <tr key={m.label} className={cn('align-top transition-colors hover:bg-muted/20', index % 2 === 1 && 'bg-muted/[0.025]')}>
+                  <th scope="row" className="px-4 py-3.5 text-start text-sm font-medium text-muted-foreground">{m.label}</th>
+                  <td className="tabular border-s border-border/60 bg-viz-a/[0.035] px-4 py-3.5 font-semibold">{m.a}</td>
+                  <td className="tabular border-s border-border/60 bg-viz-b/[0.035] px-4 py-3.5 font-semibold">{m.b}</td>
+                  <td className={cn('border-s border-border/60 px-4 py-3.5', m.d?.delta && m.d.delta < 0 ? 'bg-success-soft/20' : m.d?.delta && m.d.delta > 0 ? 'bg-danger-soft/15' : 'bg-muted/15')}>
+                    {m.d && m.aValue !== undefined && m.bValue !== undefined && m.deltaFormat
+                      ? <DeltaSentence a={m.aValue} b={m.bValue} format={m.deltaFormat} nameA={nameA} nameB={nameB} soFar={anyUnfinished} />
+                      : <span className="text-muted-foreground">—</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+        <ul className="divide-y border-t lg:hidden">
+          {metrics.map((m) => (
+            <li key={m.label} className="grid gap-2.5 px-3 py-3">
+              <p className="text-sm font-semibold text-muted-foreground">{m.label}</p>
+              <dl className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg border bg-viz-a/5 px-2.5 py-2 shadow-sm"><dt className="text-xs text-muted-foreground"><KeyChip side="a">{t('compare.projectA')}</KeyChip></dt><dd className="tabular mt-1 font-bold">{m.a}</dd></div>
+                <div className="rounded-lg border bg-viz-b/5 px-2.5 py-2 shadow-sm"><dt className="text-xs text-muted-foreground"><KeyChip side="b">{t('compare.projectB')}</KeyChip></dt><dd className="tabular mt-1 font-bold">{m.b}</dd></div>
+              </dl>
+              {m.d && m.aValue !== undefined && m.bValue !== undefined && m.deltaFormat && <DeltaSentence a={m.aValue} b={m.bValue} format={m.deltaFormat} nameA={nameA} nameB={nameB} soFar={anyUnfinished} />}
+            </li>
+          ))}
+        </ul>
 
         <section className="border-t">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
@@ -345,12 +342,12 @@ function CompareBody({
             ]}
           />
         </div>
-          {phaseBars.length === 0 ? <p className="px-4 pb-3 text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={phaseBars} format={fmt} flush />}
+          {phaseBars.length === 0 ? <p className="px-4 pb-3 text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={phaseBars} format={fmt} nameA={nameA} nameB={nameB} caption={t('compare.byPhase')} subjectLabel={t('compare.phase')} flush />}
         </section>
 
         <section className="border-t">
         <div className="px-4 py-2.5"><CardHeading icon={Tags} className={COMPACT_HEADING}>{t('compare.byCategory')}</CardHeading></div>
-          {catBars.length === 0 ? <p className="px-4 pb-3 text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={catBars} format={fmt} flush />}
+          {catBars.length === 0 ? <p className="px-4 pb-3 text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={catBars} format={fmt} nameA={nameA} nameB={nameB} caption={t('compare.byCategory')} subjectLabel={t('compare.category')} flush />}
         </section>
 
         <section className="border-t">
@@ -361,7 +358,7 @@ function CompareBody({
           <p className="mx-4 mb-3 rounded-lg bg-muted/40 px-3 py-2.5 text-sm leading-5 text-muted-foreground">
             {t('compare.noMaterials')}
           </p>
-          ) : <RateChangeBars rows={rateRows} flush />}
+          ) : <RateChangeBars rows={rateRows} nameA={nameA} nameB={nameB} caption={t('compare.materials')} subjectLabel={t('compare.material')} flush />}
         </section>
 
       </Card>
