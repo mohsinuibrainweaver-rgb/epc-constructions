@@ -1252,6 +1252,9 @@ export const en = {
 
   'nav.compare': 'Compare projects',
   'compare.title': 'Compare projects',
+  'compare.print': 'Print comparison summary',
+  'compare.printTitle': 'Project comparison summary',
+  'compare.prepared': 'Prepared on {date}',
   'compare.intro': 'See where the money went in an earlier project, and where it is going in this one. Only paid and approved money is counted.',
   'compare.projectA': 'Earlier project',
   'compare.projectB': 'This project',

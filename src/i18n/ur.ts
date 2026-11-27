@@ -1254,6 +1254,9 @@ export const ur: Record<Key, string> = {
 
   'nav.compare': 'پراجیکٹس کا موازنہ',
   'compare.title': 'پراجیکٹس کا موازنہ',
+  'compare.print': 'موازنے کا خلاصہ پرنٹ کریں',
+  'compare.printTitle': 'پراجیکٹ موازنے کا خلاصہ',
+  'compare.prepared': '{date} کو تیار کیا گیا',
   'compare.intro': 'دیکھیں کہ پچھلے پراجیکٹ میں پیسہ کہاں لگا تھا اور اس میں کہاں لگ رہا ہے۔ صرف ادا اور منظور شدہ رقم شمار ہوتی ہے۔',
   'compare.projectA': 'پچھلا پراجیکٹ',
   'compare.projectB': 'یہ پراجیکٹ',

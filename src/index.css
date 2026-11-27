@@ -655,6 +655,14 @@
   @page {
     margin: 14mm;
   }
+  @page statement {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+  @page comparison {
+    size: A4 landscape;
+    margin: 12mm;
+  }
   html {
     color-scheme: light !important;
   }
@@ -677,5 +685,222 @@
   a {
     color: inherit;
     text-decoration: none;
+  }
+
+  /* Statements have eight useful columns, so they get a named landscape page instead of
+     squeezing words one character at a time in portrait. A normal block flow is intentional:
+     paged browsers can fragment it reliably, while a multi-page CSS grid can overlap its
+     summary with rows carried onto the following sheet. */
+  .statement-print {
+    page: statement;
+    display: block !important;
+    width: 100%;
+    color: #111;
+  }
+  .statement-print__header {
+    margin-bottom: 5mm;
+    padding-bottom: 3mm;
+    break-after: avoid-page;
+  }
+  .statement-print__table {
+    table-layout: fixed;
+    width: 100%;
+    font-size: 8.5pt;
+    line-height: 1.3;
+  }
+  .statement-print__table col:nth-child(1) { width: 11%; }
+  .statement-print__table col:nth-child(2) { width: 19%; }
+  .statement-print__table col:nth-child(3) { width: 16%; }
+  .statement-print__table col:nth-child(4) { width: 16%; }
+  .statement-print__table col:nth-child(5) { width: 8%; }
+  .statement-print__table col:nth-child(6) { width: 9%; }
+  .statement-print__table col:nth-child(7) { width: 9%; }
+  .statement-print__table col:nth-child(8) { width: 12%; }
+  .statement-print__table th,
+  .statement-print__table td {
+    box-sizing: border-box;
+    padding: 2.2mm 1.8mm !important;
+    vertical-align: top;
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: none;
+  }
+  .statement-print__table th {
+    background: #f3f4f6 !important;
+    border-bottom: 1.5pt solid #555 !important;
+    white-space: nowrap;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .statement-print__table td:nth-child(1),
+  .statement-print__table td:nth-child(5),
+  .statement-print__table td:nth-child(6),
+  .statement-print__table td:nth-child(7),
+  .statement-print__table td:nth-child(8) {
+    white-space: nowrap;
+  }
+  .statement-print__table tr {
+    /* Chromium already breaks tables between rows. Forcing every row to be an unbreakable
+       page box can push the final row into the top page margin when a summary follows. */
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+  .statement-print__total {
+    margin-top: 4mm;
+    padding-top: 3mm;
+    break-inside: avoid-page;
+  }
+  .statement-print__breakdown {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4mm 12mm;
+    margin-top: 5mm;
+  }
+  .statement-print__breakdown section {
+    break-inside: avoid-page;
+  }
+  .statement-print__phases {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 12mm;
+  }
+  .statement-print__phases h3 {
+    grid-column: 1 / -1;
+  }
+  .statement-print__footer {
+    margin-top: 6mm;
+    padding-top: 3mm;
+    border-top: 1px solid #ddd;
+    break-inside: avoid-page;
+  }
+
+  /* A plain-language project comparison report. Screen controls and charts are replaced by
+     aligned figures and tables so browser Print > Save as PDF produces a useful document. */
+  body:has(.comparison-print) {
+    page: comparison;
+    min-height: 0 !important;
+  }
+  body:has(.comparison-print) #root,
+  body:has(.comparison-print) #root > div,
+  body:has(.comparison-print) main,
+  body:has(.comparison-print) main > div {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+  body:has(.comparison-print) main {
+    display: block !important;
+    flex: none !important;
+    padding: 0 !important;
+  }
+  body:has(.comparison-print) .page-in {
+    display: block !important;
+    animation: none !important;
+    transform: none !important;
+  }
+  .comparison-print {
+    display: block !important;
+    width: 100%;
+    color: #111;
+    font-size: 9pt;
+    line-height: 1.35;
+  }
+  .comparison-print__header {
+    margin-bottom: 5mm;
+    padding-bottom: 3mm;
+    border-bottom: 1.5pt solid #333;
+    break-after: avoid-page;
+  }
+  .comparison-print__brand {
+    margin: 0 0 1mm;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .comparison-print__header h1 {
+    margin: 0 0 1.5mm;
+    font-size: 18pt;
+    line-height: 1.15;
+  }
+  .comparison-print__header p {
+    margin: 0;
+  }
+  .comparison-print__muted,
+  .comparison-print__eyebrow {
+    color: #555;
+  }
+  .comparison-print__result {
+    margin-bottom: 5mm;
+    padding: 4mm;
+    border: 1px solid #bbb;
+    border-radius: 2mm;
+    break-inside: avoid-page;
+  }
+  .comparison-print__result p,
+  .comparison-print__result h2 {
+    margin: 0;
+  }
+  .comparison-print__result h2 {
+    margin-top: 1mm;
+    font-size: 16pt;
+  }
+  .comparison-print__result-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3mm 10mm;
+    margin-top: 3mm;
+    padding-top: 3mm;
+    border-top: 1px solid #ddd;
+  }
+  .comparison-print__result-grid p {
+    display: flex;
+    justify-content: space-between;
+    gap: 5mm;
+  }
+  .comparison-print__section {
+    margin-top: 5mm;
+  }
+  .comparison-print__section h2 {
+    margin: 0 0 2mm;
+    font-size: 12pt;
+    break-after: avoid-page;
+  }
+  .comparison-print table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+  .comparison-print th,
+  .comparison-print td {
+    padding: 2mm 2.5mm;
+    border: 1px solid #ccc;
+    vertical-align: top;
+    text-align: start;
+    overflow-wrap: break-word;
+  }
+  .comparison-print thead th {
+    background: #eef0f3 !important;
+    font-weight: 700;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .comparison-print tbody th {
+    width: 28%;
+    font-weight: 600;
+  }
+  .comparison-print th:not(:first-child),
+  .comparison-print td:not(:first-child) {
+    width: 24%;
+  }
+  .comparison-print small {
+    display: block;
+    margin-top: .5mm;
+    color: #555;
+    font-size: 8pt;
+    font-weight: 400;
+  }
+  .comparison-print tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }

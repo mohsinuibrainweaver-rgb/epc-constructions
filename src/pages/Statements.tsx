@@ -255,9 +255,9 @@ export function Statements() {
       ) : (
         <article
           aria-label={`${project.name} — ${title}`}
-          className="grid gap-6 rounded-2xl border bg-card p-3.5 max-sm:gap-4 sm:p-8 print:gap-4 print:rounded-none print:border-0 print:p-0 print:shadow-none"
+          className="statement-print grid gap-6 rounded-2xl border bg-card p-3.5 max-sm:gap-4 sm:p-8 print:block print:rounded-none print:border-0 print:p-0 print:shadow-none"
         >
-          <header className="grid gap-1 border-b pb-4 max-sm:pb-3">
+          <header className="statement-print__header grid gap-1 border-b pb-4 max-sm:pb-3">
             <p className="text-sm font-semibold tracking-wide text-muted-foreground uppercase max-sm:text-xs">{t('stmt.heading')}</p>
             <h2 className="text-2xl font-semibold text-balance max-sm:text-xl">{title}</h2>
             <p className="font-semibold max-sm:text-[0.9375rem]">{project.name}</p>
@@ -305,7 +305,17 @@ export function Statements() {
                 ))}
               </ul>
 
-              <table className="hidden w-full border-collapse text-sm md:table print:table">
+              <table className="statement-print__table hidden w-full border-collapse text-sm md:table print:table">
+                <colgroup>
+                  <col />
+                  <col />
+                  <col />
+                  <col />
+                  <col />
+                  <col />
+                  <col />
+                  <col />
+                </colgroup>
                 <thead>
                   <tr className="border-b-2 text-start">
                     {(['date', 'purpose', 'payee', 'phase', 'mode', 'paidBy', 'status'] as const).map((c) => (
@@ -340,7 +350,7 @@ export function Statements() {
                 </tbody>
               </table>
 
-              <dl className="grid gap-2 border-t-2 pt-3 break-inside-avoid">
+              <dl className="statement-print__total grid gap-2 border-t-2 pt-3 break-inside-avoid">
                 <div className="flex items-baseline justify-between gap-4 text-lg font-extrabold max-sm:text-base">
                   <dt>{t('stmt.total')}</dt>
                   <dd className="tabular">{money(result.total)}</dd>
@@ -359,7 +369,7 @@ export function Statements() {
                 )}
               </dl>
 
-              <div className="grid gap-4 max-sm:gap-3 sm:grid-cols-2 break-inside-avoid">
+              <div className="statement-print__breakdown grid gap-4 max-sm:gap-3 sm:grid-cols-2">
                 <section aria-label={t('stmt.byMode')} className="grid content-start gap-1">
                   <h3 className="font-semibold max-sm:text-[0.9375rem]">{t('stmt.byMode')}</h3>
                   <p className="flex justify-between text-sm max-sm:text-[0.8125rem]"><span>{t('mode.cash')}</span><span className="tabular">{money(result.byMode.cash)}</span></p>
@@ -372,7 +382,7 @@ export function Statements() {
                   ))}
                 </section>
                 {scope !== 'phase' && result.byPhase.length > 1 && (
-                  <section aria-label={t('stmt.byPhase')} className="grid content-start gap-1 sm:col-span-2">
+                  <section aria-label={t('stmt.byPhase')} className="statement-print__phases grid content-start gap-1 sm:col-span-2">
                     <h3 className="font-semibold max-sm:text-[0.9375rem]">{t('stmt.byPhase')}</h3>
                     {result.byPhase.map((b) => (
                       <p key={b.phaseId || 'none'} className="flex justify-between text-sm max-sm:text-[0.8125rem]">
@@ -397,7 +407,7 @@ export function Statements() {
             </div>
           )}
 
-          <footer className="text-xs text-muted-foreground">{t('stmt.footer')}</footer>
+          <footer className="statement-print__footer text-xs text-muted-foreground">{t('stmt.footer')}</footer>
         </article>
       )}
     </>

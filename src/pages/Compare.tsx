@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Layers3, Package, Plus, Scale, Tags, Timer, TrendingDown, TrendingUp } from 'lucide-react'
+import { Layers3, Package, Plus, Printer, Scale, Tags, Timer, TrendingDown, TrendingUp } from 'lucide-react'
 import { useApp } from '@/app/AppContext'
 import { cn } from '@/lib/utils'
+
+const COMPACT_HEADING = 'gap-2 text-base [&>span:first-child]:size-7 [&>span:first-child>svg]:size-4'
 import { CardHeading } from '@/components/CardHeading'
 import { COMPARE_GRID, CompareBars, DeltaBadge, KeyChip, Legend, PaceChart, RateChangeBars, type BarRow, type RateRow } from '@/components/CompareParts'
 import { EmptyState, PageHeader } from '@/components/common'
@@ -88,12 +90,11 @@ export function Compare() {
 
   // The two choices. The colour key beside each name is the key for every chart below.
   const controls = (
-    <Card className="gap-0 overflow-hidden p-0">
-      <p className="border-b px-4 py-3 text-sm text-muted-foreground sm:px-5 sm:py-4 sm:text-base">{t('compare.intro')}</p>
-      <div className="relative grid grid-cols-2">
+    <div>
+      <div className="relative grid grid-cols-2 border-b">
         <span aria-hidden="true" className="pointer-events-none absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-border" />
         {([['a', t('compare.projectA'), aId], ['b', t('compare.projectB'), bId]] as const).map(([side, label, value]) => (
-          <div key={side} className="grid min-w-0 content-start gap-2 px-3 py-2.5 sm:px-5 sm:py-3">
+          <div key={side} className="grid min-w-0 content-start gap-1.5 px-3 py-2.5 sm:px-4">
             <span className="text-xs font-semibold text-muted-foreground sm:text-sm">
               <KeyChip side={side}>{label}</KeyChip>
             </span>
@@ -107,14 +108,14 @@ export function Compare() {
           </div>
         ))}
       </div>
-    </Card>
+    </div>
   )
 
   if (!sideA || !sideB || sideA.project.id === sideB.project.id) {
     return (
       <>
         <PageHeader title={t('compare.title')} />
-        {controls}
+        <Card className="gap-0 overflow-hidden p-0">{controls}</Card>
         <Card>
           <EmptyState icon={Scale} title={t('compare.sameProject')} />
         </Card>
@@ -203,131 +204,137 @@ function CompareBody({
 
   const pacePct = pace && pace.a > 0 ? delta(pace.a, pace.b).pct : undefined
   const heroWord = pacePct === undefined ? undefined : pacePct === 0 ? 'same' : pacePct > 0 ? 'more' : 'less'
+  const printDelta = (d: Delta | undefined, soFar = false): string => {
+    if (!d || Math.abs(d.delta) < 0.5) return d ? t('compare.same') : '—'
+    const word = d.delta > 0 ? t('compare.more') : t('compare.less')
+    const label = soFar ? t('compare.soFar', { word }) : word
+    return `${label}${d.pct === undefined ? '' : ` ${Math.abs(d.pct)}%`}`
+  }
 
   return (
     <>
-      <PageHeader title={t('compare.title')} />
-      {controls}
-
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-3 py-2.5 sm:px-4">
-        <span className="text-sm font-semibold">{t('compare.basis')}</span>
-        <ViewTabs
-          label={t('compare.basis')}
-          value={perArea ? 'sqft' : 'total'}
-          onValueChange={setBasis}
-          tabs={[
-            { value: 'total', label: t('compare.basisTotal') },
-            { value: 'sqft', label: t('compare.basisArea'), disabled: areaBasis === undefined },
-          ]}
+      <div className="print:hidden">
+        <PageHeader
+          title={t('compare.title')}
+          actions={
+            <Button variant="secondary" onClick={() => window.print()}>
+              <Printer aria-hidden="true" />
+              {t('compare.print')}
+            </Button>
+          }
         />
-        {areaBasis === undefined && <span className="text-sm text-muted-foreground">{t('compare.noArea')}</span>}
       </div>
+      <Card className="gap-0 overflow-hidden p-0 print:hidden">
+        {controls}
 
-      <Card className="overflow-hidden p-0">
-        <div className="border-b px-4 py-3 sm:px-5">
-          <CardHeading icon={Scale}>{t('compare.summary')}</CardHeading>
+        {/* The high-level comparison and chart sit before the continuous tables below. */}
+        {pace && pacePct !== undefined && heroWord && (
+          <section className="grid gap-3 p-3 sm:p-4">
+            <div className="grid gap-1">
+              <p className="text-sm font-medium text-muted-foreground">{t('compare.heroTitle', { month: pace.month + 1 })}</p>
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <p className="flex items-center gap-2 text-4xl leading-none font-extrabold tracking-tight sm:text-5xl">
+                  {heroWord === 'more' ? <TrendingUp aria-hidden="true" className="size-9 text-danger" /> : heroWord === 'less' ? <TrendingDown aria-hidden="true" className="size-9 text-success" /> : null}
+                  <bdi>{pacePct === 0 ? '0%' : `${Math.abs(pacePct)}%`}</bdi>
+                </p>
+                <p className="text-lg font-semibold">{t(heroWord === 'more' ? 'compare.heroMore' : heroWord === 'less' ? 'compare.heroLess' : 'compare.heroSame')}</p>
+              </div>
+            </div>
+            <dl className="grid gap-2 sm:grid-cols-2 sm:gap-x-8">
+              <div className="flex items-center justify-between gap-3">
+                <dt><KeyChip side="a">{t('compare.projectA')}</KeyChip></dt>
+                <dd className="tabular font-bold">{fmt(pace.a)}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt><KeyChip side="b">{t('compare.projectB')}</KeyChip></dt>
+                <dd className="tabular font-bold">{fmt(pace.b)}</dd>
+              </div>
+            </dl>
+            {(insights.higher.length > 0 || insights.lower.length > 0) && (
+              <div className="grid gap-3 border-t pt-3 md:grid-cols-2 md:gap-6">
+                {([['higher', insights.higher, TrendingUp, 'compare.higher'], ['lower', insights.lower, TrendingDown, 'compare.lower']] as const).map(([k, list, Icon, title]) => (
+                  <section key={k} aria-label={t(title)} className="grid content-start gap-1.5">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold">
+                      <Icon aria-hidden="true" className={cn('size-4', k === 'higher' ? 'text-danger' : 'text-success')} />
+                      {t(title)}
+                    </h3>
+                    {list.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">{t('compare.noneHere')}</p>
+                    ) : (
+                      <ul className="grid gap-1">
+                        {list.map(({ row, d }) => (
+                          <li key={row.id} className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+                            <span className="min-w-0 font-medium">{row.phase ? phaseName(row.phase) : ''}</span>
+                            <span className={cn('tabular', k === 'higher' ? 'text-danger' : 'text-success')}>
+                              <bdi>
+                                {d.delta > 0 ? '+' : '-'}
+                                {fmt(Math.abs(d.delta))}
+                                {d.pct !== undefined ? ` (${pctText(d.pct)})` : ''}
+                              </bdi>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {pace && (
+          <section className="border-t">
+            <div className="px-4 pt-3">
+              <CardHeading icon={Timer} className={COMPACT_HEADING}>{t('compare.paceTitle')}</CardHeading>
+            </div>
+            <Legend className="mt-2 px-4" />
+            <div className="mt-2 px-4 pb-3"><PaceChart a={paceA} b={paceB} format={fmt} /></div>
+          </section>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2 border-t bg-muted/15 px-4 py-2 sm:px-5">
+          <span className="text-sm font-semibold">{t('compare.basis')}</span>
+          <ViewTabs
+            label={t('compare.basis')}
+            value={perArea ? 'sqft' : 'total'}
+            onValueChange={setBasis}
+            tabs={[
+              { value: 'total', label: t('compare.basisTotal') },
+              { value: 'sqft', label: t('compare.basisArea'), disabled: areaBasis === undefined },
+            ]}
+          />
+          {areaBasis === undefined && <span className="text-sm text-muted-foreground">{t('compare.noArea')}</span>}
+        </div>
+        <div className="px-4 py-2 sm:px-4">
+          <CardHeading icon={Scale} className={COMPACT_HEADING}>{t('compare.summary')}</CardHeading>
         </div>
         <div role="table" aria-label={t('compare.summary')}>
           <div role="row" className={cn('grid grid-cols-[minmax(7rem,.8fr)_minmax(0,1fr)_minmax(0,1fr)] border-b bg-muted/40 text-sm font-semibold', COMPARE_GRID)}>
-            <span aria-hidden="true" className="p-3 sm:p-4" />
-            <span role="columnheader" className="min-w-0 border-s p-3 sm:p-4">
+            <span aria-hidden="true" className="px-3 py-2 sm:px-4" />
+            <span role="columnheader" className="min-w-0 border-s px-3 py-2 sm:px-4">
               <KeyChip side="a">{nameA}</KeyChip>
             </span>
-            <span role="columnheader" className="min-w-0 border-s p-3 sm:p-4">
+            <span role="columnheader" className="min-w-0 border-s px-3 py-2 sm:px-4">
               <KeyChip side="b">{nameB}</KeyChip>
             </span>
-            <span role="columnheader" className="hidden border-s p-4 text-muted-foreground sm:block">{t('compare.difference')}</span>
+            <span role="columnheader" className="hidden border-s px-4 py-2 text-muted-foreground sm:block">{t('compare.difference')}</span>
           </div>
           {metrics.map((m) => (
             <div key={m.label} role="row" className={cn('grid grid-cols-[minmax(7rem,.8fr)_minmax(0,1fr)_minmax(0,1fr)] border-b last:border-b-0', COMPARE_GRID)}>
-              <span role="rowheader" className="p-3 text-sm font-medium text-muted-foreground sm:p-4">{m.label}</span>
-              <span role="cell" className="tabular min-w-0 border-s p-3 text-sm font-semibold break-words sm:p-4 sm:text-base">{m.a}</span>
-              <span role="cell" className="tabular min-w-0 border-s p-3 text-sm font-semibold break-words sm:p-4 sm:text-base">{m.b}</span>
-              <span role="cell" className="hidden min-w-28 border-s p-4 sm:block">
+              <span role="rowheader" className="px-3 py-2 text-sm font-medium text-muted-foreground sm:px-4">{m.label}</span>
+              <span role="cell" className="tabular min-w-0 border-s px-3 py-2 text-sm font-semibold break-words sm:px-4 sm:text-base">{m.a}</span>
+              <span role="cell" className="tabular min-w-0 border-s px-3 py-2 text-sm font-semibold break-words sm:px-4 sm:text-base">{m.b}</span>
+              <span role="cell" className="hidden min-w-28 border-s px-4 py-2 sm:block">
                 {m.d ? <DeltaBadge d={m.d} format={m.money ? money : moneyRate} soFar={anyUnfinished} /> : <span className="text-muted-foreground">—</span>}
               </span>
             </div>
           ))}
         </div>
-      </Card>
 
-      {/* The answer first: how this project stands at the same stage, then what differs most. */}
-      {pace && pacePct !== undefined && heroWord && (
-        <Card className="gap-3 p-4 sm:gap-5 sm:p-5">
-          <div className="grid gap-1">
-            <p className="text-sm font-medium text-muted-foreground">{t('compare.heroTitle', { month: pace.month + 1 })}</p>
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <p className="flex items-center gap-2 text-4xl leading-none font-extrabold tracking-tight sm:text-5xl">
-                {heroWord === 'more' ? <TrendingUp aria-hidden="true" className="size-9 text-warning" /> : heroWord === 'less' ? <TrendingDown aria-hidden="true" className="size-9 text-success" /> : null}
-                <bdi>{pacePct === 0 ? '0%' : `${Math.abs(pacePct)}%`}</bdi>
-              </p>
-              <p className="text-lg font-semibold">{t(heroWord === 'more' ? 'compare.heroMore' : heroWord === 'less' ? 'compare.heroLess' : 'compare.heroSame')}</p>
-            </div>
-          </div>
-          <dl className="grid gap-2 sm:grid-cols-2 sm:gap-x-8">
-            <div className="flex items-center justify-between gap-3">
-              <dt>
-                <KeyChip side="a">{t('compare.projectA')}</KeyChip>
-              </dt>
-              <dd className="tabular font-bold">{fmt(pace.a)}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt>
-                <KeyChip side="b">{t('compare.projectB')}</KeyChip>
-              </dt>
-              <dd className="tabular font-bold">{fmt(pace.b)}</dd>
-            </div>
-          </dl>
-          {(insights.higher.length > 0 || insights.lower.length > 0) && (
-            <div className="grid gap-3 border-t pt-3 sm:pt-4 md:grid-cols-2 md:gap-8">
-              {([['higher', insights.higher, TrendingUp, 'compare.higher'], ['lower', insights.lower, TrendingDown, 'compare.lower']] as const).map(([k, list, Icon, title]) => (
-                <section key={k} aria-label={t(title)} className="grid content-start gap-1.5">
-                  <h3 className="flex items-center gap-2 text-sm font-semibold">
-                    <Icon aria-hidden="true" className="size-4" />
-                    {t(title)}
-                  </h3>
-                  {list.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">{t('compare.noneHere')}</p>
-                  ) : (
-                    <ul className="grid gap-1">
-                      {list.map(({ row, d }) => (
-                        <li key={row.id} className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
-                          <span className="min-w-0 font-medium">{row.phase ? phaseName(row.phase) : ''}</span>
-                          <span className="tabular text-muted-foreground">
-                            <bdi>
-                              {d.delta > 0 ? '+' : '-'}
-                              {fmt(Math.abs(d.delta))}
-                              {d.pct !== undefined ? ` (${pctText(d.pct)})` : ''}
-                            </bdi>
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-              ))}
-            </div>
-          )}
-        </Card>
-      )}
-
-      {pace && (
-        <Card className="overflow-hidden p-0">
-          <div className="grid gap-1 px-4 pt-4 sm:px-5 sm:pt-5">
-            <CardHeading icon={Timer}>{t('compare.paceTitle')}</CardHeading>
-            <p className="text-sm text-muted-foreground">{t('compare.paceSub')}</p>
-          </div>
-          <Legend className="px-4 sm:px-5" />
-          <div className="px-4 pb-4 sm:px-5 sm:pb-5"><PaceChart a={paceA} b={paceB} format={fmt} /></div>
-        </Card>
-      )}
-
-      <Card className="overflow-hidden p-0">
-        <div className="flex flex-wrap items-start justify-between gap-3 p-4 sm:p-5">
-          <div className="grid gap-1">
-            <CardHeading icon={Layers3}>{t('compare.byPhase')}</CardHeading>
-            <p className="text-sm text-muted-foreground">{perArea ? t('compare.basisArea') : t('compare.basisTotal')}</p>
-          </div>
+        <section className="border-t">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
+          <CardHeading icon={Layers3} className={COMPACT_HEADING}>{t('compare.byPhase')}</CardHeading>
           <ViewTabs
             label={t('compare.sortBy')}
             value={phaseSort}
@@ -338,29 +345,149 @@ function CompareBody({
             ]}
           />
         </div>
-        {phaseBars.length === 0 ? <p className="text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={phaseBars} format={fmt} />}
-      </Card>
+          {phaseBars.length === 0 ? <p className="px-4 pb-3 text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={phaseBars} format={fmt} flush />}
+        </section>
 
-      <Card className="overflow-hidden p-0">
-        <div className="p-4 sm:p-5"><CardHeading icon={Tags}>{t('compare.byCategory')}</CardHeading></div>
-        {catBars.length === 0 ? <p className="text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={catBars} format={fmt} />}
-      </Card>
+        <section className="border-t">
+        <div className="px-4 py-2.5"><CardHeading icon={Tags} className={COMPACT_HEADING}>{t('compare.byCategory')}</CardHeading></div>
+          {catBars.length === 0 ? <p className="px-4 pb-3 text-muted-foreground">{t('reports.noData')}</p> : <CompareBars rows={catBars} format={fmt} flush />}
+        </section>
 
-      <Card className="overflow-hidden p-0">
-        <div className="grid gap-1 p-4 sm:p-5">
-          <CardHeading icon={Package}>{t('compare.materials')}</CardHeading>
-          <p className="text-sm text-muted-foreground">{t('compare.materialsNote')}</p>
+        <section className="border-t">
+        <div className="px-4 py-2.5">
+          <CardHeading icon={Package} className={COMPACT_HEADING}>{t('compare.materials')}</CardHeading>
         </div>
         {materials.length === 0 ? (
-          <p className="mx-4 mb-4 rounded-lg bg-muted/40 px-3 py-3 text-sm leading-6 text-muted-foreground sm:mx-5 sm:mb-5">
+          <p className="mx-4 mb-3 rounded-lg bg-muted/40 px-3 py-2.5 text-sm leading-5 text-muted-foreground">
             {t('compare.noMaterials')}
           </p>
-        ) : <RateChangeBars rows={rateRows} />}
+          ) : <RateChangeBars rows={rateRows} flush />}
+        </section>
+
       </Card>
 
-      <p className="rounded-lg border bg-muted/20 px-4 py-3 text-sm leading-5 text-muted-foreground">
-        {t('compare.note')}
-      </p>
+      <section className="comparison-print hidden print:block">
+        <header className="comparison-print__header">
+          <p className="comparison-print__brand">EndPoint Construction</p>
+          <h1>{t('compare.printTitle')}</h1>
+          <p>{nameA} · {t('compare.projectA')} &nbsp; | &nbsp; {nameB} · {t('compare.projectB')}</p>
+          <p className="comparison-print__muted">{t('compare.prepared', { date: formatDate(today, lang) })}</p>
+        </header>
+
+        {pace && pacePct !== undefined && heroWord && (
+          <section className="comparison-print__result">
+            <p className="comparison-print__eyebrow">{t('compare.heroTitle', { month: pace.month + 1 })}</p>
+            <h2>
+              {pacePct === 0 ? '0%' : `${Math.abs(pacePct)}%`} {t(heroWord === 'more' ? 'compare.heroMore' : heroWord === 'less' ? 'compare.heroLess' : 'compare.heroSame')}
+            </h2>
+            <div className="comparison-print__result-grid">
+              <p><strong>{nameA}</strong><span>{fmt(pace.a)}</span></p>
+              <p><strong>{nameB}</strong><span>{fmt(pace.b)}</span></p>
+            </div>
+          </section>
+        )}
+
+        <section className="comparison-print__section">
+          <h2>{t('compare.summary')}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>{t('compare.details')}</th>
+                <th>{nameA}</th>
+                <th>{nameB}</th>
+                <th>{t('compare.difference')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metrics.map((m) => (
+                <tr key={m.label}>
+                  <th scope="row">{m.label}</th>
+                  <td>{m.a}</td>
+                  <td>{m.b}</td>
+                  <td>{printDelta(m.d, anyUnfinished)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="comparison-print__section">
+          <h2>{t('compare.byPhase')}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>{t('compare.byPhase')}</th>
+                <th>{nameA}</th>
+                <th>{nameB}</th>
+                <th>{t('compare.difference')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {phaseBars.map((row) => {
+                const d = delta(row.a, row.b)
+                return (
+                  <tr key={row.key}>
+                    <th scope="row">{row.label}{row.note ? <small>{row.note}</small> : null}</th>
+                    <td>{row.a > 0 ? fmt(row.a) : '—'}</td>
+                    <td>{row.b > 0 ? fmt(row.b) : '—'}</td>
+                    <td>{printDelta(d, row.soFar)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="comparison-print__section">
+          <h2>{t('compare.byCategory')}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>{t('compare.byCategory')}</th>
+                <th>{nameA}</th>
+                <th>{nameB}</th>
+                <th>{t('compare.difference')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {catBars.map((row) => (
+                <tr key={row.key}>
+                  <th scope="row">{row.label}</th>
+                  <td>{row.a > 0 ? fmt(row.a) : '—'}</td>
+                  <td>{row.b > 0 ? fmt(row.b) : '—'}</td>
+                  <td>{printDelta(delta(row.a, row.b), row.soFar)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        {rateRows.length > 0 && (
+          <section className="comparison-print__section">
+            <h2>{t('compare.materials')}</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>{t('compare.materials')}</th>
+                  <th>{nameA}</th>
+                  <th>{nameB}</th>
+                  <th>{t('compare.difference')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rateRows.map((row) => (
+                  <tr key={row.key}>
+                    <th scope="row">{row.label}<small>{row.unit}</small></th>
+                    <td>{row.from}</td>
+                    <td>{row.to}</td>
+                    <td>{row.pct === undefined ? '—' : row.pct === 0 ? t('compare.same') : `${row.pct > 0 ? t('compare.more') : t('compare.less')} ${Math.abs(row.pct)}%`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+      </section>
     </>
   )
 }

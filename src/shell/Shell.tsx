@@ -374,7 +374,7 @@ export function Shell() {
   const mobileTabSplit = Math.ceil(visibleMobileTabs.length / 2)
   const mobileTabCount = visibleMobileTabs.length + (canAddPayment ? 1 : 0) + (useMore ? 1 : 0)
   return (
-    <div className="grid min-h-[calc(100dvh-2*var(--page-gap))] grid-cols-1 gap-[var(--page-gap)] sm:grid-cols-[4.5rem_minmax(0,1fr)] lg:grid-cols-[15rem_minmax(0,1fr)] print:block">
+    <div className="grid min-h-[calc(100dvh-2*var(--page-gap))] grid-cols-1 gap-[var(--page-gap)] sm:grid-cols-[4.5rem_minmax(0,1fr)] lg:grid-cols-[15rem_minmax(0,1fr)] print:block print:min-h-0">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:inset-s-3 focus:top-3 focus:z-50 focus:rounded-control focus:bg-primary focus:px-4 focus:py-2 focus:font-semibold focus:text-primary-foreground"
@@ -440,7 +440,7 @@ export function Shell() {
         <AccountMenu />
       </aside>
 
-      <div className="flex min-h-[calc(100dvh-2*var(--page-gap))] min-w-0 flex-col overflow-clip bg-card sm:rounded-2xl sm:border sm:shadow-sm print:overflow-visible print:rounded-none print:border-0 print:bg-white print:shadow-none">
+      <div className="flex min-h-[calc(100dvh-2*var(--page-gap))] min-w-0 flex-col overflow-clip bg-card sm:rounded-2xl sm:border sm:shadow-sm print:min-h-0 print:overflow-visible print:rounded-none print:border-0 print:bg-white print:shadow-none">
         <header className={cn('sticky top-0 z-20 border-b bg-card pt-[env(safe-area-inset-top)] sm:hidden print:hidden', fullscreen && 'hidden')}>
           <div className="container-page flex min-h-14 items-center gap-3">
             <Link
@@ -538,7 +538,7 @@ export function Shell() {
           ref={mainRef}
           id="main"
           tabIndex={-1}
-          className={cn('container-page grid flex-1 content-start gap-4 py-4 outline-none sm:gap-6 sm:py-5 sm:pb-8', fullscreen ? 'max-sm:pt-3 max-sm:pb-0' : 'pb-[calc(5.75rem+env(safe-area-inset-bottom))]')}
+          className={cn('container-page grid flex-1 content-start gap-4 py-4 outline-none sm:gap-6 sm:py-5 sm:pb-8 print:block print:min-h-0 print:flex-none print:p-0', fullscreen ? 'max-sm:pt-3 max-sm:pb-0' : 'pb-[calc(5.75rem+env(safe-area-inset-bottom))]')}
         >
           {needRefresh && (
             <div role="status" className="flex items-start gap-3 rounded-xl bg-info-soft p-4 text-sm font-semibold text-info">
@@ -551,7 +551,7 @@ export function Shell() {
               </div>
             </div>
           )}
-          <div key={loc.pathname} className="page-in grid min-w-0 content-start gap-4 sm:gap-6">
+          <div key={loc.pathname} className="page-in grid min-w-0 content-start gap-4 sm:gap-6 print:block print:min-h-0">
             <Outlet />
           </div>
         </main>

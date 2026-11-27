@@ -40,17 +40,18 @@ export function Legend({ className }: { className?: string }) {
 }
 
 /**
- * How B stands against A, in words and an icon (never colour alone): more, less or the same. Higher cost is a warning,
+ * How B stands against A, in words and an icon (never colour alone): more, less or the same. Higher cost is a danger,
  * lower is good news. The word already says the direction, so the numbers have no sign. `format` writes an amount;
  * `showAmount` adds the difference in money to the percent. `soFar`: one of the two is not finished, so the difference is
- * only where things stand now: it is written "so far" and kept neutral instead of calling it good or bad.
+ * only where things stand now, so the wording remains "so far". Direction still uses the same semantic colour:
+ * lower cost is green, higher cost is red, and equal cost is neutral.
  */
 export function DeltaBadge({ d, format, showAmount = false, soFar = false }: { d: Delta; format: (n: number) => string; showAmount?: boolean; soFar?: boolean }) {
   const { t } = useApp()
   const same = Math.abs(d.delta) < 0.5
   const up = d.delta > 0
   const Icon = same ? Minus : up ? TrendingUp : TrendingDown
-  const variant = same || soFar ? 'neutral' : up ? 'warning' : 'success'
+  const variant = same ? 'neutral' : up ? 'danger' : 'success'
   const word = same ? t('compare.same') : up ? t('compare.more') : t('compare.less')
   return (
     <Badge variant={variant} className="h-auto w-fit shrink-0 whitespace-nowrap">
@@ -102,23 +103,23 @@ export interface BarRow {
 }
 
 /** Each subject is one comparison row: the two project values stay in fixed columns, with a shared-scale bar and difference. */
-export function CompareBars({ rows, format }: { rows: BarRow[]; format: (n: number) => string }) {
+export function CompareBars({ rows, format, flush = false }: { rows: BarRow[]; format: (n: number) => string; flush?: boolean }) {
   const { t } = useApp()
   const max = Math.max(1e-9, ...rows.flatMap((r) => [r.a, r.b]))
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className={cn('overflow-hidden rounded-lg border', flush && 'rounded-none border-x-0 border-b-0')}>
       <div className={cn('hidden border-b bg-muted/40 text-sm font-semibold sm:grid', COMPARE_GRID)}>
-        <span aria-hidden="true" className="p-3" />
-        <span className="border-s p-3"><KeyChip side="a">{t('compare.projectA')}</KeyChip></span>
-        <span className="border-s p-3"><KeyChip side="b">{t('compare.projectB')}</KeyChip></span>
-        <span className="min-w-28 border-s p-3 text-muted-foreground">{t('compare.difference')}</span>
+        <span aria-hidden="true" className="px-3 py-2" />
+        <span className="border-s px-3 py-2"><KeyChip side="a">{t('compare.projectA')}</KeyChip></span>
+        <span className="border-s px-3 py-2"><KeyChip side="b">{t('compare.projectB')}</KeyChip></span>
+        <span className="min-w-28 border-s px-3 py-2 text-muted-foreground">{t('compare.difference')}</span>
       </div>
       <ul className="divide-y">
       {rows.map((r) => {
         const d: Delta = { delta: r.b - r.a, pct: r.a > 0 ? Math.round(((r.b - r.a) / r.a) * 100) : undefined }
         return (
           <li key={r.key} className={cn('grid grid-cols-2', COMPARE_GRID)}>
-            <div className="col-span-2 flex min-w-0 items-start justify-between gap-3 p-3 pb-2 sm:col-span-1 sm:block sm:p-3">
+            <div className="col-span-2 flex min-w-0 items-start justify-between gap-3 px-3 py-2 sm:col-span-1 sm:block">
               <span className="min-w-0">
                 <span className="font-semibold">{r.label}</span>
                 {r.note && <span className="block text-sm text-muted-foreground">{r.note}</span>}
@@ -126,7 +127,7 @@ export function CompareBars({ rows, format }: { rows: BarRow[]; format: (n: numb
               {(r.a > 0 || r.b > 0) && <span className="sm:hidden"><DeltaBadge d={d} format={format} soFar={r.soFar} /></span>}
             </div>
             {([['a', r.a, t('compare.projectA')], ['b', r.b, t('compare.projectB')]] as const).map(([side, v, name]) => (
-              <div key={side} role="img" aria-label={`${name}: ${v > 0 ? format(v) : '0'}`} className="grid min-w-0 gap-2 border-t border-s p-3 sm:border-t-0" dir="ltr">
+              <div key={side} role="img" aria-label={`${name}: ${v > 0 ? format(v) : '0'}`} className="grid min-w-0 gap-1.5 border-t border-s px-3 py-2 sm:border-t-0" dir="ltr">
                 <span className="flex items-center gap-2 text-xs text-muted-foreground sm:hidden">
                   <span className={cn('size-2 rounded-full', side === 'a' ? SIDE_A.bar : SIDE_B.bar)} />
                   {name}
@@ -137,7 +138,7 @@ export function CompareBars({ rows, format }: { rows: BarRow[]; format: (n: numb
                 </span>
               </div>
             ))}
-            <div className="hidden min-w-28 border-s p-3 sm:block">
+            <div className="hidden min-w-28 border-s px-3 py-2 sm:block">
               {(r.a > 0 || r.b > 0) ? <DeltaBadge d={d} format={format} soFar={r.soFar} /> : <span className="text-muted-foreground">—</span>}
             </div>
           </li>
@@ -166,9 +167,9 @@ export function PaceChart({ a, b, format }: { a: number[]; b: number[]; format: 
   const vb = inRange(b, active) ? b[active] : undefined
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-2">
       <div className="grid grid-cols-[3rem_minmax(0,1fr)] gap-2" dir="ltr">
-        <div aria-hidden="true" className="flex h-56 flex-col justify-between pb-7 text-right text-xs text-muted-foreground">
+        <div aria-hidden="true" className="flex h-48 flex-col justify-between pb-7 text-right text-xs text-muted-foreground">
           <span>{compact(top)}</span>
           <span>{compact(top / 2)}</span>
           <span>0</span>
@@ -189,7 +190,7 @@ export function PaceChart({ a, b, format }: { a: number[]; b: number[]; format: 
           <span aria-hidden="true" className="absolute inset-x-0 top-0 border-t" />
           <span aria-hidden="true" className="absolute inset-x-0 top-[calc(50%-0.875rem)] border-t" />
           <span aria-hidden="true" className="absolute inset-x-0 bottom-7 border-t" />
-          <div className="grid h-56 min-w-full grid-flow-col auto-cols-[minmax(4rem,1fr)] items-end gap-2 px-1">
+          <div className="grid h-48 min-w-full grid-flow-col auto-cols-[minmax(4rem,1fr)] items-end gap-2 px-1">
             {Array.from({ length: n }, (_, i) => {
               const av = inRange(a, i) ? a[i] : undefined
               const bv = inRange(b, i) ? b[i] : undefined
@@ -216,27 +217,25 @@ export function PaceChart({ a, b, format }: { a: number[]; b: number[]; format: 
       <p className="text-center text-sm text-muted-foreground">{t('compare.paceAxis')}</p>
 
       <div role="status" aria-live="polite" className={cn('grid grid-cols-2 overflow-hidden rounded-lg border', COMPARE_GRID)}>
-        <p className="col-span-2 p-3 font-semibold sm:col-span-1">{t('compare.month', { n: active + 1 })}</p>
+        <p className="col-span-2 px-3 py-2 font-semibold sm:col-span-1">{t('compare.month', { n: active + 1 })}</p>
         <dl className="contents">
-          <div className="grid gap-1 border-t border-s p-3 sm:border-t-0">
+          <div className="grid gap-1 border-t border-s px-3 py-2 sm:border-t-0">
             <dt>
               <KeyChip side="a">{t('compare.projectA')}</KeyChip>
             </dt>
             <dd className="tabular font-bold">{va === undefined ? '—' : format(va)}</dd>
           </div>
-          <div className="grid gap-1 border-t border-s p-3 sm:border-t-0">
+          <div className="grid gap-1 border-t border-s px-3 py-2 sm:border-t-0">
             <dt>
               <KeyChip side="b">{t('compare.projectB')}</KeyChip>
             </dt>
             <dd className="tabular font-bold">{vb === undefined ? '—' : format(vb)}</dd>
           </div>
         </dl>
-        <div className="hidden border-s p-3 sm:block">
+        <div className="hidden border-s px-3 py-2 sm:block">
           {va !== undefined && vb !== undefined && va > 0 ? <DeltaBadge d={{ delta: vb - va, pct: Math.round(((vb - va) / va) * 100) }} format={format} /> : <span className="text-muted-foreground">—</span>}
         </div>
       </div>
-      <p className="text-sm text-muted-foreground">{t('compare.paceHint')}</p>
-
       <div className="sr-only">
         <table>
           <caption>{t('compare.paceTitle')}</caption>
@@ -273,17 +272,17 @@ export interface RateRow {
 
 /**
  * How much each material's rate changed, on one scale around zero: a bar to the right for a rise, to the left for a fall.
- * Rises are amber and falls green, always with an arrow and the percent in words, never colour alone.
+ * Rises are red and falls green, always with an arrow and the percent in words, never colour alone.
  */
-export function RateChangeBars({ rows }: { rows: RateRow[] }) {
+export function RateChangeBars({ rows, flush = false }: { rows: RateRow[]; flush?: boolean }) {
   const { t } = useApp()
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className={cn('overflow-hidden rounded-lg border', flush && 'rounded-none border-x-0 border-b-0')}>
       <div className={cn('hidden border-b bg-muted/40 text-sm font-semibold sm:grid', COMPARE_GRID)}>
-        <span className="p-3">{t('compare.materials')}</span>
-        <span className="border-s p-3"><KeyChip side="a">{t('compare.projectA')}</KeyChip></span>
-        <span className="border-s p-3"><KeyChip side="b">{t('compare.projectB')}</KeyChip></span>
-        <span className="border-s p-3 text-muted-foreground">{t('compare.difference')}</span>
+        <span className="px-3 py-2">{t('compare.materials')}</span>
+        <span className="border-s px-3 py-2"><KeyChip side="a">{t('compare.projectA')}</KeyChip></span>
+        <span className="border-s px-3 py-2"><KeyChip side="b">{t('compare.projectB')}</KeyChip></span>
+        <span className="border-s px-3 py-2 text-muted-foreground">{t('compare.difference')}</span>
       </div>
       <ul className="divide-y">
       {rows.map((r) => {
@@ -293,14 +292,21 @@ export function RateChangeBars({ rows }: { rows: RateRow[] }) {
         const word = pct === 0 ? t('compare.same') : up ? t('compare.more') : t('compare.less')
         return (
           <li key={r.key} className={cn('grid grid-cols-2', COMPARE_GRID)}>
-            <div className="col-span-2 p-3 sm:col-span-1">
+            <div className="col-span-2 px-3 py-2 sm:col-span-1">
               <span className="font-semibold">
                 {r.label} <span className="text-sm font-normal text-muted-foreground">/ {r.unit}</span>
               </span>
             </div>
-            <div className="border-t border-s p-3 text-sm font-semibold sm:border-t-0">{r.from}</div>
-            <div className="border-t border-s p-3 text-sm font-semibold sm:border-t-0">{r.to}</div>
-            <div role="img" aria-label={r.pct === undefined ? '' : `${word} ${Math.abs(pct)}%`} className="col-span-2 flex items-center gap-1 border-t p-3 text-sm font-semibold sm:col-span-1 sm:border-t-0 sm:border-s">
+            <div className="border-t border-s px-3 py-2 text-sm font-semibold sm:border-t-0">{r.from}</div>
+            <div className="border-t border-s px-3 py-2 text-sm font-semibold sm:border-t-0">{r.to}</div>
+            <div
+              role="img"
+              aria-label={r.pct === undefined ? '' : `${word} ${Math.abs(pct)}%`}
+              className={cn(
+                'col-span-2 flex items-center gap-1 border-t px-3 py-2 text-sm font-semibold sm:col-span-1 sm:border-t-0 sm:border-s',
+                r.pct === undefined || pct === 0 ? 'text-muted-foreground' : up ? 'text-danger' : 'text-success',
+              )}
+            >
                 <Icon aria-hidden="true" className="size-4" />
                 <span>{word}</span>
                 <bdi className="tabular">{r.pct === undefined ? '' : `${Math.abs(pct)}%`}</bdi>
