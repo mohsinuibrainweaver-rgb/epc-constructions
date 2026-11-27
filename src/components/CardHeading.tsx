@@ -11,10 +11,10 @@ export function IconTile({ icon: Icon, className }: { icon: ElementType; classNa
 }
 
 /** The heading of a card, with its icon. Keep the heading text the same as it was: the icon is only there to help the eye find the card. */
-export function CardHeading({ icon, id, className, children }: { icon: ElementType; id?: string; className?: string; children: ReactNode }) {
+export function CardHeading({ icon, id, className, iconClassName, children }: { icon: ElementType; id?: string; className?: string; iconClassName?: string; children: ReactNode }) {
   return (
     <h2 id={id} className={cn('flex items-center gap-2.5 text-lg font-semibold', className)}>
-      <IconTile icon={icon} />
+      <IconTile icon={icon} className={iconClassName} />
       <span className="min-w-0">{children}</span>
     </h2>
   )

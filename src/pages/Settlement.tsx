@@ -108,7 +108,7 @@ export function Settlement() {
       <div className="grid items-start gap-6 max-sm:gap-3 md:grid-cols-2">
         <Card className="max-sm:gap-3 max-sm:py-4">
           <CardHeader className="max-sm:px-4">
-            <CardTitle className="flex min-w-0 items-center gap-2.5 text-lg max-sm:text-base"><IconTile icon={Scale} />{t('stl.balance')}</CardTitle>
+            <CardTitle className="flex min-w-0 items-center gap-2.5 text-lg max-sm:text-base"><IconTile icon={Scale} className="rounded-md" />{t('stl.balance')}</CardTitle>
           </CardHeader>
           <CardContent className="max-sm:px-4">
             <dl className="divide-y">
@@ -128,7 +128,7 @@ export function Settlement() {
 
         <Card className="max-sm:gap-3 max-sm:py-4">
           <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2 max-sm:px-4">
-            <CardTitle className="flex min-w-0 items-center gap-2.5 text-lg max-sm:text-base"><IconTile icon={Percent} />{t('stl.fee')}</CardTitle>
+            <CardTitle className="flex min-w-0 items-center gap-2.5 text-lg max-sm:text-base"><IconTile icon={Percent} className="rounded-md" />{t('stl.fee')}</CardTitle>
             {can('editFee') && (
               <Button size="sm" variant="outline" className="shrink-0 print:hidden" onClick={() => setFeeOpen(true)}>
                 <Pencil aria-hidden="true" />
@@ -186,7 +186,7 @@ export function Settlement() {
 
       <Card className="max-sm:gap-3 max-sm:py-4">
         <CardHeader className="max-sm:px-4">
-          <CardTitle className="flex min-w-0 items-center gap-2.5 text-lg max-sm:text-base"><IconTile icon={Banknote} />{t('stl.totalDue')}</CardTitle>
+          <CardTitle className="flex min-w-0 items-center gap-2.5 text-lg max-sm:text-base"><IconTile icon={Banknote} className="rounded-md" />{t('stl.totalDue')}</CardTitle>
         </CardHeader>
         <CardContent className="max-sm:px-4">
           <p role="status" className="text-xl font-extrabold text-balance max-sm:text-lg">
@@ -197,7 +197,7 @@ export function Settlement() {
       </Card>
 
       <Card className="gap-0 overflow-hidden py-0">
-        <CardHeading icon={WalletCards} className="p-4 max-sm:p-3">{t('cash.title')}</CardHeading>
+        <CardHeading icon={WalletCards} iconClassName="rounded-md" className="p-4 max-sm:p-3">{t('cash.title')}</CardHeading>
         <div className="border-t p-4 max-sm:p-3">
           <p className="mb-4 text-sm text-muted-foreground max-sm:mb-3 max-sm:text-[0.8125rem]">{t('cash.subtitle')}</p>
           {ownerView && (
@@ -244,7 +244,7 @@ export function Settlement() {
       </Card>
 
       <Card className="gap-0 overflow-hidden py-0">
-        <CardHeading icon={ArrowLeftRight} className="p-4 max-sm:p-3">{t('stl.transfers')}</CardHeading>
+        <CardHeading icon={ArrowLeftRight} iconClassName="rounded-md" className="p-4 max-sm:p-3">{t('stl.transfers')}</CardHeading>
         {transfers.length === 0 ? (
           <EmptyState compact icon={ArrowLeftRight} title={t('stl.transferEmpty')} body={t('stl.transferEmptyBody')} />
         ) : (
