@@ -67,6 +67,7 @@ export const onAccessRevoked = (listener: (notice: RevokedAccessNotice) => void)
 
 const EPOCH = '1970-01-01T00:00:00+00:00'
 const PAGE = 1000
+const MEMBERSHIP_SCOPE = 'sync.membershipScope'
 
 export async function countPending(): Promise<number> {
   const counts = await Promise.all(TABLES.map((d) => d.table.where('dirty').equals(1).count()))
@@ -279,11 +280,14 @@ async function pull(): Promise<void> {
 }
 
 /** Keeps this account's membership and individual project permissions available offline. */
-export async function refreshMembership(): Promise<void> {
-  if (!supabase || !userId) return
+export async function refreshMembership(): Promise<boolean> {
+  if (!supabase || !userId) return false
   const { data, error } = await supabase.from('project_members').select('project_id, role').eq('user_id', userId)
-  if (error) return
+  if (error) return false
   const rows = (data ?? []) as { project_id: string; role: string }[]
+  const nextScope = [...new Set(rows.map((row) => row.project_id))].sort()
+  const previousScope = ((await db.settings.get(MEMBERSHIP_SCOPE))?.value as string[] | undefined) ?? []
+  const scopeChanged = previousScope.length !== nextScope.length || previousScope.some((id, index) => id !== nextScope[index])
   const keep = new Set(rows.map((r) => `member.role.${r.project_id}`))
   const old = ((await db.settings.toCollection().primaryKeys()) as string[]).filter((k) => k.startsWith('member.role.') && !keep.has(k))
   const accessibleProjectIds = rows.map((row) => row.project_id)
@@ -303,6 +307,7 @@ export async function refreshMembership(): Promise<void> {
   await purgeRevokedProjects(revokedProjectIds, accessibleProjectIds)
   for (const notice of revokedProjects) revokedAccessListeners.forEach((listener) => listener(notice))
   await db.settings.bulkPut(rows.map((r) => ({ key: `member.role.${r.project_id}`, value: r.role })))
+  await db.settings.put({ key: MEMBERSHIP_SCOPE, value: nextScope })
   const projectIds = rows.map((r) => r.project_id)
   if (projectIds.length) {
     const [{ data: permissionRows }, { data: memberRows }] = await Promise.all([
@@ -327,6 +332,7 @@ export async function refreshMembership(): Promise<void> {
       })))
     }
   }
+  return scopeChanged
 }
 
 async function resetCursors(): Promise<void> {
@@ -391,7 +397,11 @@ export async function syncNow(): Promise<void> {
   try {
     const { data: claimed, error } = await supabase.rpc('claim_invites')
     if (error) throw named('claim_invites', error)
-    if (typeof claimed === 'number' && claimed > 0) await resetCursors() // new projects became visible
+    // Cursors are shared by all accessible projects in a table. If this account gains access to a
+    // project, its older rows can sit before an already-advanced cursor. Reset before pulling so a
+    // newly visible project is hydrated in full instead of showing only rows edited afterwards.
+    const membershipChanged = await refreshMembership()
+    if ((typeof claimed === 'number' && claimed > 0) || membershipChanged) await resetCursors()
     refusedNow = 0
     await push()
     await pull()
@@ -477,10 +487,12 @@ export function startSync(uid: string): Promise<void> {
   const interval = setInterval(() => void syncNow(), 60_000)
   stops.push(() => clearInterval(interval))
 
-  // Let the caller distinguish the initial server pull from the later background syncs. In
-  // particular, an empty local database must not be treated as "this account has no projects"
-  // until this promise settles.
-  return syncNow()
+  // Re-read every accessible server row once when this browser session starts. Incremental cursors
+  // keep the one-minute/background syncs cheap, while this full reconciliation repairs an old or
+  // incomplete browser cache and guarantees that two devices start from the same server dataset.
+  // applyRows keeps newer unsent local edits, so offline work is not overwritten by this check.
+  // Let the caller distinguish this initial pull from later background syncs.
+  return resetCursors().then(() => syncNow())
 }
 
 export function stopSync(): void {
